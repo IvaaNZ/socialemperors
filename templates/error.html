@@ -1,9 +1,9 @@
 {% extends 'base.html' %}
-{% block title %}{{ title | default('Não foi possível continuar') }} · Social Empires{% endblock %}
+{% block title %}{{ _(title | default('Não foi possível continuar')) }} · Social Empires{% endblock %}
 {% block content %}
 <section class="auth-panel error-panel" aria-labelledby="error-title">
-    <h1 id="error-title">{{ title | default('Não foi possível continuar') }}</h1>
-    <p>{{ message | default('Atualize a página e tente novamente.') }}</p>
-    <a class="button button-primary" href="{{ '/play.html' if current_account else url_for('login') }}">{{ 'Voltar para minha vila' if current_account else 'Voltar para o login' }}</a>
+    <h1 id="error-title">{{ _(title | default('Não foi possível continuar')) }}</h1>
+    <p>{{ _(message | default('Atualize a página e tente novamente.')) }}</p>
+    <a class="button button-primary" href="{{ '/play.html' if current_account else url_for('login') }}">{{ _('Voltar para minha vila') if current_account else _('Voltar para o login') }}</a>
 </section>
 {% endblock %}

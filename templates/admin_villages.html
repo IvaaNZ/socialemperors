@@ -1,44 +1,44 @@
 {% extends 'base.html' %}
-{% block title %}Gerenciar vilas · Social Empires{% endblock %}
+{% block title %}{{ _('Gerenciar vilas') }} · Social Empires{% endblock %}
 {% block head %}<link rel="stylesheet" href="{{ url_for('css', path='management.css') }}">{% endblock %}
 {% block main_class %}management-main{% endblock %}
 {% block content %}
-{% set status_labels = {'pending': 'Aguardando aprovação', 'approved': 'Aprovada', 'rejected': 'Recusada', 'suspended': 'Suspensa'} %}
+{% set status_labels = {'pending': _('Aguardando aprovação'), 'approved': _('Aprovada'), 'rejected': _('Recusada'), 'suspended': _('Suspensa')} %}
 <div class="management-heading">
-    <div><h1>Gerenciar vilas</h1><p>Ajuste recursos e progresso das vilas dos jogadores.</p></div>
+    <div><h1>{{ _('Gerenciar vilas') }}</h1><p>{{ _('Ajuste recursos e progresso das vilas dos jogadores.') }}</p></div>
 </div>
-<nav class="management-nav" aria-label="Administração">
-    <a href="{{ url_for('admin_accounts') }}">Contas</a>
-    <a href="{{ url_for('admin_villages') }}" aria-current="page">Vilas</a>
+<nav class="management-nav" aria-label="{{ _('Administração') }}">
+    <a href="{{ url_for('admin_accounts') }}">{{ _('Contas') }}</a>
+    <a href="{{ url_for('admin_villages') }}" aria-current="page">{{ _('Vilas') }}</a>
 </nav>
 {% if villages %}
 <table class="management-table">
-    <caption class="sr-only">Vilas dos jogadores e seus recursos</caption>
-    <thead><tr><th scope="col">Jogador</th><th scope="col">Vila</th><th scope="col">Recursos</th><th scope="col"><span class="sr-only">Ação</span></th></tr></thead>
+    <caption class="sr-only">{{ _('Vilas dos jogadores e seus recursos') }}</caption>
+    <thead><tr><th scope="col">{{ _('Jogador') }}</th><th scope="col">{{ _('Vila') }}</th><th scope="col">{{ _('Recursos') }}</th><th scope="col"><span class="sr-only">{{ _('Ação') }}</span></th></tr></thead>
     <tbody>
         {% for entry in villages %}
         <tr>
-            <td data-label="Jogador">
+            <td data-label="{{ _('Jogador') }}">
                 <strong>{{ entry.account.name }}</strong>
                 <span class="player-detail">{{ entry.account.email }}</span>
                 <span class="status status-{{ entry.account.status }}">{{ status_labels.get(entry.account.status, entry.account.status) }}</span>
             </td>
             {% if entry.unavailable %}
-            <td colspan="3" data-label="Vila"><strong>Save indisponível</strong><span class="player-detail">Restaure o arquivo da vila para voltar a gerenciá-la.</span></td>
+            <td colspan="3" data-label="{{ _('Vila') }}"><strong>{{ _('Save indisponível') }}</strong><span class="player-detail">{{ _('Restaure o arquivo da vila para voltar a gerenciá-la.') }}</span></td>
             {% else %}
-            <td data-label="Vila">
+            <td data-label="{{ _('Vila') }}">
                 <strong>{{ entry.village.name }}</strong>
-                <span class="player-detail">Nível {{ entry.village.level }}</span>
+                <span class="player-detail">{{ _('Nível {level}', level=entry.village.level) }}</span>
             </td>
-            <td data-label="Recursos">
+            <td data-label="{{ _('Recursos') }}">
                 <div class="management-resources">
-                    {% for key, label in [('coins', 'Ouro'), ('wood', 'Madeira'), ('food', 'Comida'), ('stone', 'Pedra')] %}
+                    {% for key, label in [('coins', _('Ouro')), ('wood', _('Madeira')), ('food', _('Comida')), ('stone', _('Pedra'))] %}
                     <span>{{ label }}: {{ entry.resources[key] | game_number }}</span>
                     {% endfor %}
-                    <span>Dinheiro: {{ entry.cash | game_number }}</span>
+                    <span>{{ _('Dinheiro') }}: {{ entry.cash | game_number }}</span>
                 </div>
             </td>
-            <td data-label="Gerenciamento"><a class="button button-secondary button-small manage-link" href="{{ url_for('admin_village', account_id=entry.account.id) }}" aria-label="Gerenciar vila de {{ entry.account.name }}">Gerenciar vila</a></td>
+            <td data-label="{{ _('Gerenciamento') }}"><a class="button button-secondary button-small manage-link" href="{{ url_for('admin_village', account_id=entry.account.id) }}" aria-label="{{ _('Gerenciar vila de {name}', name=entry.account.name) }}">{{ _('Gerenciar vila') }}</a></td>
             {% endif %}
         </tr>
         {% endfor %}
@@ -46,9 +46,9 @@
 </table>
 {% else %}
 <section class="management-empty" aria-labelledby="no-villages">
-    <h2 id="no-villages">Nenhuma vila disponível</h2>
-    <p>As vilas aparecem aqui quando o acesso de uma conta é aprovado.</p>
-    <p><a href="{{ url_for('admin_accounts') }}">Gerenciar contas</a></p>
+    <h2 id="no-villages">{{ _('Nenhuma vila disponível') }}</h2>
+    <p>{{ _('As vilas aparecem aqui quando o acesso de uma conta é aprovado.') }}</p>
+    <p><a href="{{ url_for('admin_accounts') }}">{{ _('Gerenciar contas') }}</a></p>
 </section>
 {% endif %}
 {% endblock %}

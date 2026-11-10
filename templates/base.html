@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="{{ portal_lang }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -10,27 +10,27 @@
     {% block head %}{% endblock %}
 </head>
 <body class="{% block body_class %}{% endblock %}">
-    <a class="skip-link" href="#main">Ir para o conteúdo</a>
+    <a class="skip-link" href="#main">{{ _('Ir para o conteúdo') }}</a>
     <header class="site-header">
         <div class="header-inner">
-            <a class="brand" href="{{ '/play.html' if current_account else url_for('login') }}" aria-label="Social Empires — início">
+            <a class="brand" href="{{ '/play.html' if current_account else url_for('login') }}" aria-label="{{ _('Social Empires — início') }}">
                 <img src="{{ url_for('images', path='logo.png') }}" alt="Social Empires" width="134" height="65">
             </a>
-            <nav class="header-nav" aria-label="Navegação principal">
+            <nav class="header-nav" aria-label="{{ _('Navegação principal') }}">
                 {% if current_account %}
                     <span class="account-name">{{ current_account.name }}</span>
-                    <a href="/play.html">Minha vila</a>
-                    <a href="{{ url_for('rival_villages') }}" {% if request.endpoint == 'rival_villages' %}aria-current="page"{% endif %}>Rivais e saques</a>
-                    <a href="{{ url_for('treasury') }}" {% if request.endpoint == 'treasury' %}aria-current="page"{% endif %}>Tesouro</a>
-                    {% if current_account.is_admin %}<a href="{{ url_for('admin_accounts') }}" {% if request.endpoint in ['admin_accounts', 'admin_villages', 'admin_village'] %}aria-current="page"{% endif %}>Administração</a>{% endif %}
+                    <a href="/play.html">{{ _('Minha vila') }}</a>
+                    <a href="{{ url_for('rival_villages') }}" {% if request.endpoint == 'rival_villages' %}aria-current="page"{% endif %}>{{ _('Rivais e saques') }}</a>
+                    <a href="{{ url_for('treasury') }}" {% if request.endpoint == 'treasury' %}aria-current="page"{% endif %}>{{ _('Tesouro') }}</a>
+                    {% if current_account.is_admin %}<a href="{{ url_for('admin_accounts') }}" {% if request.endpoint in ['admin_accounts', 'admin_villages', 'admin_village'] %}aria-current="page"{% endif %}>{{ _('Administração') }}</a>{% endif %}
                     <form action="{{ url_for('logout') }}" method="post">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <button class="nav-button" type="submit">Sair</button>
+                        <button class="nav-button" type="submit">{{ _('Sair') }}</button>
                     </form>
                 {% elif request.endpoint == 'register' %}
-                    <a href="{{ url_for('login') }}">Entrar</a>
+                    <a href="{{ url_for('login') }}">{{ _('Entrar') }}</a>
                 {% else %}
-                    <a href="{{ url_for('register') }}">Criar conta</a>
+                    <a href="{{ url_for('register') }}">{{ _('Criar conta') }}</a>
                 {% endif %}
             </nav>
         </div>
@@ -38,7 +38,7 @@
     <main id="main" class="{% block main_class %}auth-main{% endblock %}">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}<div class="messages" aria-live="polite">
-                {% for category, message in messages %}<div class="notice notice-{{ category }}" role="status">{{ message }}</div>{% endfor %}
+                {% for category, message in messages %}<div class="notice notice-{{ category }}" role="status">{{ _(message) }}</div>{% endfor %}
             </div>{% endif %}
         {% endwith %}
         {% block content %}{% endblock %}

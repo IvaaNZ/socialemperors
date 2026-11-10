@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Tesouro · Social Empires{% endblock %}
+{% block title %}{{ _('Tesouro') }} · Social Empires{% endblock %}
 {% block head %}
     <link rel="stylesheet" href="{{ url_for('css', path='portal-shell.css') }}">
     <link rel="stylesheet" href="{{ url_for('css', path='treasury.css') }}">
@@ -11,66 +11,66 @@
 {%- endmacro %}
 {% macro history_entry(reward) -%}
 <li>
-    <div><h3>{{ 'Bônus inicial' if reward.kind == 'initial' else 'Recompensa diária' }}</h3><time data-timestamp="{{ reward.claimed_at }}">{{ reward.claimed_at | game_datetime }}</time></div>
-    <span class="treasury-history-amount">+{{ reward.amount | game_number }}<span class="sr-only"> de dinheiro</span></span>
+    <div><h3>{{ _('Bônus inicial') if reward.kind == 'initial' else _('Recompensa diária') }}</h3><time data-timestamp="{{ reward.claimed_at }}">{{ reward.claimed_at | game_datetime }}</time></div>
+    <span class="treasury-history-amount">+{{ reward.amount | game_number }}<span class="sr-only"> {{ _('de dinheiro') }}</span></span>
 </li>
 {%- endmacro %}
 {% set initial_full = overview.balance + overview.initial_bonus > overview.max_balance %}
 {% set daily_full = overview.balance + overview.daily_reward > overview.max_balance %}
 {% block content %}
     <div class="treasury-heading">
-        <div><h1>Tesouro</h1><p>Dinheiro gratuito para usar no jogo.</p></div>
-        <a class="treasury-back" href="{{ url_for('play') }}"><svg class="treasury-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M19 12H5m6-6-6 6 6 6"/></svg>Minha vila</a>
+        <div><h1>{{ _('Tesouro') }}</h1><p>{{ _('Dinheiro gratuito para usar no jogo.') }}</p></div>
+        <a class="treasury-back" href="{{ url_for('play') }}"><svg class="treasury-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M19 12H5m6-6-6 6 6 6"/></svg>{{ _('Minha vila') }}</a>
     </div>
-    {% if error %}<p class="notice notice-error" role="alert">{{ error }}</p>{% endif %}
+    {% if error %}<p class="notice notice-error" role="alert">{{ _(error) }}</p>{% endif %}
     <div class="treasury-wallet">
-        <dl class="treasury-balance"><dt>Saldo de dinheiro</dt><dd>{{ cash_icon() }}<span data-treasury-balance>{{ overview.balance | game_number }}</span></dd></dl>
+        <dl class="treasury-balance"><dt>{{ _('Saldo de dinheiro') }}</dt><dd>{{ cash_icon() }}<span data-treasury-balance>{{ overview.balance | game_number }}</span></dd></dl>
         {% if (overview.initial_available and initial_full) or (overview.can_claim and daily_full) %}
-        <p class="treasury-capacity" id="treasury-capacity">Use parte do saldo para resgatar. Limite: {{ overview.max_balance | game_number }}.</p>
+        <p class="treasury-capacity" id="treasury-capacity">{{ _('Use parte do saldo para resgatar. Limite: {limit}.', limit=overview.max_balance | game_number) }}</p>
         {% endif %}
         {% if overview.initial_available %}
         <section class="treasury-reward" aria-labelledby="initial-title">
-            <div class="treasury-reward-name"><h2 id="initial-title">Bônus inicial</h2><p>Resgate único</p></div>
-            <p class="treasury-reward-amount">+{{ overview.initial_bonus | game_number }}<span class="sr-only"> de dinheiro</span></p>
-            <form action="{{ url_for('claim_treasury') }}" method="post" data-treasury-claim>
+            <div class="treasury-reward-name"><h2 id="initial-title">{{ _('Bônus inicial') }}</h2><p>{{ _('Resgate único') }}</p></div>
+            <p class="treasury-reward-amount">+{{ overview.initial_bonus | game_number }}<span class="sr-only"> {{ _('de dinheiro') }}</span></p>
+            <form action="{{ url_for('claim_treasury') }}" method="post" data-treasury-claim data-busy-label="{{ _('Resgatando…') }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input type="hidden" name="action" value="initial">
-                <button class="button button-primary" type="submit" {% if initial_full %}disabled aria-describedby="treasury-capacity"{% endif %}>Resgatar bônus</button>
+                <button class="button button-primary" type="submit" {% if initial_full %}disabled aria-describedby="treasury-capacity"{% endif %}>{{ _('Resgatar bônus') }}</button>
             </form>
         </section>
         {% endif %}
         <section class="treasury-reward" aria-labelledby="daily-title">
-            <div class="treasury-reward-name"><h2 id="daily-title">Recompensa diária</h2><p>A cada 24 horas</p></div>
-            <p class="treasury-reward-amount">+{{ overview.daily_reward | game_number }}<span class="sr-only"> de dinheiro</span></p>
+            <div class="treasury-reward-name"><h2 id="daily-title">{{ _('Recompensa diária') }}</h2><p>{{ _('A cada 24 horas') }}</p></div>
+            <p class="treasury-reward-amount">+{{ overview.daily_reward | game_number }}<span class="sr-only"> {{ _('de dinheiro') }}</span></p>
             <div class="treasury-daily-action">
                 {% if overview.can_claim %}
-                <form action="{{ url_for('claim_treasury') }}" method="post" data-treasury-claim>
+                <form action="{{ url_for('claim_treasury') }}" method="post" data-treasury-claim data-busy-label="{{ _('Resgatando…') }}">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="action" value="daily">
-                    <button class="button button-primary" type="submit" {% if daily_full %}disabled aria-describedby="treasury-capacity"{% endif %}>Resgatar recompensa</button>
+                    <button class="button button-primary" type="submit" {% if daily_full %}disabled aria-describedby="treasury-capacity"{% endif %}>{{ _('Resgatar recompensa') }}</button>
                 </form>
                 {% else %}
-                <button class="button" type="button" disabled aria-describedby="daily-next">Já resgatada</button>
-                <p class="treasury-next" id="daily-next">Próximo resgate<br><time data-timestamp="{{ overview.next_claim_at }}">{{ overview.next_claim_at | game_datetime }}</time><a class="treasury-refresh" href="{{ url_for('treasury') }}">Atualizar<span class="sr-only"> disponibilidade do resgate</span></a></p>
+                <button class="button" type="button" disabled aria-describedby="daily-next">{{ _('Já resgatada') }}</button>
+                <p class="treasury-next" id="daily-next">{{ _('Próximo resgate') }}<br><time data-timestamp="{{ overview.next_claim_at }}">{{ overview.next_claim_at | game_datetime }}</time><a class="treasury-refresh" href="{{ url_for('treasury') }}">{{ _('Atualizar') }}<span class="sr-only"> {{ _('disponibilidade do resgate') }}</span></a></p>
                 {% endif %}
             </div>
         </section>
     </div>
     <section class="treasury-history" aria-labelledby="reward-history" data-treasury-history>
-        <h2 id="reward-history">Últimos resgates</h2>
+        <h2 id="reward-history">{{ _('Últimos resgates') }}</h2>
         {% if overview.history %}
         <ol class="treasury-history-list">{% for reward in overview.history[:3] %}{{ history_entry(reward) }}{% endfor %}</ol>
         {% if overview.history | length > 3 %}
-        <details class="treasury-older"><summary>Ver mais resgates ({{ overview.history | length - 3 }})</summary><ol class="treasury-history-list" start="4">{% for reward in overview.history[3:] %}{{ history_entry(reward) }}{% endfor %}</ol></details>
+        <details class="treasury-older"><summary>{{ _('Ver mais resgates ({count})', count=overview.history | length - 3) }}</summary><ol class="treasury-history-list" start="4">{% for reward in overview.history[3:] %}{{ history_entry(reward) }}{% endfor %}</ol></details>
         {% endif %}
-        {% else %}<p class="treasury-empty">Nenhum resgate ainda.</p>{% endif %}
+        {% else %}<p class="treasury-empty">{{ _('Nenhum resgate ainda.') }}</p>{% endif %}
     </section>
     <details class="treasury-help">
-        <summary>Sobre o dinheiro</summary>
+        <summary>{{ _('Sobre o dinheiro') }}</summary>
         <ul>
-            <li>Use no jogo para acelerar tarefas e fazer compras especiais. Reabra sua vila para carregar o saldo atualizado.</li>
-            <li>É gratuito, diferente de ouro e não entra nos saques.</li>
-            <li>A diária fica disponível 24 horas após cada resgate. Dias sem resgate não acumulam.</li>
+            <li>{{ _('Use no jogo para acelerar tarefas e fazer compras especiais. Reabra sua vila para carregar o saldo atualizado.') }}</li>
+            <li>{{ _('É gratuito, diferente de ouro e não entra nos saques.') }}</li>
+            <li>{{ _('A diária fica disponível 24 horas após cada resgate. Dias sem resgate não acumulam.') }}</li>
         </ul>
     </details>
 {% endblock %}

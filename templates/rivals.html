@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Rivais · Social Empires{% endblock %}
+{% block title %}{{ _('Rivais') }} · Social Empires{% endblock %}
 {% block head %}<link rel="stylesheet" href="{{ url_for('css', path='portal-shell.css') }}"><link rel="stylesheet" href="{{ url_for('css', path='rivals.css') }}">{% endblock %}
 {% block body_class %}portal-modern rivals-page{% endblock %}
 {% block main_class %}rivals-main{% endblock %}
@@ -15,112 +15,112 @@
 </svg>
 {%- endmacro %}
 {% macro resources(amounts) -%}
-    {% for key, label in [('coins', 'Ouro'), ('wood', 'Madeira'), ('food', 'Comida'), ('stone', 'Pedra')] %}
+    {% for key, label in [('coins', _('Ouro')), ('wood', _('Madeira')), ('food', _('Comida')), ('stone', _('Pedra'))] %}
     <span class="rivals-resource" title="{{ label }}">{{ icon(key) }}<span class="sr-only">{{ label }}: </span><span>{{ amounts[key] | game_number }}</span></span>
     {% endfor %}
 {%- endmacro %}
 {% set blocked_copy = {
-    'Conclua o tutorial para participar dos saques.': 'Conclua o tutorial para atacar.',
-    'Esta vila está protegida durante o tutorial.': 'Protegida pelo tutorial.',
-    'Treine pelo menos uma tropa combatente para atacar.': 'Treine uma tropa para atacar.',
-    'Esta vila está fora da sua faixa de nível.': 'Fora da sua faixa de nível.',
-    'Seu exército precisa aguardar entre os ataques.': 'Seu exército está descansando.',
-    'Esta vila está protegida após um saque.': 'Vila protegida após um saque.',
-    'Você já atacou esta vila nas últimas 6 horas.': 'Você já atacou esta vila.'
+    'Conclua o tutorial para participar dos saques.': _('Conclua o tutorial para atacar.'),
+    'Esta vila está protegida durante o tutorial.': _('Protegida pelo tutorial.'),
+    'Treine pelo menos uma tropa combatente para atacar.': _('Treine uma tropa para atacar.'),
+    'Esta vila está fora da sua faixa de nível.': _('Fora da sua faixa de nível.'),
+    'Seu exército precisa aguardar entre os ataques.': _('Seu exército está descansando.'),
+    'Esta vila está protegida após um saque.': _('Vila protegida após um saque.'),
+    'Você já atacou esta vila nas últimas 6 horas.': _('Você já atacou esta vila.')
 } %}
 {% block content %}
     <div class="rivals-heading">
-        <div><h1>Rivais</h1><p>Combate automático <span aria-hidden="true">·</span> Saque de {{ rules.loot_percent }}%</p></div>
-        <a class="rivals-back" href="{{ url_for('play') }}">{{ icon('arrow') }}Minha vila</a>
+        <div><h1>{{ _('Rivais') }}</h1><p>{{ _('Combate automático') }} <span aria-hidden="true">·</span> {{ _('Saque de {percent}%', percent=rules.loot_percent) }}</p></div>
+        <a class="rivals-back" href="{{ url_for('play') }}">{{ icon('arrow') }}{{ _('Minha vila') }}</a>
     </div>
     {% if last_battle %}
     <div class="rivals-result {% if last_battle.won %}is-victory{% endif %}" role="status">
-        <strong>{% if last_battle.won %}Vitória contra {{ last_battle.defender_name }}!{% else %}A defesa de {{ last_battle.defender_name }} venceu.{% endif %}</strong>
-        {% if last_battle.won %}<div class="rivals-resources" aria-label="Recursos recebidos">{{ resources(last_battle.loot) }}</div>{% else %}<p>Nenhum recurso saqueado.</p>{% endif %}
+        <strong>{% if last_battle.won %}{{ _('Vitória contra {name}!', name=last_battle.defender_name) }}{% else %}{{ _('A defesa de {name} venceu.', name=last_battle.defender_name) }}{% endif %}</strong>
+        {% if last_battle.won %}<div class="rivals-resources" aria-label="{{ _('Recursos recebidos') }}">{{ resources(last_battle.loot) }}</div>{% else %}<p>{{ _('Nenhum recurso saqueado.') }}</p>{% endif %}
     </div>
     {% endif %}
     <section class="rivals-own" aria-labelledby="own-village-title">
         <div class="rivals-own-overview">
-            <div class="rivals-own-name"><h2 id="own-village-title">{{ own.name }}</h2><span class="rivals-label">Sua vila <span aria-hidden="true">·</span> Nível {{ own.level }}</span></div>
+            <div class="rivals-own-name"><h2 id="own-village-title">{{ own.name }}</h2><span class="rivals-label">{{ _('Sua vila') }} <span aria-hidden="true">·</span> {{ _('Nível {level}', level=own.level) }}</span></div>
             <dl class="rivals-stats">
-                <div><dt>Tropas</dt><dd>{{ own.combatants | game_number }}</dd></div>
-                <div><dt>Ataque</dt><dd>{{ own.attack_power | game_number }}</dd></div>
-                <div><dt>Defesa</dt><dd>{{ own.defense_power | game_number }}</dd></div>
+                <div><dt>{{ _('Tropas') }}</dt><dd>{{ own.combatants | game_number }}</dd></div>
+                <div><dt>{{ _('Ataque') }}</dt><dd>{{ own.attack_power | game_number }}</dd></div>
+                <div><dt>{{ _('Defesa') }}</dt><dd>{{ own.defense_power | game_number }}</dd></div>
             </dl>
         </div>
         <div class="rivals-own-bottom">
-            <div class="rivals-resources" aria-label="Seus recursos">{{ resources(own.resources) }}</div>
-            {% if not own.tutorial_complete %}<p class="rivals-own-status">{{ icon('shield') }}Conclua o tutorial para atacar.</p>
-            {% elif not own.combatants %}<p class="rivals-own-status">Treine uma tropa para atacar.</p>
-            {% elif own.attack_available_at > server_now %}<p class="rivals-own-status">Próximo ataque: <time data-timestamp="{{ own.attack_available_at }}">{{ own.attack_available_at | game_datetime }}</time></p>{% endif %}
+            <div class="rivals-resources" aria-label="{{ _('Seus recursos') }}">{{ resources(own.resources) }}</div>
+            {% if not own.tutorial_complete %}<p class="rivals-own-status">{{ icon('shield') }}{{ _('Conclua o tutorial para atacar.') }}</p>
+            {% elif not own.combatants %}<p class="rivals-own-status">{{ _('Treine uma tropa para atacar.') }}</p>
+            {% elif own.attack_available_at > server_now %}<p class="rivals-own-status">{{ _('Próximo ataque:') }} <time data-timestamp="{{ own.attack_available_at }}">{{ own.attack_available_at | game_datetime }}</time></p>{% endif %}
         </div>
     </section>
     <div class="rivals-workspace" data-rivals-tabs>
-        <nav class="rivals-tabs" aria-label="Explorar rivais">
-            <a id="tab-villages" href="#rivals-villages" data-rivals-tab>Vilas <span class="rivals-count">{{ rivals | length }}</span></a>
-            <a id="tab-ranking" href="#rivals-ranking" data-rivals-tab>Classificação</a>
-            <a id="tab-history" href="#rivals-history" data-rivals-tab>Histórico</a>
+        <nav class="rivals-tabs" aria-label="{{ _('Explorar rivais') }}">
+            <a id="tab-villages" href="#rivals-villages" data-rivals-tab>{{ _('Vilas') }} <span class="rivals-count">{{ rivals | length }}</span></a>
+            <a id="tab-ranking" href="#rivals-ranking" data-rivals-tab>{{ _('Classificação') }}</a>
+            <a id="tab-history" href="#rivals-history" data-rivals-tab>{{ _('Histórico') }}</a>
         </nav>
         <section id="rivals-villages" class="rivals-panel" data-rivals-panel aria-labelledby="tab-villages">
-            <h2 class="rivals-panel-title">Vilas rivais</h2>
+            <h2 class="rivals-panel-title">{{ _('Vilas rivais') }}</h2>
             {% if rivals %}
-            <div class="rivals-columns" aria-hidden="true"><span>Vila</span><span>Defesa</span><span>Saque possível</span><span></span></div>
+            <div class="rivals-columns" aria-hidden="true"><span>{{ _('Vila') }}</span><span>{{ _('Defesa') }}</span><span>{{ _('Saque possível') }}</span><span></span></div>
             <div class="rivals-list">
                 {% for rival in rivals %}
                 <article class="rival-row" aria-labelledby="rival-name-{{ loop.index }}">
-                    <div class="rival-identity"><h3 id="rival-name-{{ loop.index }}">{{ rival.name }}</h3><p>Nível {{ rival.level }} <span aria-hidden="true">·</span> {{ rival.combatants | game_number }} {{ 'tropa' if rival.combatants == 1 else 'tropas' }}</p></div>
-                    <div class="rival-defense"><span class="rival-mobile-label">Defesa</span><strong>{{ rival.defense_power | game_number }}</strong><span class="rival-defense-detail">{{ rival.defenses | game_number }} {{ 'estrutura' if rival.defenses == 1 else 'estruturas' }}</span></div>
-                    <div class="rival-loot"><span class="rival-mobile-label">Saque possível</span><div class="rivals-resources">{{ resources(rival.estimated_loot) }}</div></div>
+                    <div class="rival-identity"><h3 id="rival-name-{{ loop.index }}">{{ rival.name }}</h3><p>{{ _('Nível {level}', level=rival.level) }} <span aria-hidden="true">·</span> {{ rival.combatants | game_number }} {{ _('tropa') if rival.combatants == 1 else _('tropas') }}</p></div>
+                    <div class="rival-defense"><span class="rival-mobile-label">{{ _('Defesa') }}</span><strong>{{ rival.defense_power | game_number }}</strong><span class="rival-defense-detail">{{ rival.defenses | game_number }} {{ _('estrutura') if rival.defenses == 1 else _('estruturas') }}</span></div>
+                    <div class="rival-loot"><span class="rival-mobile-label">{{ _('Saque possível') }}</span><div class="rivals-resources">{{ resources(rival.estimated_loot) }}</div></div>
                     <div class="rival-action">
-                        <form method="post" action="{{ url_for('raid_village', defender_id=rival.userid) }}" data-raid-form>
+                        <form method="post" action="{{ url_for('raid_village', defender_id=rival.userid) }}" data-raid-form data-busy-label="{{ _('Atacando…') }}">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <input type="hidden" name="raid_token" value="{{ rival.raid_token }}">
-                            <button class="button button-primary" type="submit" {% if not rival.can_attack %}disabled aria-describedby="blocked-{{ loop.index }}"{% endif %}>Atacar<span class="sr-only"> {{ rival.name }}</span></button>
+                            <button class="button button-primary" type="submit" {% if not rival.can_attack %}disabled aria-describedby="blocked-{{ loop.index }}"{% endif %}>{{ _('Atacar') }}<span class="sr-only"> {{ rival.name }}</span></button>
                         </form>
                         {% if not rival.can_attack %}
-                        <p id="blocked-{{ loop.index }}" class="rival-blocked">{{ blocked_copy.get(rival.blocked_reason, rival.blocked_reason) }}</p>
-                        {% if rival.available_at > server_now and own.tutorial_complete and rival.tutorial_complete %}<p class="rival-available">Disponível <time data-timestamp="{{ rival.available_at }}">{{ rival.available_at | game_datetime }}</time></p>{% endif %}
+                        <p id="blocked-{{ loop.index }}" class="rival-blocked">{{ blocked_copy.get(rival.blocked_reason, _(rival.blocked_reason)) }}</p>
+                        {% if rival.available_at > server_now and own.tutorial_complete and rival.tutorial_complete %}<p class="rival-available">{{ _('Disponível') }} <time data-timestamp="{{ rival.available_at }}">{{ rival.available_at | game_datetime }}</time></p>{% endif %}
                         {% endif %}
                     </div>
                 </article>
                 {% endfor %}
             </div>
-            {% else %}<div class="rivals-empty"><h3>Nenhuma vila rival por enquanto</h3><p>Novas vilas aparecem aqui.</p></div>{% endif %}
+            {% else %}<div class="rivals-empty"><h3>{{ _('Nenhuma vila rival por enquanto') }}</h3><p>{{ _('Novas vilas aparecem aqui.') }}</p></div>{% endif %}
         </section>
         <section id="rivals-ranking" class="rivals-panel" data-rivals-panel aria-labelledby="tab-ranking">
-            <h2 class="rivals-panel-title">Classificação</h2>
+            <h2 class="rivals-panel-title">{{ _('Classificação') }}</h2>
             <table class="rivals-table" role="table">
-                <caption class="sr-only">Classificação por vitórias e recursos saqueados</caption>
-                <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Vila</th><th scope="col" role="columnheader" class="numeric">Vitórias</th><th scope="col" role="columnheader" class="numeric">Saqueado</th></tr></thead>
+                <caption class="sr-only">{{ _('Classificação por vitórias e recursos saqueados') }}</caption>
+                <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">{{ _('Vila') }}</th><th scope="col" role="columnheader" class="numeric">{{ _('Vitórias') }}</th><th scope="col" role="columnheader" class="numeric">{{ _('Saqueado') }}</th></tr></thead>
                 <tbody role="rowgroup">{% for player in ranking %}<tr role="row" {% if player.userid == own.userid %}class="is-own"{% endif %}>
-                    <th scope="row" role="rowheader"><div class="rivals-rank-name"><span class="rivals-position">{{ player.position }}</span><div><span class="rivals-player-name">{{ player.name }}</span>{% if player.userid == own.userid %}<span class="rivals-you">Você</span>{% endif %}</div></div></th>
-                    <td class="numeric" role="cell"><span class="rivals-mobile-metric" aria-hidden="true">Vitórias</span>{{ player.wins | game_number }}</td><td class="numeric" role="cell"><span class="rivals-mobile-metric" aria-hidden="true">Saqueado</span>{{ player.loot_total | game_number }}</td>
+                    <th scope="row" role="rowheader"><div class="rivals-rank-name"><span class="rivals-position">{{ player.position }}</span><div><span class="rivals-player-name">{{ player.name }}</span>{% if player.userid == own.userid %}<span class="rivals-you">{{ _('Você') }}</span>{% endif %}</div></div></th>
+                    <td class="numeric" role="cell"><span class="rivals-mobile-metric" aria-hidden="true">{{ _('Vitórias') }}</span>{{ player.wins | game_number }}</td><td class="numeric" role="cell"><span class="rivals-mobile-metric" aria-hidden="true">{{ _('Saqueado') }}</span>{{ player.loot_total | game_number }}</td>
                 </tr>{% endfor %}</tbody>
             </table>
         </section>
         <section id="rivals-history" class="rivals-panel" data-rivals-panel aria-labelledby="tab-history">
-            <h2 class="rivals-panel-title">Histórico</h2>
+            <h2 class="rivals-panel-title">{{ _('Histórico') }}</h2>
             {% if history %}
             <ol class="rivals-history">{% for battle in history %}<li>
                 <div class="rivals-history-main">
-                    <p>{% if battle.role == 'attacker' %}{% if battle.won %}Você saqueou{% else %}Seu ataque foi defendido por{% endif %} {{ battle.enemy_name }}.{% else %}{% if battle.won %}Sua vila foi saqueada por{% else %}Você defendeu sua vila de{% endif %} {{ battle.enemy_name }}.{% endif %}</p>
+                    <p>{% if battle.role == 'attacker' %}{% if battle.won %}{{ _('Você saqueou {name}.', name=battle.enemy_name) }}{% else %}{{ _('Seu ataque foi defendido por {name}.', name=battle.enemy_name) }}{% endif %}{% else %}{% if battle.won %}{{ _('Sua vila foi saqueada por {name}.', name=battle.enemy_name) }}{% else %}{{ _('Você defendeu sua vila de {name}.', name=battle.enemy_name) }}{% endif %}{% endif %}</p>
                     <time data-timestamp="{{ battle.created_at }}">{{ battle.created_at | game_datetime }}</time>
                 </div>
-                {% if battle.total_loot %}<div class="rivals-resources" aria-label="Recursos {% if battle.role == 'attacker' %}recebidos{% else %}perdidos{% endif %}">{{ resources(battle.loot) }}</div>{% endif %}
-                <details class="rivals-battle-detail"><summary>Ver combate</summary><p>Ataque {{ battle.attacker_power | game_number }} <span aria-hidden="true">·</span> Defesa {{ battle.defender_power | game_number }}</p></details>
+                {% if battle.total_loot %}<div class="rivals-resources" aria-label="{% if battle.role == 'attacker' %}{{ _('Recursos recebidos') }}{% else %}{{ _('Recursos perdidos') }}{% endif %}">{{ resources(battle.loot) }}</div>{% endif %}
+                <details class="rivals-battle-detail"><summary>{{ _('Ver combate') }}</summary><p>{{ _('Ataque') }} {{ battle.attacker_power | game_number }} <span aria-hidden="true">·</span> {{ _('Defesa') }} {{ battle.defender_power | game_number }}</p></details>
             </li>{% endfor %}</ol>
-            {% else %}<div class="rivals-empty"><h3>Nenhum combate ainda</h3><p>Seus ataques e defesas aparecem aqui.</p></div>{% endif %}
+            {% else %}<div class="rivals-empty"><h3>{{ _('Nenhum combate ainda') }}</h3><p>{{ _('Seus ataques e defesas aparecem aqui.') }}</p></div>{% endif %}
         </section>
     </div>
     <details class="rivals-rules">
-        <summary>Regras dos saques</summary>
+        <summary>{{ _('Regras dos saques') }}</summary>
         <ul>
-            <li>Uma vitória transfere {{ rules.loot_percent }}% de cada recurso disponível na vila rival, arredondados para baixo. Dinheiro não é saqueado.</li>
-            <li>{{ rules.power_description }}</li>
-            <li>Intervalo entre ataques: {{ rules.attack_cooldown_seconds // 60 }} minutos. Contra o mesmo rival: {{ rules.pair_cooldown_seconds // 3600 }} horas.</li>
-            <li>Uma vila saqueada fica protegida por {{ rules.defender_protection_seconds // 60 }} minutos. Vilas em tutorial também ficam protegidas.</li>
-            <li>Na sua faixa, a diferença entre níveis pode ser de até {{ rules.max_level_gap }}.</li>
-            <li>Tropas e construções permanecem após o combate. Reabra sua vila para atualizar os saldos no jogo.</li>
+            <li>{{ _('Uma vitória transfere {percent}% de cada recurso disponível na vila rival, arredondados para baixo. Dinheiro não é saqueado.', percent=rules.loot_percent) }}</li>
+            <li>{{ _(rules.power_description) }}</li>
+            <li>{{ _('Intervalo entre ataques: {minutes} minutos. Contra o mesmo rival: {hours} horas.', minutes=rules.attack_cooldown_seconds // 60, hours=rules.pair_cooldown_seconds // 3600) }}</li>
+            <li>{{ _('Uma vila saqueada fica protegida por {minutes} minutos. Vilas em tutorial também ficam protegidas.', minutes=rules.defender_protection_seconds // 60) }}</li>
+            <li>{{ _('Na sua faixa, a diferença entre níveis pode ser de até {gap}.', gap=rules.max_level_gap) }}</li>
+            <li>{{ _('Tropas e construções permanecem após o combate. Reabra sua vila para atualizar os saldos no jogo.') }}</li>
         </ul>
     </details>
 {% endblock %}

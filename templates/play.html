@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="{{ portal_lang }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -17,22 +17,23 @@
         'locale': 'pt-BR',
         'raidRevision': raid_revision | default(''),
         'eventsUrl': url_for('village_events'),
+        'texts': script_texts | default({}),
     } | tojson }}</script>
     <script src="{{ url_for('javascript', path='game.js') }}" defer></script>
 </head>
 <body class="tab-expanded">
-    <a class="skip-link" href="#vila">Ir para a vila</a>
+    <a class="skip-link" href="#vila">{{ _('Ir para a vila') }}</a>
     <header class="game-header">
-        <a class="brand" href="{{ url_for('play') }}" aria-label="Social Empires, minha vila">
+        <a class="brand" href="{{ url_for('play') }}" aria-label="{{ _('Social Empires, minha vila') }}">
             <img src="{{ url_for('images', path='logo.png') }}" alt="Social Empires" width="170">
         </a>
-        <nav aria-label="Conta">
-            <a href="/rivals">Rivais e saques</a>
-            <a href="{{ url_for('treasury') }}">Tesouro</a>
-            {% if current_account and current_account.is_admin %}<a href="/admin">Administração</a>{% endif %}
+        <nav aria-label="{{ _('Conta') }}">
+            <a href="/rivals">{{ _('Rivais e saques') }}</a>
+            <a href="{{ url_for('treasury') }}">{{ _('Tesouro') }}</a>
+            {% if current_account and current_account.is_admin %}<a href="/admin">{{ _('Administração') }}</a>{% endif %}
             <form action="/logout" method="post">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button class="text-button" type="submit">Sair da conta</button>
+                <button class="text-button" type="submit">{{ _('Sair da conta') }}</button>
             </form>
         </nav>
     </header>
@@ -40,35 +41,35 @@
         <div class="village-heading">
             <div>
                 <h1>{{ save_info.name }}</h1>
-                <p>Sua vila · nível {{ save_info.level }}</p>
+                <p>{{ _('Sua vila · nível {level}', level=save_info.level) }}</p>
             </div>
         </div>
-        <section id="vila" class="game-shell is-expanded" aria-label="Sua vila no Social Empires" tabindex="-1">
-            <aside id="controls-dock" class="controls-dock" aria-label="Controles do jogo">
-                <button id="controls-toggle" class="controls-toggle" type="button" aria-controls="controls-panel" aria-expanded="false" title="Controles do jogo" hidden>
+        <section id="vila" class="game-shell is-expanded" aria-label="{{ _('Sua vila no Social Empires') }}" tabindex="-1">
+            <aside id="controls-dock" class="controls-dock" aria-label="{{ _('Controles do jogo') }}">
+                <button id="controls-toggle" class="controls-toggle" type="button" aria-controls="controls-panel" aria-expanded="false" title="{{ _('Controles do jogo') }}" hidden>
                     <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"></path></svg>
-                    <span class="visually-hidden">Controles</span>
+                    <span class="visually-hidden">{{ _('Controles') }}</span>
                 </button>
                 <div id="controls-panel" class="controls-panel" hidden>
                     <div id="village-update" class="village-update" role="status" hidden>
-                        <p>Sua vila foi atualizada. Recarregue para continuar jogando.</p>
-                        <a href="/play.html">Atualizar vila</a>
+                        <p>{{ _('Sua vila foi atualizada. Recarregue para continuar jogando.') }}</p>
+                        <a href="/play.html">{{ _('Atualizar vila') }}</a>
                     </div>
                     <div class="audio-controls">
                         <div class="volume-label">
-                            <label for="game-volume">Volume</label>
+                            <label for="game-volume">{{ _('Volume') }}</label>
                             <output id="volume-value" for="game-volume">100%</output>
                         </div>
                         <input id="game-volume" type="range" min="0" max="100" step="1" value="100" aria-valuetext="100%" disabled>
-                        <button id="mute-button" class="secondary-button" type="button" aria-pressed="false" hidden>Silenciar</button>
+                        <button id="mute-button" class="secondary-button" type="button" aria-pressed="false" hidden>{{ _('Silenciar') }}</button>
                     </div>
                     <div class="view-controls">
-                        <button id="expand-button" class="secondary-button" type="button" aria-controls="vila" aria-pressed="true" hidden>Restaurar janela</button>
-                        <button id="fullscreen-button" class="secondary-button" type="button" aria-controls="vila" hidden>Tela cheia</button>
-                        <a class="secondary-button" href="/village">Nome da vila</a>
-                        <a class="secondary-button" href="/rivals">Rivais e saques</a>
-                        <a class="secondary-button" href="{{ url_for('treasury') }}">Tesouro gratuito</a>
-                        {% if current_account and current_account.is_admin %}<a class="secondary-button" href="{{ url_for('admin_villages') }}">Gerenciar vilas</a>{% endif %}
+                        <button id="expand-button" class="secondary-button" type="button" aria-controls="vila" aria-pressed="true" hidden>{{ _('Restaurar janela') }}</button>
+                        <button id="fullscreen-button" class="secondary-button" type="button" aria-controls="vila" hidden>{{ _('Tela cheia') }}</button>
+                        <a class="secondary-button" href="/village">{{ _('Nome da vila') }}</a>
+                        <a class="secondary-button" href="/rivals">{{ _('Rivais e saques') }}</a>
+                        <a class="secondary-button" href="{{ url_for('treasury') }}">{{ _('Tesouro gratuito') }}</a>
+                        {% if current_account and current_account.is_admin %}<a class="secondary-button" href="{{ url_for('admin_villages') }}">{{ _('Gerenciar vilas') }}</a>{% endif %}
                     </div>
                 </div>
                 <span id="audio-status" class="visually-hidden" role="status" aria-live="polite"></span>
@@ -77,18 +78,18 @@
                 <div id="game-player" class="game-player"></div>
                 <div id="game-loading" class="game-loading" role="status" aria-live="polite">
                     <img src="{{ url_for('images', path='knight.png') }}" width="52" height="64" alt="">
-                    <h2 id="loading-title">Preparando sua vila</h2>
-                    <p id="loading-message">Carregando o jogo no navegador. Na primeira visita, isso pode levar alguns instantes.</p>
-                    <button id="retry-button" class="primary-button" type="button" hidden>Tentar novamente</button>
+                    <h2 id="loading-title">{{ _('Preparando sua vila') }}</h2>
+                    <p id="loading-message">{{ _('Carregando o jogo no navegador. Na primeira visita, isso pode levar alguns instantes.') }}</p>
+                    <button id="retry-button" class="primary-button" type="button" hidden>{{ _('Tentar novamente') }}</button>
                 </div>
-                <noscript><p class="noscript-message">Ative o JavaScript no navegador para carregar sua vila.</p></noscript>
+                <noscript><p class="noscript-message">{{ _('Ative o JavaScript no navegador para carregar sua vila.') }}</p></noscript>
             </div>
         </section>
         <div class="game-footer">
-            <p id="game-status" role="status" aria-live="polite">Conectando à sua vila…</p>
+            <p id="game-status" role="status" aria-live="polite">{{ _('Conectando à sua vila…') }}</p>
             <span>{{ version }}</span>
         </div>
-        <p class="mobile-hint">Para ver melhor sua vila no celular, use a tela na horizontal.</p>
+        <p class="mobile-hint">{{ _('Para ver melhor sua vila no celular, use a tela na horizontal.') }}</p>
     </main>
 </body>
 </html>

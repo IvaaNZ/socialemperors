@@ -15,7 +15,7 @@
             buttons.forEach((button) => { button.disabled = true; });
             const button = form.querySelector("button[type='submit']");
             if (button) {
-                button.textContent = "Resgatando…";
+                button.textContent = form.dataset.busyLabel || "Resgatando…";
                 button.setAttribute("aria-busy", "true");
             }
         });

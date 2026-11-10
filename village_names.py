@@ -8,6 +8,7 @@ Callers that mutate a live village must hold the server's ``village_lock``.
 import unicodedata
 
 import sessions
+from portal_i18n import translate
 
 
 MIN_VILLAGE_NAME_LENGTH = 2
@@ -104,5 +105,5 @@ def normalize_legacy_village_name(userid):
     names, index = _map_name_location(village)
     if names[index] not in LEGACY_DEFAULT_VILLAGE_NAMES:
         return False
-    rename_village(userid, DEFAULT_VILLAGE_NAME)
+    rename_village(userid, translate(DEFAULT_VILLAGE_NAME))
     return True

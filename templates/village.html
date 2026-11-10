@@ -1,23 +1,23 @@
 {% extends "base.html" %}
-{% block title %}Nome da vila · Social Empires{% endblock %}
+{% block title %}{{ _('Nome da vila') }} · Social Empires{% endblock %}
 {% block head %}<link rel="stylesheet" href="{{ url_for('css', path='community.css') }}">{% endblock %}
 {% block main_class %}community-main village-settings{% endblock %}
 {% block content %}
     <div class="community-heading">
         <div>
-            <h1>Nome da vila</h1>
-            <p>Escolha como seu império aparece no jogo e para os outros jogadores.</p>
+            <h1>{{ _('Nome da vila') }}</h1>
+            <p>{{ _('Escolha como seu império aparece no jogo e para os outros jogadores.') }}</p>
         </div>
-        <a class="button button-secondary" href="{{ url_for('play') }}">Voltar para a vila</a>
+        <a class="button button-secondary" href="{{ url_for('play') }}">{{ _('Voltar para a vila') }}</a>
     </div>
     <form class="village-name-form" method="post" action="{{ url_for('village_settings') }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        {% if error %}<p class="notice notice-error" role="alert" id="name-error">{{ error }}</p>{% endif %}
+        {% if error %}<p class="notice notice-error" role="alert" id="name-error">{{ _(error) }}</p>{% endif %}
         <div class="form-field">
-            <label for="village-name">Nome da sua vila</label>
+            <label for="village-name">{{ _('Nome da sua vila') }}</label>
             <input id="village-name" name="village_name" value="{{ village_name }}" minlength="2" maxlength="{{ name_max_length }}" required autocomplete="off" aria-describedby="name-hint{% if error %} name-error{% endif %}" {% if error %}aria-invalid="true"{% endif %}>
-            <span id="name-hint" class="field-hint">De 2 a {{ name_max_length }} caracteres. Acentos e espaços são permitidos.</span>
+            <span id="name-hint" class="field-hint">{{ _('De 2 a {max} caracteres. Acentos e espaços são permitidos.', max=name_max_length) }}</span>
         </div>
-        <button class="button button-primary" type="submit">Salvar nome</button>
+        <button class="button button-primary" type="submit">{{ _('Salvar nome') }}</button>
     </form>
 {% endblock %}

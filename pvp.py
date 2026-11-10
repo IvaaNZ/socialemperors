@@ -19,6 +19,7 @@ import uuid
 from get_game_config import get_item_from_id
 from sessions import session, save_session
 import sessions as village_sessions
+from portal_i18n import translate
 
 
 RAID_LOOT_PERCENT = 20
@@ -130,7 +131,7 @@ def _public_village(userid, save):
                     combatants += 1
                     attack_power += _power(unit)
     names = save['playerInfo'].get('map_names', [])
-    name = str(names[index]) if index < len(names) else 'Meu Império'
+    name = str(names[index]) if index < len(names) else translate('Meu Império')
     return {
         'userid': userid, 'name': name, 'level': max(1, _number(town.get('level'), 1)),
         'attack_power': attack_power, 'defense_power': attack_power + defense_structures,

@@ -54,16 +54,17 @@
     workspace.querySelectorAll("[data-raid-form]").forEach((form) => {
         const button = form.querySelector("button[type='submit']");
         if (!button || button.disabled) return;
+        const label = button.firstChild.textContent;
         form.addEventListener("submit", () => {
             button.disabled = true;
             button.setAttribute("aria-busy", "true");
-            button.firstChild.textContent = "Atacando…";
+            button.firstChild.textContent = form.dataset.busyLabel || "Atacando…";
         });
         window.addEventListener("pageshow", (event) => {
             if (!event.persisted) return;
             button.disabled = false;
             button.removeAttribute("aria-busy");
-            button.firstChild.textContent = "Atacar";
+            button.firstChild.textContent = label;
         });
     });
 })();

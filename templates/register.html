@@ -1,33 +1,33 @@
 {% extends 'base.html' %}
-{% block title %}Criar conta · Social Empires{% endblock %}
+{% block title %}{{ _('Criar conta') }} · Social Empires{% endblock %}
 {% block content %}
 <section class="auth-panel" aria-labelledby="register-title">
     <div class="auth-heading">
         <img class="heading-character" src="{{ url_for('images', path='knight.png') }}" alt="" width="56" height="52">
-        <div><h1 id="register-title">Crie sua conta</h1><p>O primeiro passo para construir seu império.</p></div>
+        <div><h1 id="register-title">{{ _('Crie sua conta') }}</h1><p>{{ _('O primeiro passo para construir seu império.') }}</p></div>
     </div>
-    {% if error %}<div id="form-error" class="notice notice-error" role="alert">{{ error }}</div>{% endif %}
+    {% if error %}<div id="form-error" class="notice notice-error" role="alert">{{ _(error) }}</div>{% endif %}
     <form action="{{ url_for('register') }}" method="post" class="account-form" {% if error %}aria-describedby="form-error"{% endif %}>
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="form-field">
-            <label for="name">Nome do jogador</label>
+            <label for="name">{{ _('Nome do jogador') }}</label>
             <input id="name" name="name" type="text" autocomplete="nickname" minlength="2" maxlength="60" value="{{ (values | default({})).get('name', '') }}" required autofocus>
         </div>
         <div class="form-field">
-            <label for="email">E-mail</label>
+            <label for="email">{{ _('E-mail') }}</label>
             <input id="email" name="email" type="email" autocomplete="username" inputmode="email" maxlength="254" value="{{ (values | default({})).get('email', '') }}" required>
         </div>
         <div class="form-field">
-            <label for="password">Senha</label>
+            <label for="password">{{ _('Senha') }}</label>
             <input id="password" name="password" type="password" autocomplete="new-password" minlength="10" maxlength="128" aria-describedby="password-hint" required>
-            <span id="password-hint" class="field-hint">Use pelo menos 10 caracteres.</span>
+            <span id="password-hint" class="field-hint">{{ _('Use pelo menos 10 caracteres.') }}</span>
         </div>
         <div class="form-field">
-            <label for="password-confirm">Confirme sua senha</label>
+            <label for="password-confirm">{{ _('Confirme sua senha') }}</label>
             <input id="password-confirm" name="password_confirm" type="password" autocomplete="new-password" minlength="10" maxlength="128" required>
         </div>
-        <button class="button button-primary button-wide" type="submit">Solicitar cadastro</button>
+        <button class="button button-primary button-wide" type="submit">{{ _('Solicitar cadastro') }}</button>
     </form>
-    <div class="auth-switch">Já tem uma conta? <a href="{{ url_for('login') }}">Entrar na minha vila</a></div>
+    <div class="auth-switch">{{ _('Já tem uma conta?') }} <a href="{{ url_for('login') }}">{{ _('Entrar na minha vila') }}</a></div>
 </section>
 {% endblock %}

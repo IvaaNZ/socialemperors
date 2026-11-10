@@ -3,6 +3,12 @@
     "use strict";
 
     const config = JSON.parse(document.getElementById("game-config").textContent);
+    // Portal wording comes from the server in the active language; Portuguese is the source text.
+    const texts = config.texts && typeof config.texts === "object" ? config.texts : {};
+    const t = (text, values = {}) => Object.entries(values).reduce(
+        (result, [name, value]) => result.split(`{${name}}`).join(String(value)),
+        typeof texts[text] === "string" ? texts[text] : text,
+    );
     // The public scheme, host and port belong to the browser. A TLS proxy may
     // forward HTTP to Flask, so its absolute URL can otherwise cause mixed content.
     const base = new URL(config.baseUrl, window.location.href);
@@ -85,8 +91,8 @@
             pauseUpdatedVillage();
             villageUpdate.hidden = false;
             controlsToggle.classList.add("has-update");
-            controlsToggle.title = "Sua vila foi atualizada. Abra os controles para carregar as alterações.";
-            controlsToggle.setAttribute("aria-label", "Controles: há uma atualização da vila");
+            controlsToggle.title = t("Sua vila foi atualizada. Abra os controles para carregar as alterações.");
+            controlsToggle.setAttribute("aria-label", t("Controles: há uma atualização da vila"));
         } catch {
             // An unavailable update check must not interrupt the running game.
         } finally {
@@ -111,7 +117,7 @@
         volume.value = String(preferences.volume);
         volume.setAttribute("aria-valuetext", `${preferences.volume}%${silent ? ", sem som" : ""}`);
         volumeValue.value = `${preferences.volume}%`;
-        mute.textContent = silent ? "Ativar som" : "Silenciar";
+        mute.textContent = silent ? t("Ativar som") : t("Silenciar");
         mute.setAttribute("aria-pressed", String(silent));
         if (player) player.ruffle().volume = silent ? 0 : preferences.volume / 100;
     }
@@ -120,7 +126,7 @@
         expanded = value;
         document.body.classList.toggle("tab-expanded", expanded);
         shell.classList.toggle("is-expanded", expanded);
-        expand.textContent = expanded ? "Restaurar janela" : "Preencher aba";
+        expand.textContent = expanded ? t("Restaurar janela") : t("Preencher aba");
         expand.setAttribute("aria-pressed", String(expanded));
     }
 
@@ -201,14 +207,14 @@
         }
         applyAudio();
         savePreferences();
-        audioStatus.textContent = preferences.muted ? "Som silenciado." : `Som ativado em ${preferences.volume}%.`;
+        audioStatus.textContent = preferences.muted ? t("Som silenciado.") : t("Som ativado em {volume}%.", { volume: preferences.volume });
     });
     expand.addEventListener("click", async () => {
         if (document.fullscreenElement === shell) {
             try {
                 await document.exitFullscreen();
             } catch {
-                status.textContent = "Use Esc para sair da tela cheia do navegador.";
+                status.textContent = t("Use Esc para sair da tela cheia do navegador.");
                 return;
             }
         }
@@ -229,7 +235,7 @@
         }
     }, true);
     document.addEventListener("fullscreenchange", () => {
-        fullscreen.textContent = document.fullscreenElement === shell ? "Sair da tela cheia" : "Tela cheia";
+        fullscreen.textContent = document.fullscreenElement === shell ? t("Sair da tela cheia") : t("Tela cheia");
     });
 
     function fail(heading, description) {
@@ -238,7 +244,7 @@
         message.textContent = description;
         overlay.hidden = false;
         retry.hidden = false;
-        status.textContent = "Não foi possível carregar sua vila.";
+        status.textContent = t("Não foi possível carregar sua vila.");
     }
 
     retry.addEventListener("click", () => window.location.reload());
@@ -247,12 +253,12 @@
             if (document.fullscreenElement === shell) await document.exitFullscreen();
             else await shell.requestFullscreen();
         } catch {
-            status.textContent = "O navegador não permitiu a tela cheia. Você pode continuar jogando aqui.";
+            status.textContent = t("O navegador não permitiu a tela cheia. Você pode continuar jogando aqui.");
         }
     });
 
     if (!window.WebAssembly) {
-        fail("Seu navegador precisa ser atualizado", "Use uma versão atual do Chrome, Firefox, Edge ou Safari para abrir o jogo.");
+        fail(t("Seu navegador precisa ser atualizado"), t("Use uma versão atual do Chrome, Firefox, Edge ou Safari para abrir o jogo."));
         return;
     }
 
@@ -261,14 +267,14 @@
     const script = document.createElement("script");
     script.src = `${runtimePath}ruffle.js`;
     script.addEventListener("error", () => {
-        fail("O jogo está indisponível", "Não foi possível baixar os arquivos do jogo deste servidor. Tente novamente em instantes.");
+        fail(t("O jogo está indisponível"), t("Não foi possível baixar os arquivos do jogo deste servidor. Tente novamente em instantes."));
     });
     script.addEventListener("load", startPlayer);
     document.head.appendChild(script);
 
     // Slow runtime downloads remain retriable without pretending the game loaded.
     loadingTimer = setTimeout(() => {
-        message.textContent = "O carregamento está demorando mais que o esperado. Verifique sua conexão e, se necessário, tente novamente.";
+        message.textContent = t("O carregamento está demorando mais que o esperado. Verifique sua conexão e, se necessário, tente novamente.");
         retry.hidden = false;
     }, 45000);
 
@@ -285,9 +291,9 @@
                 applyAudio();
                 if (villageChanged) {
                     pauseUpdatedVillage();
-                    status.textContent = "Sua vila foi atualizada. Recarregue para continuar jogando.";
+                    status.textContent = t("Sua vila foi atualizada. Recarregue para continuar jogando.");
                 } else {
-                    status.textContent = "Jogo aberto no navegador. O carregamento da vila continua dentro do jogo.";
+                    status.textContent = t("Jogo aberto no navegador. O carregamento da vila continua dentro do jogo.");
                 }
             }, { once: true });
 
@@ -323,7 +329,7 @@
             applyAudio();
         } catch (error) {
             console.error("Unable to start Social Empires", error);
-            fail("Não foi possível abrir o jogo", "Confira sua conexão e tente novamente. Se o problema continuar, avise o administrador.");
+            fail(t("Não foi possível abrir o jogo"), t("Confira sua conexão e tente novamente. Se o problema continuar, avise o administrador."));
         }
     }
 })();

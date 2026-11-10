@@ -7,6 +7,7 @@ import hashlib
 import hmac
 import sqlite3
 import copy
+import re
 from functools import lru_cache
 from io import BytesIO
 from datetime import timedelta, datetime, timezone
@@ -38,6 +39,7 @@ from version import version_name
 from constants import Constant
 from quests import get_quest_map
 from localization import SUPPORTED_LOCALES
+from portal_i18n import set_portal_language, portal_language, translate as _, translations_for
 from swf_localization import localize_swf
 from village_names import rename_village, normalize_legacy_village_name, VillageNameError, MAX_VILLAGE_NAME_LENGTH
 from pvp import RaidService, RaidError
@@ -56,11 +58,23 @@ data_dir = Path(os.environ.get('SOCIAL_EMPIRES_DATA_DIR', 'instance')).resolve()
 data_dir.mkdir(parents=True, exist_ok=True)
 
 
+def language_setting(name, default):
+    value = os.environ.get(name, default)
+    if value not in SUPPORTED_LOCALES:
+        raise RuntimeError(f'{name} deve ser um destes idiomas / debe ser uno de estos idiomas: {", ".join(SUPPORTED_LOCALES)}.')
+    return value
+
+
+GAME_LANGUAGE = language_setting('SOCIAL_EMPIRES_LANGUAGE', 'pt-BR')
+set_portal_language(GAME_LANGUAGE)
+app.jinja_env.globals['_'] = _
+
+
 def _secret_key():
     configured = os.environ.get('SECRET_KEY')
     if configured:
         if len(configured) < 32:
-            raise RuntimeError('SECRET_KEY deve ter pelo menos 32 caracteres.')
+            raise RuntimeError(_('SECRET_KEY deve ter pelo menos 32 caracteres.'))
         return configured
     key_file = data_dir / 'secret_key'
     try:
@@ -73,7 +87,7 @@ def _secret_key():
         pass
     saved_key = key_file.read_text(encoding='utf-8').strip()
     if len(saved_key) < 32:
-        raise RuntimeError('A chave em instance/secret_key está inválida. Restaure o arquivo de backup ou configure SECRET_KEY com pelo menos 32 caracteres.')
+        raise RuntimeError(_('A chave em instance/secret_key está inválida. Restaure o arquivo de backup ou configure SECRET_KEY com pelo menos 32 caracteres.'))
     return saved_key
 
 
@@ -94,7 +108,7 @@ app.extensions['village_admin'] = AdminVillageService(data_dir / 'administration
 def cash_setting(name, default):
     value = os.environ.get(name, str(default))
     if not value.isascii() or not value.isdigit() or not 1 <= int(value) <= CASH_LIMIT:
-        raise RuntimeError(f'{name} deve ser um inteiro entre 1 e {CASH_LIMIT}.')
+        raise RuntimeError(_('{name} deve ser um inteiro entre 1 e {limit}.', name=name, limit=CASH_LIMIT))
     return int(value)
 
 
@@ -103,14 +117,6 @@ app.extensions['economy'] = EconomyService(
     initial_bonus=cash_setting('SOCIAL_EMPIRES_INITIAL_CASH', 500),
     daily_reward=cash_setting('SOCIAL_EMPIRES_DAILY_CASH', 100),
 )
-def language_setting(name, default):
-    value = os.environ.get(name, default)
-    if value not in SUPPORTED_LOCALES:
-        raise RuntimeError(f'{name} deve ser um destes idiomas: {", ".join(SUPPORTED_LOCALES)}.')
-    return value
-
-
-GAME_LANGUAGE = language_setting('SOCIAL_EMPIRES_LANGUAGE', 'pt-BR')
 with village_lock:
     app.extensions['raids'].recover_pending()
     app.extensions['village_admin'].recover_pending()
@@ -189,6 +195,17 @@ def raid_tokens():
     return URLSafeTimedSerializer(app.secret_key, salt='socialemperors-raids')
 
 
+@lru_cache(maxsize=1)
+def _game_script_sources():
+    """Portuguese strings that game.js passes through its t() helper."""
+    script = (Path(TEMPLATES_DIR) / 'js' / 'game.js').read_text(encoding='utf-8')
+    return tuple(dict.fromkeys(re.findall(r'\bt\("((?:[^"\\]|\\.)*)"', script)))
+
+
+def game_script_texts():
+    return translations_for(_game_script_sources())
+
+
 @app.template_filter('game_number')
 def game_number(value):
     return f'{int(value):,}'.replace(',', '.')
@@ -213,7 +230,7 @@ def ensure_village(account):
 
 @app.context_processor
 def access_context():
-    return dict(current_account=getattr(g, 'account', None), csrf_token=csrf_token, version=version_name)
+    return dict(current_account=getattr(g, 'account', None), csrf_token=csrf_token, version=version_name, portal_lang=portal_language())
 
 
 @app.before_request
@@ -225,11 +242,11 @@ def protect_access():
     is_api = request.path.startswith((STATIC_GAME_PREFIX, DYNAMIC_GAME_PREFIX))
     if not g.account:
         if is_api:
-            return {'error': 'Faça login para acessar o jogo.'}, 401
+            return {'error': _('Faça login para acessar o jogo.')}, 401
         return redirect(url_for('login'))
     if g.account['status'] != 'approved':
         if is_api:
-            return {'error': 'Sua conta não está aprovada.'}, 403
+            return {'error': _('Sua conta não está aprovada.')}, 403
         session.clear()
         flash('Sua conta precisa da aprovação de um administrador para jogar.', 'info')
         return redirect(url_for('login'))
@@ -266,8 +283,8 @@ def response_headers(response):
 @app.errorhandler(503)
 def access_error(error):
     if request.path.startswith(DYNAMIC_GAME_PREFIX):
-        return {'error': error.description}, error.code
-    return render_template('error.html', status_code=error.code, message=error.description), error.code
+        return {'error': _(error.description)}, error.code
+    return render_template('error.html', status_code=error.code, message=_(error.description)), error.code
 
 print (" [+] Configuring server routes...")
 
@@ -395,9 +412,9 @@ def admin_villages():
 
 def administrative_history(userid):
     administrators = {account['id']: account['name'] for account in accounts().list_accounts()}
-    labels = {'name': 'Nome', 'coins': 'Ouro', 'wood': 'Madeira', 'food': 'Comida',
-              'stone': 'Pedra', 'cash': 'Dinheiro', 'level': 'Nível', 'xp': 'Experiência',
-              'tutorial_complete': 'Tutorial'}
+    labels = {'name': _('Nome'), 'coins': _('Ouro'), 'wood': _('Madeira'), 'food': _('Comida'),
+              'stone': _('Pedra'), 'cash': _('Dinheiro'), 'level': _('Nível'), 'xp': _('Experiência'),
+              'tutorial_complete': _('Tutorial')}
     history = []
     for entry in village_admin().history(userid):
         changes = []
@@ -406,12 +423,12 @@ def administrative_history(userid):
             for snapshot in (entry['before'], entry['after']):
                 value = snapshot['resources'][field] if field in ('coins', 'wood', 'food', 'stone') else snapshot[field]
                 if field == 'tutorial_complete':
-                    value = 'Concluído' if value else 'Em andamento'
+                    value = _('Concluído') if value else _('Em andamento')
                 elif field != 'name':
                     value = game_number(value)
                 values.append(value)
             changes.append({'label': labels[field], 'before': values[0], 'after': values[1]})
-        history.append({**entry, 'admin_name': administrators.get(entry['admin_account_id'], 'Administrador'),
+        history.append({**entry, 'admin_name': administrators.get(entry['admin_account_id'], _('Administrador')),
                         'created_label': game_datetime(entry['created_at']), 'changes': changes})
     return history
 
@@ -483,7 +500,7 @@ def claim_treasury():
             app.logger.exception('O resgate gratuito aguarda recuperação.')
             abort(503, description='Não foi possível concluir o resgate agora. Atualize a página para recuperar a gravação antes de tentar novamente.')
         else:
-            flash(f"Você recebeu {game_number(reward['amount'])} de dinheiro gratuito. Reabra a vila para usar o saldo.", 'success')
+            flash(_('Você recebeu {amount} de dinheiro gratuito. Reabra a vila para usar o saldo.', amount=game_number(reward['amount'])), 'success')
     return redirect(url_for('treasury'), code=303)
 
 
@@ -497,7 +514,7 @@ def play():
         last_login = village_session(USERID)['playerInfo'].get('last_logged_in', -1)
         if not isinstance(last_login, int) or last_login < 0:
             last_login = server_time
-        return render_template("play.html", save_info=save_info(USERID), serverTime=server_time, last_logged_in=last_login, friendsInfo=fb_friends_str(USERID), version=version_name, GAMEVERSION=GAME_VERSION, raid_revision=village_revision(USERID), game_user_key=game_session_key(USERID))
+        return render_template("play.html", script_texts=game_script_texts(), save_info=save_info(USERID), serverTime=server_time, last_logged_in=last_login, friendsInfo=fb_friends_str(USERID), version=version_name, GAMEVERSION=GAME_VERSION, raid_revision=village_revision(USERID), game_user_key=game_session_key(USERID))
 
 
 @app.route('/village', methods=['GET', 'POST'])
@@ -769,19 +786,19 @@ def get_continent_ranking_response():
 
 
 @app.cli.command('create-admin')
-@click.option('--name', prompt='Nome do administrador')
+@click.option('--name', prompt=_('Nome do administrador'))
 @click.option('--email', prompt='E-mail')
-@click.option('--password', prompt='Senha (mínimo de 10 caracteres)', hide_input=True, confirmation_prompt=True)
-@click.option('--village-id', default=None, help='Vincula um save existente e ainda não associado a uma conta.')
+@click.option('--password', prompt=_('Senha (mínimo de 10 caracteres)'), hide_input=True, confirmation_prompt=True)
+@click.option('--village-id', default=None, help=_('Vincula um save existente e ainda não associado a uma conta.'))
 def create_admin(name, email, password, village_id):
     """Cria um administrador aprovado, sem senha padrão."""
     if village_id and village_id not in all_saves_userid():
-        raise click.ClickException('O save informado não existe. Use o PID do arquivo em saves/.')
+        raise click.ClickException(_('O save informado não existe. Use o PID do arquivo em saves/.'))
     try:
         account = accounts().create_admin(name, email, password, village_id=village_id)
     except AccountError as exc:
-        raise click.ClickException(str(exc)) from exc
-    click.echo(f"Administrador criado: {account['email']}. Entre e acesse /admin para aprovar os cadastros.")
+        raise click.ClickException(_(str(exc))) from exc
+    click.echo(_('Administrador criado: {email}. Entre e acesse /admin para aprovar os cadastros.', email=account['email']))
 
 print (" [+] Running server...")
 
