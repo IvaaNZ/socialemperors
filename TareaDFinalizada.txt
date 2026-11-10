@@ -133,18 +133,18 @@ defecto de las aldeas ya están traducidos (ver sección 9). Queda:
     un SWF traducido por idioma (el código ya los cachea por idioma).
 
 
-7. TAREAS Y PORCENTAJE DE AVANCE (según Tareas.txt, al 09/11/2026)
------------------------------------------------------------------
+7. TAREAS Y PORCENTAJE DE AVANCE (según Tareas.txt, actualizado 09/11/2026)
+---------------------------------------------------------------------------
 Criterio: 100 % = hecho y comprobado; 0 % = sin empezar. Cuando algo no lo
 pude comprobar yo, lo aclaro.
 
-A. Dejarlo andando ........................................... 75 %
+A. Dejarlo andando ........................................... 83 %
    1. Clonar el repo en /e ................................. 100 %
    2. Entorno virtual + pip install ....................... 100 %
    3. Crear admin y anotar usuario/contraseña ............. 100 %
       (hay 1 cuenta de administrador; no puedo ver si anotaste la clave)
-   4. Prender el servidor y entrar desde Chrome ............ 50 %
-      (las bases de datos existen; no comprobé que hayas entrado al juego)
+   4. Prender el servidor y entrar desde Chrome ........... 100 %
+      (comprobado: el juego carga y se juega en Chrome)
    5. Copiar archivos de arte faltantes (404) ............... 0 %
       (sigue faltando fx/p.miniFireball2.swf)
    6. Comprobar la versión (git log / describe) ........... 100 %
@@ -152,7 +152,7 @@ A. Dejarlo andando ........................................... 75 %
 B. Cuidar lo que se haga ...................................... 100 %
    7. Rama propia mi-servidor ............................. 100 %
    8. Fork en GitHub y subir el trabajo ................... 100 %
-      (el último commit, ce87118, todavía no está subido)
+      (todo subido; el último commit es b6fba47)
    9. Commit después de cada etapa ........................ 100 %
   10. Claude Code con contexto ............................ 100 %
 
@@ -162,10 +162,14 @@ C. Entender el repo ........................................... 100 %
   13. GUIA_AGREGAR_ITEMS.md ............................... 100 %
   14. Comparar lo que trae el repo con lo planeado ........ 100 %
 
-D. Español .................................................... 50 %
+D. Español .................................................... 63 %
   15. Elegir español neutro o rioplatense ................. 100 %
   16. Traducir los catálogos .............................. 100 %
-  17. Revisar jugando los textos en inglés o mezclados ...... 0 %
+      (juego y portal web; ver secciones 1 y 9)
+  17. Revisar jugando los textos en inglés o mezclados ..... 50 %
+      (revisados Construir, Almacén y Noticias en el navegador; se
+      arreglaron botones vacíos, textos cortados y 25 textos faltantes.
+      Falta recorrer el resto: batallas, misiones, aventuras, torneos)
   18. Selector de idioma en el login (opcional) ............. 0 %
       (el código ya admite varios idiomas; falta el selector por cuenta)
 
@@ -190,7 +194,8 @@ F. Identidad propia y publicación ............................... 0 %
   31. Ponerlo online ........................................ 0 %
   32. Consultar con abogado o contador ...................... 0 %
 
-TOTAL DEL PLAN (32 tareas, promedio simple) .................. 47 %
+TOTAL DEL PLAN (32 tareas, promedio simple) .................. 50 %
+(antes: 47 %. Subieron A4 de 50 a 100 % y D17 de 0 a 50 %)
 
 
 8. TEXTOS QUE SIGUEN EN PORTUGUÉS Y QUÉ SIGNIFICAN
