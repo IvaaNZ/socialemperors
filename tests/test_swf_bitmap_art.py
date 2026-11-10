@@ -88,6 +88,30 @@ class SwfBitmapArtTests(unittest.TestCase):
             with self.subTest(character_id=character_id):
                 self.assertEqual(load_bitmap_art(character_id, 'es'), load_bitmap_art(character_id, 'pt-BR'))
 
+    def test_spanish_movie_replaces_its_own_drawn_english_buttons(self):
+        from swf_bitmap_art import LANGUAGE_BITMAP_DIMENSIONS
+        original = Path('assets/flash/SocialEmpires0926bsec.swf').read_bytes()
+        spanish_only = LANGUAGE_BITMAP_DIMENSIONS['es']
+
+        def bitmaps(data):
+            found = {}
+            for code, payload in flattened_tags(data):
+                if code in (35, 36) and len(payload) >= 2:
+                    found[struct.unpack_from('<H', payload)[0]] = (code, payload)
+            return found
+
+        source = bitmaps(original)
+        spanish = bitmaps(localize_swf(original, language='es'))
+        portuguese = bitmaps(localize_swf(original, language='pt-BR'))
+        for character_id, (width, height) in spanish_only.items():
+            with self.subTest(character_id=character_id):
+                code, payload = spanish[character_id]
+                self.assertEqual(code, 36)
+                self.assertEqual(struct.unpack_from('<BHH', payload, 2), (5, width, height))
+                self.assertNotEqual(payload, source[character_id][1])
+                # Portuguese keeps the original English art for these buttons.
+                self.assertEqual(portuguese[character_id], source[character_id])
+
 
 if __name__ == '__main__':
     unittest.main()

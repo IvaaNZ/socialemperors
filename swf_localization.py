@@ -244,8 +244,11 @@ def localize_swf(data, catalog=None, language='pt-BR'):
                 payload = payload[:4] + rewrite_tags(payload[4:])
             elif code in (11, 33):  # DefineText / DefineText2 embedded glyph labels
                 payload = localize_static_text(payload, fonts, catalog, code)
-            elif code == 36 and use_bitmap_art:  # Allowlisted translated Lossless2 UI images
-                payload = localize_bitmap_art(payload, language)
+            elif code in (35, 36) and use_bitmap_art:  # Allowlisted translated UI images
+                localized = localize_bitmap_art(payload, language, code)
+                if localized is not payload:
+                    code = 36  # A translated JPEG3 bitmap is served as Lossless2.
+                payload = localized
             elif code in (2, 22, 32, 83) and use_bitmap_art:
                 payload = upgrade_shape_bitmap_fill(payload, code)
             rewritten.append(encode_tag(code, payload, long_length))

@@ -13,6 +13,8 @@ def localize_quest_map(quest, language):
     player = quest.get('playerInfo')
     if isinstance(player, dict) and isinstance(player.get('name'), str):
         player['name'] = catalog.get(player['name'], player['name'])
+    if isinstance(player, dict) and isinstance(player.get('map_names'), list):
+        player['map_names'] = [catalog.get(name, name) if isinstance(name, str) else name for name in player['map_names']]
     private = quest.get('privateState')
     for game_map in private.get('maps', []) if isinstance(private, dict) else []:
         if isinstance(game_map, dict) and isinstance(game_map.get('n'), str):

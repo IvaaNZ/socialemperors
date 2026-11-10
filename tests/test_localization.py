@@ -117,6 +117,7 @@ class LocalizationTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertEqual(quest['playerInfo']['name'], 'Aventura Troll')
         self.assertIn('Aventura', [game_map.get('n') for game_map in quest['privateState']['maps']])
+        self.assertEqual(quest['playerInfo']['map_names'][0], 'Aventura')
         original, _ = get_quest_map('100000020')
         self.assertEqual(original['playerInfo']['name'], 'Troll Quest')
 

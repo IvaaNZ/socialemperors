@@ -131,7 +131,183 @@
     "editor": "tools/make_es_artwork.py (Pillow, Arial Bold over the pt-BR artwork)",
     "png": "es-3967.png",
     "packed": "es-3967.argb.zlib",
-    "png_sha256": "44eac9a26ec61b3a8714611fed99bfc00fe0b854bee250c624f3d5f7766f66f2",
-    "packed_sha256": "859012af70d1e4f614c68798f02642ef0b50a86b661fdb007fad51b06d860b59"
+    "png_sha256": "8a1c683fe9b078fde6d926a1496d476f5a78ba5283f3dbb8da0642955e8fd749",
+    "packed_sha256": "13b032ddf2e54899d27f491f6c9e7108e5fee217865b007a6baf742d4a90940c"
+  },
+  {
+    "id": 147,
+    "width": 83,
+    "height": 82,
+    "text": "MI ALDEA",
+    "editor": "tools/make_es_artwork.py (Pillow, Arial Bold over the original bitmap)",
+    "png": "es-147.png",
+    "packed": "es-147.argb.zlib",
+    "png_sha256": "b001cd3e56498a87097c08ed802da592b24636d2926aa49d406d5bdba4689878",
+    "packed_sha256": "bfba8193cdbe6ad4b6c4d8c78a7f69485c202a443422e8cccce60cae932cc238"
+  },
+  {
+    "id": 149,
+    "width": 93,
+    "height": 85,
+    "text": "MENÚ DE BATALLA",
+    "editor": "tools/make_es_artwork.py (Pillow, Arial Bold over the original bitmap)",
+    "png": "es-149.png",
+    "packed": "es-149.argb.zlib",
+    "png_sha256": "fa2b1ceeff04b96503e4a5a3445696f64f6efe0a2dbe246cf188577a53a3cf66",
+    "packed_sha256": "460c7da6b2010603dfc1e690ad47cc39b3b78ce95a86c5d2358f8b94d309b303"
+  },
+  {
+    "id": 233,
+    "width": 128,
+    "height": 29,
+    "text": "ATACANDO",
+    "editor": "tools/make_es_artwork.py (Pillow, Arial Bold over the original bitmap)",
+    "png": "es-233.png",
+    "packed": "es-233.argb.zlib",
+    "png_sha256": "e49868c80d7640f03164d24acd7da8e1b71b447a892d15686f0c831ef3996727",
+    "packed_sha256": "d81bb7b7f581718d0cde82905b141d7d79ee8c23b9a325c89c992884f6527b88"
+  },
+  {
+    "id": 234,
+    "width": 238,
+    "height": 27,
+    "text": "BOTÍN DE BATALLA",
+    "editor": "tools/make_es_artwork.py (Pillow, Arial Bold over the original bitmap)",
+    "png": "es-234.png",
+    "packed": "es-234.argb.zlib",
+    "png_sha256": "6cf96bab54c71940deeb59c618c75806ea5d3110cdd5c53f454cc0cf2aa5a131",
+    "packed_sha256": "f29b487743aaba7840b64425aaa52fd4e6de231e6487ce0a757bb4191977f48f"
+  },
+  {
+    "id": 792,
+    "width": 157,
+    "height": 59,
+    "text": "Más dinero",
+    "editor": "tools/make_es_artwork.py (Pillow, Arial Bold over the original bitmap)",
+    "png": "es-792.png",
+    "packed": "es-792.argb.zlib",
+    "png_sha256": "b365833c43be040ca11b40bdc3ca399eca35c50ce9dc1453277f9e2c189890dd",
+    "packed_sha256": "552378938c313b619a47cfa9d6174aaf47504c0f592ccee454d9f575d1e8176a"
+  },
+  {
+    "id": 798,
+    "width": 62,
+    "height": 75,
+    "text": "LANZAR HECHIZO",
+    "editor": "tools/make_es_artwork.py (Pillow, Arial Bold over the original bitmap)",
+    "png": "es-798.png",
+    "packed": "es-798.argb.zlib",
+    "png_sha256": "e19d50fc07d8a3232e4e4c9943e2429eef05633e7497ce1218dc6466f2042967",
+    "packed_sha256": "3dbcac62f337481b11d54fd6ce3958e99d699fa5a624989bc6e9830f1a73dd06"
+  },
+  {
+    "id": 1028,
+    "width": 63,
+    "height": 44,
+    "text": "¡VAMOS!",
+    "editor": "tools/make_es_artwork.py (Pillow, Arial Bold over the original bitmap)",
+    "png": "es-1028.png",
+    "packed": "es-1028.argb.zlib",
+    "png_sha256": "dc9c40febbf6ef63ce074e1fe82f5b0dfd660d3708e63dc4cebd8f1fd750bd54",
+    "packed_sha256": "9fa5defec3447c1e4d1b6128faf63dff1369ed4340aaf52958cfc1d99d7d689d"
+  },
+  {
+    "id": 1034,
+    "width": 105,
+    "height": 47,
+    "text": "RESULTADOS DE BATALLA",
+    "editor": "tools/make_es_artwork.py (Pillow, Arial Bold over the original bitmap)",
+    "png": "es-1034.png",
+    "packed": "es-1034.argb.zlib",
+    "png_sha256": "5733596e84959b3950c212c2da744a9f8cd7a9175f90c8c77b7afdebf4d51bbc",
+    "packed_sha256": "a0ceeb36459f06dbe2ea104d6ee479b3b839023d419ec194034294e05c093b17"
+  },
+  {
+    "id": 1038,
+    "width": 84,
+    "height": 52,
+    "text": "OPCIONES",
+    "editor": "tools/make_es_artwork.py (Pillow, Arial Bold over the original bitmap)",
+    "png": "es-1038.png",
+    "packed": "es-1038.argb.zlib",
+    "png_sha256": "a74b5fcf513573066711cfaf64f764a052de0618d5656af340a4a76f908e920a",
+    "packed_sha256": "7e856980bcc737c6dace2bbfb0214543c1aead3d51dd28b529c0c8c4bf4c2518"
+  },
+  {
+    "id": 1042,
+    "width": 111,
+    "height": 105,
+    "text": "EXPLORADOR DEL MUNDO",
+    "editor": "tools/make_es_artwork.py (Pillow, Arial Bold over the original bitmap)",
+    "png": "es-1042.png",
+    "packed": "es-1042.argb.zlib",
+    "png_sha256": "1615cc092695fe49d414d998a2e984bc722768a82803a54459754a59d4cdd280",
+    "packed_sha256": "b3d965d731dfe6fe1ca4dfa44b7277103bb408e22fbed6cf3efb23a8188d9f1b"
+  },
+  {
+    "id": 1529,
+    "width": 159,
+    "height": 33,
+    "text": "ATAQUES ENVIADOS",
+    "editor": "tools/make_es_artwork.py (Pillow, Arial Bold over the original bitmap)",
+    "png": "es-1529.png",
+    "packed": "es-1529.argb.zlib",
+    "png_sha256": "0ae484c7d1ab66c9f334e441e9886b2cabb9959fb69305681bb5e9bf0cb91d90",
+    "packed_sha256": "f58bd26c27223f6d11fc4631fecf3e4c5d03925886bee8b24e94c28decee174c"
+  },
+  {
+    "id": 1534,
+    "width": 159,
+    "height": 33,
+    "text": "ATAQUES RECIBIDOS",
+    "editor": "tools/make_es_artwork.py (Pillow, Arial Bold over the original bitmap)",
+    "png": "es-1534.png",
+    "packed": "es-1534.argb.zlib",
+    "png_sha256": "e677df369d655044ae606cf05f3237ebc9db77666f25aa6fe596fa7830c75d58",
+    "packed_sha256": "c6c89b091c8cb927b39aab08730aeba9cdbb8de186874101e7e248b5e0377701"
+  },
+  {
+    "id": 2421,
+    "width": 186,
+    "height": 60,
+    "text": "HECHIZOS",
+    "editor": "tools/make_es_artwork.py (Pillow, Arial Bold over the original bitmap)",
+    "png": "es-2421.png",
+    "packed": "es-2421.argb.zlib",
+    "png_sha256": "7f965f92ca9950c3727b63c57d93490a578cbd76621a30501bce50674a9b07d6",
+    "packed_sha256": "ca4c5232c325fb896ac686cdf3fd5c774ddccc80f52c0645e859c543cbc50b61"
+  },
+  {
+    "id": 3431,
+    "width": 49,
+    "height": 48,
+    "text": "GUARDAR",
+    "editor": "tools/make_es_artwork.py (Pillow, Arial Bold over the original bitmap)",
+    "png": "es-3431.png",
+    "packed": "es-3431.argb.zlib",
+    "png_sha256": "600c7aeb5c7f2a4c9e64d58e911487f99f3b4275908424564647c8a254d4f100",
+    "packed_sha256": "db02fcf57334e56becac630dcdef39f9b80e8f45ff8b167622b5992d43d20e7b"
+  },
+  {
+    "id": 3545,
+    "width": 54,
+    "height": 55,
+    "text": "ENTRENAR",
+    "editor": "tools/make_es_artwork.py (Pillow, Arial Bold over the original bitmap)",
+    "png": "es-3545.png",
+    "packed": "es-3545.argb.zlib",
+    "png_sha256": "80ba54eb53ed726da200d5edc41f7fc0f6dc24c6a07bd466558056cca9b0eba9",
+    "packed_sha256": "1878b04e9624306dd3d64012b59e35d3e016fe22367d40db6e90ed4c930ffd6e"
+  },
+  {
+    "id": 3582,
+    "width": 157,
+    "height": 59,
+    "text": "Más dinero",
+    "editor": "tools/make_es_artwork.py (Pillow, Arial Bold over the original bitmap)",
+    "png": "es-3582.png",
+    "packed": "es-3582.argb.zlib",
+    "png_sha256": "b365833c43be040ca11b40bdc3ca399eca35c50ce9dc1453277f9e2c189890dd",
+    "packed_sha256": "552378938c313b619a47cfa9d6174aaf47504c0f592ccee454d9f575d1e8176a"
   }
 ]

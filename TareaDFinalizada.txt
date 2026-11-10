@@ -355,11 +355,29 @@ Corregido:
   - Revisión automática: ningún texto de los catálogos en español tiene
     palabras en portugués.
 
-Sigue en inglés (son imágenes con el texto dibujado, también en el juego
-original): CAST SPELL, SPELLBOOK, MON DAY REWARD, HELP!, MY TOWN,
-Get More Cash, WORLD EXPLORER, BATTLE RESULTS, OPTIONS, GO!, ATTACKS
-SENT, ATTACKS RECEIVED, TRAIN, STORE, SHIP MAP 1, BATTLE REWARD,
-BATTLE MENU, ATTACKING y los consejos de las Noticias.
+Imágenes con texto dibujado rehechas en español (tools/make_es_artwork.py,
+verificadas en el juego):
+  MY TOWN -> MI ALDEA            BATTLE MENU -> MENÚ DE BATALLA
+  ATTACKING -> ATACANDO          BATTLE REWARD -> BOTÍN DE BATALLA
+  GO! -> ¡VAMOS!                 BATTLE RESULTS -> RESULTADOS DE BATALLA
+  OPTIONS -> OPCIONES            WORLD EXPLORER -> EXPLORADOR DEL MUNDO
+  CAST SPELL -> LANZAR HECHIZO   SPELLBOOK -> HECHIZOS
+  ATTACKS SENT -> ATAQUES ENVIADOS   ATTACKS RECEIVED -> ATAQUES RECIBIDOS
+  STORE -> GUARDAR               TRAIN -> ENTRENAR
+  Get More Cash -> Más dinero
+Se borran las letras viejas, se rellena con el fondo y se escribe el texto
+nuevo con Arial Negrita y contorno: se leen bien, pero son más simples que
+las letras decoradas del original. Solo cambian con SOCIAL_EMPIRES_LANGUAGE=es;
+en portugués quedan las originales.
+
+Siguen en inglés por decisión (son ~30 imágenes menos visibles): CANCEL,
+MY WORLD, MAP, SPYING, SAILING, RESUME, ATTACK, SPY, PROFILE, CONQUER,
+NEW, +INFO, UNLOCK AT LEVEL, ONLY THIS WEEK, COMPLETED!, CASH, ENTER,
+VISIT MARKET, SET WEATHER, LET'S SAIL, LET'S FLY, ENTER SURVIVAL, SAVE ME,
+LEARN SPELLS, GET UNITS, OPEN, GET ALLIES, OBTAINED!, Get More Coins,
+BUY NOW, los consejos de las Noticias, y las imágenes de otros archivos
+(MON DAY REWARD, HELP!, SHIP MAP 1). La herramienta permite agregarlas
+después sumando una línea por imagen.
 
 Sin revisar: torneos y supervivencia (se entra desde edificios que la
 aldea no tiene).
