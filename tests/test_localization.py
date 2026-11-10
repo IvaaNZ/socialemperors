@@ -2,21 +2,29 @@
 
 from collections import Counter
 import copy
+import json
+from pathlib import Path
 import re
 import unittest
 
 from get_game_config import get_game_config, get_name_from_item_id
 from localization import (
-    DISPLAY_FIELDS, load_catalog, localize_game_config, walk_display_fields,
+    DISPLAY_FIELDS, SUPPORTED_LOCALES, load_catalog, localize_game_config,
+    normalize_locale, walk_display_fields,
 )
+from swf_localization import load_swf_catalog
 
 
 class LocalizationTests(unittest.TestCase):
     def test_complete_desktop_catalog_preserves_substitutions_and_markup(self):
-        catalog = load_catalog()
         original = get_game_config()
+        for locale in SUPPORTED_LOCALES:
+            catalog = load_catalog(locale)
+            self._assert_complete_catalog(locale, catalog, original)
+
+    def _assert_complete_catalog(self, locale, catalog, original):
         for section, fields in DISPLAY_FIELDS.items():
-            with self.subTest(section=section):
+            with self.subTest(locale=locale, section=section):
                 for _, key, source in walk_display_fields(original[section], fields):
                     if not source:
                         continue
@@ -62,6 +70,29 @@ class LocalizationTests(unittest.TestCase):
         self.assertEqual(localize_game_config(custom), custom)
         # Localization returns independent data even for new mod fields.
         self.assertIsNot(localize_game_config(custom)['items'], custom['items'])
+
+    def test_spanish_catalogs_mirror_portuguese_sources(self):
+        for portuguese_file in sorted((Path(__file__).resolve().parent.parent / 'config' / 'locales').glob('pt-BR-*.json')):
+            spanish_file = portuguese_file.with_name(portuguese_file.name.replace('pt-BR-', 'es-'))
+            with self.subTest(catalog=spanish_file.name):
+                portuguese = json.loads(portuguese_file.read_text(encoding='utf-8'))
+                spanish = json.loads(spanish_file.read_text(encoding='utf-8'))
+                self.assertEqual(list(spanish), list(portuguese))
+                for source, translated in spanish.items():
+                    self.assertTrue(translated, source)
+                    for pattern in (r'#\d+#', r'<[^>]+>'):
+                        self.assertEqual(Counter(re.findall(pattern, source)), Counter(re.findall(pattern, translated)), source)
+
+    def test_spanish_locale_aliases_and_localized_text(self):
+        for alias in ('es', 'ES', 'es-AR', 'es_419'):
+            self.assertEqual(normalize_locale(alias), 'es')
+            self.assertIs(get_game_config(alias), get_game_config('es'))
+        spanish = get_game_config('es')
+        self.assertEqual(spanish['items'][0]['name'], 'Casa I')
+        self.assertEqual(spanish['localization_strings'][0]['text'], '¡Bienvenido a tu imperio!')
+        self.assertEqual(get_name_from_item_id(1), 'House I')
+        self.assertEqual(load_swf_catalog('es')['Next'], 'Siguiente')
+        self.assertEqual(load_swf_catalog('en'), {})
 
 
 if __name__ == '__main__':

@@ -12,7 +12,7 @@ import zlib
 from pathlib import Path
 
 from bundle import CONFIG_DIR
-from localization import load_catalog
+from localization import load_catalog, normalize_locale
 from swf_bitmap_art import localize_bitmap_art
 from swf_hd_art import upgrade_shape_bitmap_fill
 from swf_static_text import build_font_maps, localize_static_text
@@ -83,9 +83,12 @@ def decode_swf(data):
     return body, _rect_size(body) + 4
 
 
-def load_swf_catalog():
-    catalog = load_catalog()
-    for filename in ('pt-BR-swf.json', 'pt-BR-static.json'):
+def load_swf_catalog(language='pt-BR'):
+    locale = normalize_locale(language)
+    catalog = load_catalog(locale)
+    if not catalog:
+        return catalog
+    for filename in (f'{locale}-swf.json', f'{locale}-static.json'):
         with (Path(CONFIG_DIR) / 'locales' / filename).open(encoding='utf-8') as stream:
             catalog.update(json.load(stream))
     return catalog
@@ -113,10 +116,10 @@ def translate_edit_text(text, catalog):
     )
 
 
-def localize_swf(data, catalog=None):
+def localize_swf(data, catalog=None, language='pt-BR'):
     """Return a derivative movie; never overwrite or mutate the source bytes."""
     use_bitmap_art = catalog is None
-    catalog = load_swf_catalog() if catalog is None else catalog
+    catalog = load_swf_catalog(language) if catalog is None else catalog
     body, header_length = decode_swf(data)
     fonts = build_font_maps(body)
 

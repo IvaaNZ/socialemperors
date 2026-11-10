@@ -66,13 +66,16 @@ python -c "import json;c=json.load(open('config/game_config_20120826.json',encod
 
 ## 5. Traducción (obligatoria para que pasen los tests)
 
-Agregá el nombre original y su traducción en `config/locales/pt-BR-items.json`:
+Agregá el nombre original y su traducción en **los dos** catálogos de ítems, en la misma posición:
 
 ```json
+// config/locales/pt-BR-items.json
 "Iron Tower": "Torre de Ferro"
+// config/locales/es-items.json
+"Iron Tower": "Torre de hierro"
 ```
 
-Sin esa entrada, el juego muestra el texto en inglés, pero `tests/test_localization.py` falla: el test exige que todo `name`, `achievement_desc` y demás campos visibles estén en el catálogo. El idioma es global (pt-BR para todos).
+Sin esa entrada, el juego muestra el texto en inglés, pero `tests/test_localization.py` falla: el test exige que todo `name`, `achievement_desc` y demás campos visibles estén en ambos catálogos y que los catálogos `es-*` tengan las mismas claves, en el mismo orden, que los `pt-BR-*`. El idioma es global y se elige con `SOCIAL_EMPIRES_LANGUAGE` (`pt-BR` o `es`).
 
 ## 6. Cómo cuenta en Rivais (PvP del servidor)
 

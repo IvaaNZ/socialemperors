@@ -28,22 +28,27 @@ DISPLAY_FIELDS = {
 }
 
 
+SUPPORTED_LOCALES = ('pt-BR', 'es')
+# Specific item names take precedence over short generic UI wording.
+CATALOG_PARTS = ('core', 'interface', 'extended', 'collections', 'missions', 'auxiliary', 'items')
+
+
 def normalize_locale(language):
-    return 'pt-BR' if str(language).lower().replace('_', '-') in {'pt', 'pt-br'} else 'en'
+    normalized = str(language).lower().replace('_', '-')
+    if normalized in {'pt', 'pt-br'}:
+        return 'pt-BR'
+    if normalized == 'es' or normalized.startswith('es-'):
+        return 'es'
+    return 'en'
 
 
 def load_catalog(language='pt-BR'):
     """Load source-text keys so config patches retain their original IDs."""
-    if normalize_locale(language) != 'pt-BR':
+    locale = normalize_locale(language)
+    if locale not in SUPPORTED_LOCALES:
         return {}
     catalog = {}
-    # Specific item names take precedence over short generic UI wording.
-    filenames = (
-        'pt-BR-core.json', 'pt-BR-interface.json', 'pt-BR-extended.json',
-        'pt-BR-collections.json', 'pt-BR-missions.json',
-        'pt-BR-auxiliary.json', 'pt-BR-items.json',
-    )
-    for filename in filenames:
+    for filename in (f'{locale}-{part}.json' for part in CATALOG_PARTS):
         with (Path(CONFIG_DIR) / 'locales' / filename).open(encoding='utf-8') as stream:
             catalog.update(json.load(stream))
     return catalog

@@ -63,6 +63,8 @@ Os valores podem ser configurados por `SOCIAL_EMPIRES_INITIAL_CASH` e `SOCIAL_EM
 
 O jogo recebe os textos em português do Brasil, incluindo tutorial, menus, missões e nomes de unidades e construções. Os catálogos de tradução ficam em `config/locales/pt-BR-*.json`; o conteúdo original permanece disponível para a lógica interna do servidor. Os arquivos de fontes mantêm seus nomes originais para preservar a compatibilidade com o cliente.
 
+Também há catálogos em espanhol neutro em `config/locales/es-*.json`, com as mesmas chaves dos catálogos em português. Para usá-los, inicie o servidor com `SOCIAL_EMPIRES_LANGUAGE=es`; o idioma vale para todos os jogadores. As quatro artes com texto continuam em português, e o portal web (login, administração, Rivais e Tesouro) ainda não foi traduzido.
+
 Os rótulos gravados dentro do SWF também são traduzidos, incluindo **Próximo**, **Construir** e **Ajudar**. O servidor prepara uma cópia em memória e a reutiliza nas próximas requisições, preservando o SWF original. Quatro artes da interface com texto em inglês foram localizadas com a ferramenta integrada de geração de imagens, preservando suas proporções, seu tamanho em cena e a transparência. Os PNGs, arquivos usados pelo jogo, prompts exatos e checksums estão em [`config/locales/artwork/`](config/locales/artwork/manifest.json).
 
 O jogo já abre preenchendo a aba, sem esconder as abas ou a barra de endereço do navegador. Os controles ficam em um menu que se recolhe automaticamente, fora da imagem do jogo. Abra-o pela lateral para ajustar o som, usar **Restaurar janela** ou ativar **Tela cheia** do navegador. O espaço reservado aos controles permanece estável ao abrir e fechar o menu, evitando que a imagem e as áreas de clique mudem de posição. Em janelas pequenas ou telas na vertical, os controles ocupam uma área abaixo do jogo. A imagem mantém suas proporções.
@@ -123,6 +125,7 @@ Faça backup de **contas, chave, os três journals e saves juntos**, com o servi
 | `SOCIAL_EMPIRES_SAVES_DIR` | Sobrescreve apenas o diretório dos saves, inclusive para reutilizar saves existentes. |
 | `SOCIAL_EMPIRES_INITIAL_CASH` | Bônus inicial gratuito; padrão `500`, inteiro de 1 a 1.000.000. |
 | `SOCIAL_EMPIRES_DAILY_CASH` | Recompensa gratuita a cada 24 horas; padrão `100`, inteiro de 1 a 1.000.000. |
+| `SOCIAL_EMPIRES_LANGUAGE` | Idioma do jogo para todos os jogadores: `pt-BR` (padrão) ou `es` (espanhol neutro). |
 | `SECRET_KEY` | Chave opcional de pelo menos 32 caracteres; mantenha estável entre reinícios. |
 | `COOKIE_SECURE=1` | Envia o cookie de sessão somente por HTTPS; use com HTTPS configurado. |
 

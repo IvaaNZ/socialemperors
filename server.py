@@ -37,6 +37,7 @@ from engine import timestamp_now
 from version import version_name
 from constants import Constant
 from quests import get_quest_map
+from localization import SUPPORTED_LOCALES
 from swf_localization import localize_swf
 from village_names import rename_village, normalize_legacy_village_name, VillageNameError, MAX_VILLAGE_NAME_LENGTH
 from pvp import RaidService, RaidError
@@ -102,6 +103,14 @@ app.extensions['economy'] = EconomyService(
     initial_bonus=cash_setting('SOCIAL_EMPIRES_INITIAL_CASH', 500),
     daily_reward=cash_setting('SOCIAL_EMPIRES_DAILY_CASH', 100),
 )
+def language_setting(name, default):
+    value = os.environ.get(name, default)
+    if value not in SUPPORTED_LOCALES:
+        raise RuntimeError(f'{name} deve ser um destes idiomas: {", ".join(SUPPORTED_LOCALES)}.')
+    return value
+
+
+GAME_LANGUAGE = language_setting('SOCIAL_EMPIRES_LANGUAGE', 'pt-BR')
 with village_lock:
     app.extensions['raids'].recover_pending()
     app.extensions['village_admin'].recover_pending()
@@ -608,15 +617,15 @@ def similar_05122012_dynamic():
 @app.route("/default01.static.socialpointgames.com/static/socialempires/<path:path>")
 def static_assets_loader(path):
     if path == f'flash/{GAME_VERSION}':
-        movie, checksum = portuguese_game_movie()
+        movie, checksum = localized_game_movie()
         return send_file(BytesIO(movie), mimetype='application/x-shockwave-flash', download_name=GAME_VERSION, etag=checksum, conditional=True)
     return send_from_directory(ASSETS_DIR, path)
 
 
 @lru_cache(maxsize=1)
-def portuguese_game_movie():
+def localized_game_movie():
     original = (Path(ASSETS_DIR) / 'flash' / GAME_VERSION).read_bytes()
-    translated = patch_tutorial(patch_private_economy(localize_swf(original)))
+    translated = patch_tutorial(patch_private_economy(localize_swf(original, language=GAME_LANGUAGE)))
     return translated, hashlib.sha256(translated).hexdigest()
 
 ## GAME DYNAMIC
@@ -640,7 +649,7 @@ def get_game_config_response():
         spdebug = request.values['spdebug']
     language = request.values['language']
 
-    return get_game_config('pt-BR')
+    return get_game_config(GAME_LANGUAGE)
 
 @app.route("/dynamic.flash1.dev.socialpoint.es/appsfb/socialempiresdev/srvempires/get_player_info.php", methods=['POST'])
 def get_player_info_response():

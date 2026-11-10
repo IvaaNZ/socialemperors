@@ -1,0 +1,136 @@
+TAREA D - Español (neutro)
+Repo: E:\socialemperors - rama mi-servidor - 09/11/2026
+==========================================================
+
+RESUMEN
+-------
+El juego ya puede funcionar en español neutro. El idioma sigue siendo GLOBAL
+(el mismo para todos los jugadores) y se elige al arrancar el servidor.
+Por defecto sigue en portugués, así que nada cambia si no se configura.
+
+Para jugar en español (Windows, PowerShell):
+    $env:SOCIAL_EMPIRES_LANGUAGE = "es"
+    .venv\Scripts\python server.py
+En Git Bash / Linux:
+    SOCIAL_EMPIRES_LANGUAGE=es .venv/Scripts/python server.py
+Luego recargar la pestaña del juego con Ctrl+F5.
+Valores aceptados: pt-BR (por defecto) o es. Cualquier otro valor frena el
+arranque con un mensaje de error claro.
+
+
+ESTADO DE LOS PUNTOS DEL BLOQUE D
+---------------------------------
+15. Elegir el español: HECHO -> español neutro, tratamiento de "tú"
+    (sin voseo), vocabulario latinoamericano general.
+16. Traducir los catálogos tomando el portugués como modelo: HECHO.
+17. Revisar jugando qué textos quedan en inglés o mezclados: PENDIENTE
+    (hay que jugar; abajo hay una lista de lo que ya sé que falta).
+18. Selector de idioma en el login, guardado en la cuenta: NO HECHO
+    (era opcional; ver "Próximo paso sugerido").
+
+
+1. CATÁLOGOS NUEVOS (config/locales/)
+-------------------------------------
+Nueve archivos es-*.json, con las mismas claves y en el mismo orden que los
+pt-BR-*.json. En total, 4.302 textos traducidos:
+
+    es-static.json         70   textos de glifos fijos del SWF
+    es-collections.json    99   nombres de colecciones de unidades
+    es-swf.json           320   textos editables del SWF
+    es-auxiliary.json     255   hechizos, rangos, ayudas de vecinos, categorías,
+                                descripciones de unidades, oficios de trabajadores
+    es-core.json          392   tutorial, mensajes, errores, coleccionables
+    es-extended.json      487   capítulos, torneos, dragones, supervivencia
+    es-interface.json     574   interfaz, batallas, misiones de rescate
+    es-missions.json      457   títulos y descripciones de misiones
+    es-items.json        1648   nombres de edificios, unidades y decoraciones
+
+Se respetaron todos los marcadores #0#, #1#..., las etiquetas HTML/<SPACE>,
+los saltos de línea y la cantidad de comas en las listas de trabajadores.
+
+Términos elegidos (por si se quiere cambiar algo después):
+    Town Hall -> Ayuntamiento        Village -> Aldea
+    Cash -> dinero                   Gold/Wood/Food/Stone -> oro/madera/comida/piedra
+    Draggy -> Dragoncito             Quest -> Aventura
+    Storage -> Almacén               Barracks -> Cuartel
+    Farm Land -> Granja              Healer -> Curandero
+    Click -> haz clic                Cost -> Costo
+
+
+2. CAMBIOS DE CÓDIGO
+--------------------
+localization.py
+  - Nuevo SUPPORTED_LOCALES = ('pt-BR', 'es').
+  - normalize_locale() reconoce es, ES, es-AR, es_419, etc. -> 'es'.
+  - load_catalog(idioma) carga {idioma}-core.json, -interface.json, etc.
+    (antes estaba fijo en pt-BR).
+
+get_game_config.py
+  - El config traducido se cachea por idioma (antes solo existía el de pt-BR).
+
+swf_localization.py
+  - load_swf_catalog(idioma) y localize_swf(..., language=...) aceptan el idioma.
+
+server.py
+  - Nueva variable de entorno SOCIAL_EMPIRES_LANGUAGE (pt-BR por defecto),
+    validada al arrancar.
+  - get_game_config.php y el SWF servido usan ese idioma.
+  - portuguese_game_movie() pasó a llamarse localized_game_movie().
+
+El motor del juego sigue usando el config original en inglés: solo cambian
+los textos visibles. IDs, precios, imágenes y reglas no se tocan.
+
+
+3. PRUEBAS
+----------
+tests/test_localization.py
+  - La prueba de catálogo completo ahora valida pt-BR y es.
+  - Nueva: los catálogos es-* tienen las mismas claves y el mismo orden que
+    los pt-BR-*, sin textos vacíos y con los mismos marcadores/etiquetas.
+  - Nueva: alias de idioma (es, ES, es-AR, es_419), textos traducidos de
+    ejemplo y catálogo SWF en español.
+Resultado: Ran 156 tests ... OK (antes eran 154).
+
+Verificaciones manuales:
+  - Servidor con SOCIAL_EMPIRES_LANGUAGE=es: el config sale en español
+    (ej.: "Iglesia", "Entrena un aldeano").
+  - Servidor con SOCIAL_EMPIRES_LANGUAGE=fr: se niega a arrancar con error claro.
+  - SWF: los 82 textos de glifos fijos que se traducen en portugués también
+    se traducen en español (0 quedan en inglés).
+  - Las fuentes principales del SWF y las de assets/fonts incluyen ñ, ¿ y ¡.
+
+
+4. DOCUMENTACIÓN
+----------------
+README.md
+  - Nueva fila SOCIAL_EMPIRES_LANGUAGE en la tabla de variables.
+  - Párrafo sobre los catálogos en español y sus límites.
+GUIA_AGREGAR_ITEMS.md
+  - El paso de traducción ahora pide agregar el nombre en pt-BR-items.json
+    y en es-items.json.
+
+
+5. LO QUE TODAVÍA QUEDA EN PORTUGUÉS O SIN REVISAR (para el punto 17)
+---------------------------------------------------------------------
+  - Cuatro botones con el texto dibujado en la imagen: "Construir" y
+    "ALIADO" se escriben igual en español; "Dinheiro" (debería ser "Dinero")
+    y "Adicionar vizinhos" ("Agregar vecinos") necesitan arte nuevo.
+  - Portal web (login, registro, admin, Rivais, Tesouro, nombre de la vila):
+    las plantillas HTML siguen en portugués.
+  - Nombre por defecto de las aldeas nuevas: sigue siendo "Meu Império"
+    (village_names.py y pvp.py).
+  - Mensajes de error del servidor (por ejemplo, el de un idioma inválido),
+    que siguen en portugués.
+  - Algunas palabras de placeholder internas del SWF (ej.: "Nom de la unitat")
+    solo aparecen si el juego las muestra; hay que confirmarlo jugando.
+  - La etiqueta <SPACE> de dos misiones se mantuvo igual que en el original
+    y en portugués; Flash puede ocultarla. Revisar jugando.
+
+
+6. PRÓXIMO PASO SUGERIDO
+------------------------
+  a) Jugar con SOCIAL_EMPIRES_LANGUAGE=es y anotar textos raros (punto 17).
+  b) Traducir el portal web y el nombre por defecto de la aldea.
+  c) Si se quiere idioma por jugador (punto 18): guardar el idioma en la
+    cuenta, usar el parámetro "language" que el cliente ya envía y preparar
+    un SWF traducido por idioma (el código ya los cachea por idioma).
