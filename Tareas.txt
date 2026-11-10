@@ -1,0 +1,59 @@
+Estas son las tareas, en orden. Parto de que empezás de cero con el repo de Jandersu en /e.
+
+A. Dejarlo andando
+
+Clonar https://github.com/Jandersu/socialemperors en /e.
+Crear el entorno virtual e instalar los paquetes (pip install -r requirements.txt).
+Crear la cuenta de administrador con flask --app server create-admin y anotar usuario y contraseña.
+Prender el servidor (python server.py) y entrar desde Chrome en http://127.0.0.1:5050/.
+Si faltan archivos de arte (errores 404), copiarlos desde el paquete de la versión alpha 0.04a.
+Comprobar qué versión tenés (git log -1 y git describe --tags --always).
+
+B. Cuidar lo que se haga de ahora en adelante
+7. Crear una rama propia (git checkout -b mi-servidor).
+8. Crear tu propio fork en GitHub y subir ahí el trabajo, para no volver a perderlo.
+9. Hacer un commit después de cada etapa.
+10. Instalar Claude Code en /e/socialemperors y pegarle un contexto corto con lo que querés lograr.
+
+C. Entender el repo antes de tocarlo (pedírselo a Claude Code)
+11. Que explique cómo funciona la traducción al portugués y si el idioma es global o por jugador.
+12. Que explique cómo se resuelve un ataque (qué corre en el servidor y qué en el SWF) y qué parte de la IA se puede mejorar.
+13. Que arme una guía para agregar edificios y unidades nuevas (GUIA_AGREGAR_ITEMS.md).
+14. Que compare qué trae este repo y qué no, respecto de lo que habías planeado.
+
+D. Español
+15. Elegir el español: neutro o rioplatense (yo sugería neutro).
+16. Traducir los catálogos tomando el portugués como modelo.
+17. Revisar jugando qué textos quedan en inglés o mezclados.
+18. Si querés, hacer el selector de idioma en el login y guardar la elección en la cuenta (con una prueba de que los guardados no cambian).
+
+E. Funciones que tenías en la lista
+19. Panel de admin más completo: recursos, bloqueos, estadísticas de unidades, misiones.
+20. Balance de unidades y misiones, sobre todo para PvP y ranked.
+21. Duelos PvP en vivo, y ranked desde nivel 25.
+22. Clanes (máximo 10 miembros, Guild Master y Assist, retos entre clanes).
+23. Casino (ruleta y tragamonedas con recursos del juego).
+24. Clima y ciclo día/noche.
+25. Editor de mundo (World Editor).
+26. Pase de temporada gratuito.
+27. Mejorar el HUD (primero una capa HTML y CSS alrededor del juego).
+28. Mejorar la IA de combate, según lo que se vea en el punto 12.
+
+F. Identidad propia y publicación
+29. Reemplazar arte, música y nombres por los tuyos antes de cobrar nada.
+30. Decidir si habrá dos servidores: uno clásico sin fines de lucro y otro propio.
+31. Ponerlo online (hosting, base de datos, CORS), solo cuando lo anterior funcione.
+32. Consultar con un abogado o contador antes de recibir dinero o donaciones.
+
+Decisiones abiertas
+
+Español neutro 
+Selector de idioma por jugador.
+Duelo en arena o en base, si hacemos un World Editor podemos crear alguna arena de combates.
+Qué imperio cuenta para el nivel 25.
+Permisos del Assist en los clanes.
+Porcentaje de pago (RTP) y premio máximo del casino.
+Reloj del clima y hemisferio.
+Quién hace el arte y la música propios.
+
+Si querés, empezamos por el paso 1. Decime qué te sale al clonar.
