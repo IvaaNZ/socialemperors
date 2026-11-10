@@ -138,15 +138,17 @@ defecto de las aldeas ya están traducidos (ver sección 9). Queda:
 Criterio: 100 % = hecho y comprobado; 0 % = sin empezar. Cuando algo no lo
 pude comprobar yo, lo aclaro.
 
-A. Dejarlo andando ........................................... 83 %
+A. Dejarlo andando ........................................... 92 %
    1. Clonar el repo en /e ................................. 100 %
    2. Entorno virtual + pip install ....................... 100 %
    3. Crear admin y anotar usuario/contraseña ............. 100 %
       (hay 1 cuenta de administrador; no puedo ver si anotaste la clave)
    4. Prender el servidor y entrar desde Chrome ........... 100 %
       (comprobado: el juego carga y se juega en Chrome)
-   5. Copiar archivos de arte faltantes (404) ............... 0 %
-      (sigue faltando fx/p.miniFireball2.swf)
+   5. Copiar archivos de arte faltantes (404) .............. 50 %
+      (búsqueda hecha: faltan 6 archivos que tampoco están en los
+      repositorios de GitHub; falta decidir si se revisa el paquete
+      0.04a de 1,2 GB o se cierra así. Ver sección 11)
    6. Comprobar la versión (git log / describe) ........... 100 %
 
 B. Cuidar lo que se haga ...................................... 100 %
@@ -194,8 +196,9 @@ F. Identidad propia y publicación ............................... 0 %
   31. Ponerlo online ........................................ 0 %
   32. Consultar con abogado o contador ...................... 0 %
 
-TOTAL DEL PLAN (32 tareas, promedio simple) .................. 50 %
-(antes: 47 %. Subieron A4 de 50 a 100 % y D17 de 0 a 50 %)
+TOTAL DEL PLAN (32 tareas, promedio simple) .................. 52 %
+(historial: 47 % -> 50 % (A4 y D17) -> 52 % (A5 de 0 a 50 %).
+Si A5 se cierra sin bajar el paquete, A queda en 100 % y el total en 53 %)
 
 
 8. TEXTOS QUE SIGUEN EN PORTUGUÉS Y QUÉ SIGNIFICAN
@@ -296,3 +299,35 @@ no entraba en el botón, por eso quedó "Usar"/"Vender".
 Probar Ruffle nightly (10/11/2026) no cambiaba nada: no era Ruffle.
 
 Para verlo: reiniciar el servidor y recargar el juego con Ctrl+F5.
+
+
+11. ARCHIVOS DE ARTE FALTANTES (tarea A5)
+----------------------------------------
+Cómo se buscó:
+  - Se cruzó todo lo que pide la configuración con lo que hay en assets/.
+  - Se leyeron los nombres de archivo que menciona el código del juego.
+  - Se jugó en un servidor de prueba (carga, todas las pestañas de
+    Construir, Almacén y visita a Arturo) anotando cada error 404.
+  - Se buscaron los faltantes en los repositorios de AcidCaos (4.623
+    archivos) y de Jandersu.
+
+Resultado:
+  - Los 240 ítems de la tienda y los 146 ítems de las aldeas guardadas
+    tienen todos su dibujo y su miniatura.
+  - Faltan 6 archivos, que no están en ninguno de los dos repositorios:
+      fx/p.miniFireball2.swf ........ se pide al cargar (efecto de bola
+                                      de fuego chica); único 404 visto
+      dragon_limit.jpg .............. ayuda del límite de dragones
+      fuegoschinos.jpg .............. misión de los fuegos chinos
+      golemdorado.jpg ............... misión del Gólem Dorado
+      install.jpg ................... popup de instalación
+      largeexpansiongfx/expGen.png .. expansión grande del terreno
+  - Ninguno impide jugar. Para las dos misiones existen imágenes con otro
+    nombre (quest_chinos_fuegos.jpg, quest_egypt_golem.jpg).
+  - Algunas imágenes que parecían faltar están en assets/images_new/en/;
+    el juego arma esa ruta con el idioma, así que funcionan.
+
+Pendiente: decidir si se baja el paquete 0.04a (1,2 GB,
+social-emperors_0.04a.zip, Releases de AcidCaos/socialemperors) para
+confirmar. Lo más probable es que tampoco los traiga, porque se arma con
+el mismo repositorio.
