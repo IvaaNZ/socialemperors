@@ -139,9 +139,11 @@ def fit_edit_text(payload, source, translated, fonts):
     if width <= allowed or can_wrap or allowed <= 0:
         return translated, None
     ratio = allowed / width
+    # The field's own height is also the format the game uses for text it sets at runtime.
+    font_height = max(20, int(layout['font_height'] * ratio))
     if layout['html']:
-        return _HTML_SIZE.sub(lambda m: f'{m.group(1)}{max(1, int(int(m.group(2)) * ratio))}{m.group(3)}', translated), None
-    return translated, max(20, int(layout['font_height'] * ratio))
+        return _HTML_SIZE.sub(lambda m: f'{m.group(1)}{max(1, int(int(m.group(2)) * ratio))}{m.group(3)}', translated), font_height
+    return translated, font_height
 
 
 def iter_tags(data, offset=0):

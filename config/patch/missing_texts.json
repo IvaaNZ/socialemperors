@@ -1,0 +1,227 @@
+[
+    {
+        "op": "add",
+        "path": "/localization_strings/-",
+        "value": {
+            "id": 915,
+            "name": "QUEST_GOLEM_DORADO",
+            "text": "Golden Golem"
+        }
+    },
+    {
+        "op": "add",
+        "path": "/localization_strings/-",
+        "value": {
+            "id": 1288,
+            "name": "STORE_EDIFICIO_DRAGON_RIDER_TRAINING",
+            "text": "Train dragon riders to upgrade your dragons"
+        }
+    },
+    {
+        "op": "add",
+        "path": "/localization_strings/-",
+        "value": {
+            "id": 1289,
+            "name": "STORE_EDIFICIO_DRAGON_TIMING",
+            "text": "Mount a Rider on a Dragon"
+        }
+    },
+    {
+        "op": "add",
+        "path": "/localization_strings/-",
+        "value": {
+            "id": 1539,
+            "name": "ALERT_CROSS_LEVEL",
+            "text": "You need a higher level to do that."
+        }
+    },
+    {
+        "op": "add",
+        "path": "/localization_strings/-",
+        "value": {
+            "id": 1540,
+            "name": "ALERT_CROSS_DISABLED",
+            "text": "This option is not available right now."
+        }
+    },
+    {
+        "op": "add",
+        "path": "/localization_strings/-",
+        "value": {
+            "id": 1543,
+            "name": "POPUP_IPHONE_STORAGE_TITLE",
+            "text": "Mobile Storage"
+        }
+    },
+    {
+        "op": "add",
+        "path": "/localization_strings/-",
+        "value": {
+            "id": 1544,
+            "name": "POPUP_IPHONE_STORAGE_DESC",
+            "text": "The items you bought on your SE iPhone are in:<br>Storage -> Mobile Storage"
+        }
+    },
+    {
+        "op": "add",
+        "path": "/localization_strings/-",
+        "value": {
+            "id": 1545,
+            "name": "ALERT_NO_SPACE_PLACING_UNITS",
+            "text": "There is no space to place more units."
+        }
+    },
+    {
+        "op": "add",
+        "path": "/localization_strings/-",
+        "value": {
+            "id": 1546,
+            "name": "ALERT_REMAINING_UNITS_STORAGE",
+            "text": "The remaining units were sent to your storage."
+        }
+    },
+    {
+        "op": "add",
+        "path": "/localization_strings/-",
+        "value": {
+            "id": 1547,
+            "name": "POPUP_IPHONE_PLACE_UNITS",
+            "text": "Place units"
+        }
+    },
+    {
+        "op": "add",
+        "path": "/localization_strings/-",
+        "value": {
+            "id": 1548,
+            "name": "POPUP_STORAGE_USE",
+            "text": "USE"
+        }
+    },
+    {
+        "op": "add",
+        "path": "/localization_strings/-",
+        "value": {
+            "id": 1549,
+            "name": "POPUP_STORAGE_SELL",
+            "text": "SELL"
+        }
+    },
+    {
+        "op": "add",
+        "path": "/localization_strings/-",
+        "value": {
+            "id": 1550,
+            "name": "POPUP_DAILYBONUS_TITLE",
+            "text": "Daily Bonus"
+        }
+    },
+    {
+        "op": "add",
+        "path": "/localization_strings/-",
+        "value": {
+            "id": 1551,
+            "name": "POPUP_DAILYBONUS_TODAY",
+            "text": "Today"
+        }
+    },
+    {
+        "op": "add",
+        "path": "/localization_strings/-",
+        "value": {
+            "id": 1552,
+            "name": "POPUP_DAILYBONUS_TOMORROW",
+            "text": "Tomorrow"
+        }
+    },
+    {
+        "op": "add",
+        "path": "/localization_strings/-",
+        "value": {
+            "id": 1553,
+            "name": "POPUP_DAILYBONUS_DESC",
+            "text": "Play every day and reclaim your prize!"
+        }
+    },
+    {
+        "op": "add",
+        "path": "/localization_strings/-",
+        "value": {
+            "id": 1554,
+            "name": "POPUP_HURRY_UP_ASK_HELP",
+            "text": "Ask your friends to help you speed up"
+        }
+    },
+    {
+        "op": "add",
+        "path": "/localization_strings/-",
+        "value": {
+            "id": 1555,
+            "name": "POPUP_AUX_HELP",
+            "text": "Help"
+        }
+    },
+    {
+        "op": "add",
+        "path": "/localization_strings/-",
+        "value": {
+            "id": 1556,
+            "name": "AUX_DAYS",
+            "text": "days"
+        }
+    },
+    {
+        "op": "add",
+        "path": "/localization_strings/-",
+        "value": {
+            "id": 1557,
+            "name": "AUX_HOURS",
+            "text": "hours"
+        }
+    },
+    {
+        "op": "add",
+        "path": "/localization_strings/-",
+        "value": {
+            "id": 1558,
+            "name": "AUX_MINUTES",
+            "text": "minutes"
+        }
+    },
+    {
+        "op": "add",
+        "path": "/localization_strings/-",
+        "value": {
+            "id": 1559,
+            "name": "AUX_SECONDS",
+            "text": "seconds"
+        }
+    },
+    {
+        "op": "add",
+        "path": "/localization_strings/-",
+        "value": {
+            "id": 1560,
+            "name": "AUX_ALL",
+            "text": "All"
+        }
+    },
+    {
+        "op": "add",
+        "path": "/localization_strings/-",
+        "value": {
+            "id": 1561,
+            "name": "AUX_GET_MORE_CASH",
+            "text": "Get more cash"
+        }
+    },
+    {
+        "op": "add",
+        "path": "/localization_strings/-",
+        "value": {
+            "id": 1565,
+            "name": "AVISO_POCIONES_FALTA_DINERO",
+            "text": "You don't have enough cash to buy potions."
+        }
+    }
+]

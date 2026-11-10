@@ -94,6 +94,23 @@ class LocalizationTests(unittest.TestCase):
         self.assertEqual(load_swf_catalog('es')['Next'], 'Siguiente')
         self.assertEqual(load_swf_catalog('en'), {})
 
+    def test_client_text_ids_missing_from_the_2012_config_are_restored(self):
+        # The client asks for these ids by number; without them its buttons stay blank.
+        def flat(items):
+            for item in items:
+                if isinstance(item, list):
+                    yield from flat(item)
+                else:
+                    yield item
+        texts = {entry['id']: entry['text'] for entry in flat(get_game_config('es')['localization_strings'])}
+        self.assertEqual(texts[1548], 'Usar')
+        self.assertEqual(texts[1549], 'Vender')
+        self.assertEqual(texts[1560], 'Todo')
+        self.assertEqual(texts[1561], 'Más dinero')
+        entries = list(flat(get_game_config()['localization_strings']))
+        self.assertEqual({entry['id']: entry['name'] for entry in entries}[1548], 'POPUP_STORAGE_USE')
+        self.assertEqual(len(entries), len({entry['id'] for entry in entries}), 'text ids must stay unique')
+
 
 if __name__ == '__main__':
     unittest.main()

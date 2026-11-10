@@ -276,9 +276,18 @@ Además, si a la fuente del cuadro le falta una letra, queda el texto
 original en vez de una palabra incompleta: el contador de tiempo dice
 "DIA" (su fuente no trae "Í") y "SEC" (no trae la letra "G").
 
-Pendiente: la pestaña "New"/"Nuevo" del menú Construir. Su nombre lo pone
-el juego mientras se ejecuta, no está en el archivo, así que este arreglo
-no la cubre. Hay que ver en el juego si falta la pestaña entera o solo el
-texto.
+CAUSA REAL DE LOS BOTONES VACÍOS (encontrada después, con el navegador):
+El juego busca cada texto por número de id. El SWF es más nuevo que la
+configuración del 2012 y le pide 25 ids que esa configuración no trae; el
+juego recibía un texto vacío. Pasaba también en inglés y en portugués.
+Ejemplos: 1548 "Usar" y 1549 "Vender" (Almacén), 1560 "Todo" (primera
+pestaña de Construir) y 1561 "Más dinero" (pastilla azul de las noticias).
+
+Arreglo: config/patch/missing_texts.json agrega esos 25 textos con los ids
+que pide el juego (leídos de las constantes del código del SWF), y los
+catálogos pt-BR/es tienen sus traducciones. Verificado en el navegador:
+"Usar", "Vender", "Todo" y "Más dinero" ya se ven. "VENDER" en mayúsculas
+no entraba en el botón, por eso quedó "Usar"/"Vender".
+Probar Ruffle nightly (10/11/2026) no cambiaba nada: no era Ruffle.
 
 Para verlo: reiniciar el servidor y recargar el juego con Ctrl+F5.
