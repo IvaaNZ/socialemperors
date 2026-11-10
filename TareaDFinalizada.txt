@@ -194,3 +194,319 @@ F. Identidad propia y publicación ............................... 0 %
   32. Consultar con abogado o contador ...................... 0 %
 
 TOTAL DEL PLAN (32 tareas, promedio simple) .................. 47 %
+
+
+8. TEXTOS QUE SIGUEN EN PORTUGUÉS Y QUÉ SIGNIFICAN
+--------------------------------------------------
+Aunque el juego esté en español (SOCIAL_EMPIRES_LANGUAGE=es), estas partes
+siguen en portugués. Formato: portugués -> significado en español.
+
+8.1 PALABRAS QUE MÁS SE REPITEN
+    vila -> aldea                      conta -> cuenta
+    jogador -> jugador                 senha -> contraseña
+    cadastro -> registro               entrar / sair -> entrar / salir
+    saque / saquear -> saqueo / saquear
+    dinheiro -> dinero                 tesouro -> tesoro
+    resgate / resgatar -> canje, cobro / reclamar, cobrar
+    saldo -> saldo                     recursos -> recursos
+    ouro / madeira / comida / pedra -> oro / madera / comida / piedra
+    nível -> nivel                     tropas -> tropas
+    ataque / defesa -> ataque / defensa
+    rivais -> rivales                  classificação -> clasificación
+    histórico -> historial             vitórias -> victorias
+    aprovar / recusar -> aprobar / rechazar
+    suspender acesso -> suspender acceso
+    atualizar / recarregar -> actualizar / recargar
+    salvar -> guardar                  voltar -> volver
+    tente novamente -> intenta de nuevo
+    ainda / agora -> todavía / ahora   já -> ya
+    não foi possível... -> no se pudo...
+    aguarde -> espera                  em instantes -> en unos momentos
+    Meu Império -> Mi Imperio (nombre por defecto de las aldeas nuevas)
+
+8.2 BOTONES DEL JUEGO CON EL TEXTO DIBUJADO EN LA IMAGEN
+    Dinheiro -> Dinero (botón para ir al Tesoro)
+    Adicionar vizinhos -> Agregar vecinos
+    Construir -> Construir (igual en español)
+    ALIADO -> ALIADO (igual en español)
+
+8.3 MENÚ SUPERIOR DEL PORTAL (todas las páginas)
+    Ir para o conteúdo -> Ir al contenido
+    Minha vila -> Mi aldea
+    Rivais e saques -> Rivales y saqueos
+    Tesouro -> Tesoro
+    Sair -> Salir
+    Entrar -> Entrar
+    Criar conta -> Crear cuenta
+    Navegação principal -> Navegación principal
+
+8.4 INICIAR SESIÓN Y REGISTRO
+    Entre na sua vila -> Entra a tu aldea
+    Seu império está esperando por você. -> Tu imperio te está esperando.
+    E-mail / Senha -> Correo / Contraseña
+    Entrar na minha vila -> Entrar a mi aldea
+    Ainda não tem uma conta? -> ¿Todavía no tienes cuenta?
+    Crie sua conta -> Crea tu cuenta
+    O primeiro passo para construir seu império. -> El primer paso para construir tu imperio.
+    Nome do jogador -> Nombre del jugador
+    Use pelo menos 10 caracteres. -> Usa al menos 10 caracteres.
+    Confirme sua senha -> Confirma tu contraseña
+    Solicitar cadastro -> Solicitar registro
+    Já tem uma conta? -> ¿Ya tienes cuenta?
+
+    Mensajes:
+    E-mail ou senha incorretos. -> Correo o contraseña incorrectos.
+    Informe um e-mail válido. -> Ingresa un correo válido.
+    A senha deve ter entre 10 e 128 caracteres. -> La contraseña debe tener entre 10 y 128 caracteres.
+    As senhas não conferem. -> Las contraseñas no coinciden.
+    Já existe uma conta com este e-mail. -> Ya existe una cuenta con este correo.
+    Cadastro recebido! Aguarde a aprovação do administrador para entrar na sua vila.
+        -> ¡Registro recibido! Espera la aprobación del administrador para entrar a tu aldea.
+    Seu cadastro está aguardando aprovação do administrador. Tente entrar novamente após a liberação.
+        -> Tu registro está esperando la aprobación del administrador. Vuelve a intentar entrar cuando te habiliten.
+    Seu acesso não foi liberado. Entre em contato com o administrador.
+        -> Tu acceso no fue habilitado. Comunícate con el administrador.
+    Muitas tentativas de login. Aguarde alguns minutos e tente novamente.
+        -> Demasiados intentos de inicio de sesión. Espera unos minutos e intenta de nuevo.
+    O formulário expirou. Atualize a página e tente novamente.
+        -> El formulario venció. Actualiza la página e intenta de nuevo.
+    Faça login para acessar o jogo. -> Inicia sesión para entrar al juego.
+    Sua conta não está aprovada. -> Tu cuenta no está aprobada.
+    Sua conta precisa da aprovação de um administrador para jogar.
+        -> Tu cuenta necesita la aprobación de un administrador para jugar.
+
+8.5 PANTALLA DEL JUEGO (menú lateral y avisos)
+    Ir para a vila -> Ir a la aldea
+    Sair da conta -> Cerrar sesión
+    Controles -> Controles
+    Volume / Silenciar -> Volumen / Silenciar
+    Restaurar janela -> Restaurar ventana
+    Tela cheia -> Pantalla completa
+    Tesouro gratuito -> Tesoro gratuito
+    Atualizar vila -> Actualizar aldea
+    Preparando sua vila -> Preparando tu aldea
+    Carregando o jogo no navegador. Na primeira visita, isso pode levar alguns instantes.
+        -> Cargando el juego en el navegador. La primera vez puede tardar unos momentos.
+    Conectando à sua vila… -> Conectando con tu aldea…
+    Tentar novamente -> Intentar de nuevo
+    Ative o JavaScript no navegador para carregar sua vila.
+        -> Activa JavaScript en el navegador para cargar tu aldea.
+    Para ver melhor sua vila no celular, use a tela na horizontal.
+        -> Para ver mejor tu aldea en el celular, pon la pantalla en horizontal.
+    Sua vila foi atualizada. Recarregue para continuar jogando.
+        -> Tu aldea se actualizó. Recarga para seguir jugando.
+    Sua vila foi atualizada. Abra os controles para carregar as alterações.
+        -> Tu aldea se actualizó. Abre los controles para cargar los cambios.
+    Controles: há uma atualização da vila -> Controles: hay una actualización de la aldea
+    Não foi possível carregar sua vila. -> No se pudo cargar tu aldea.
+    O navegador não permitiu a tela cheia. Você pode continuar jogando aqui.
+        -> El navegador no permitió la pantalla completa. Puedes seguir jugando aquí.
+    Seu navegador precisa ser atualizado -> Tu navegador necesita actualizarse
+    Use uma versão atual do Chrome, Firefox, Edge ou Safari para abrir o jogo.
+        -> Usa una versión actual de Chrome, Firefox, Edge o Safari para abrir el juego.
+    O jogo está indisponível -> El juego no está disponible
+    Não foi possível baixar os arquivos do jogo deste servidor. Tente novamente em instantes.
+        -> No se pudieron descargar los archivos del juego de este servidor. Intenta de nuevo en unos momentos.
+    O carregamento está demorando mais que o esperado. Verifique sua conexão e, se necessário, tente novamente.
+        -> La carga está tardando más de lo esperado. Revisa tu conexión y, si hace falta, intenta de nuevo.
+    Jogo aberto no navegador. O carregamento da vila continua dentro do jogo.
+        -> Juego abierto en el navegador. La carga de la aldea sigue dentro del juego.
+    Não foi possível abrir o jogo -> No se pudo abrir el juego
+    Confira sua conexão e tente novamente. Se o problema continuar, avise o administrador.
+        -> Revisa tu conexión e intenta de nuevo. Si el problema sigue, avisa al administrador.
+    Sua vila ou sessão foi atualizada. Recarregue o jogo para continuar.
+        -> Tu aldea o tu sesión se actualizó. Recarga el juego para continuar.
+    O arquivo da sua vila não foi encontrado. Contate o administrador para restaurar o save.
+        -> No se encontró el archivo de tu aldea. Contacta al administrador para restaurar la partida guardada.
+    O servidor está recuperando alterações da vila. Tente novamente em instantes.
+        -> El servidor está recuperando cambios de la aldea. Intenta de nuevo en unos momentos.
+    Você só pode acessar sua própria vila. -> Solo puedes entrar a tu propia aldea.
+
+8.6 NOMBRE DE LA ALDEA
+    Escolha como seu império aparece no jogo e para os outros jogadores.
+        -> Elige cómo aparece tu imperio en el juego y para los otros jugadores.
+    Voltar para a vila -> Volver a la aldea
+    Nome da sua vila -> Nombre de tu aldea
+    Salvar nome -> Guardar nombre
+    Nome da vila atualizado. -> Nombre de la aldea actualizado.
+    Informe um nome para a sua vila. -> Ingresa un nombre para tu aldea.
+    O nome da vila deve ter entre 2 e 32 caracteres. -> El nombre de la aldea debe tener entre 2 y 32 caracteres.
+    Use um nome sem os símbolos < e >. -> Usa un nombre sin los símbolos < y >.
+    O nome da vila não pode conter caracteres de controle ou invisíveis.
+        -> El nombre de la aldea no puede tener caracteres de control ni invisibles.
+    Não foi possível salvar o nome da vila. Tente novamente.
+        -> No se pudo guardar el nombre de la aldea. Intenta de nuevo.
+
+8.7 RIVALES Y SAQUEOS (/rivals)
+    Rivais -> Rivales
+    Combate automático -> Combate automático
+    Sua vila -> Tu aldea
+    Tropas / Ataque / Defesa -> Tropas / Ataque / Defensa
+    Treine uma tropa para atacar. -> Entrena una tropa para atacar.
+    Próximo ataque: -> Próximo ataque:
+    Classificação / Histórico -> Clasificación / Historial
+    Vilas rivais -> Aldeas rivales
+    Saque possível -> Botín posible
+    Atacar / Disponível -> Atacar / Disponible
+    Nenhuma vila rival por enquanto -> Por ahora no hay aldeas rivales
+    Novas vilas aparecem aqui. -> Las aldeas nuevas aparecen aquí.
+    Classificação por vitórias e recursos saqueados -> Clasificación por victorias y recursos saqueados
+    Vitórias / Saqueado / Você -> Victorias / Saqueado / Tú
+    Ver combate -> Ver combate
+    Nenhum combate ainda -> Todavía no hay combates
+    Seus ataques e defesas aparecem aqui. -> Tus ataques y defensas aparecen aquí.
+    Nenhum recurso saqueado. -> No se saqueó ningún recurso.
+    Regras dos saques -> Reglas de los saqueos
+    Tropas e construções permanecem após o combate. Reabra sua vila para atualizar os saldos no jogo.
+        -> Las tropas y construcciones siguen después del combate. Vuelve a abrir tu aldea para actualizar los saldos en el juego.
+    Recursos recebidos / Seus recursos -> Recursos recibidos / Tus recursos
+    Explorar rivais -> Explorar rivales
+    Cada tropa soma 10 × ataque + 5 × defesa + vida. A defesa soma também as muralhas,
+    torres e outras estruturas de defesa. Só contam tropas da raça da vila, soltas ou
+    abrigadas; trabalhadores e curandeiros não participam. A maior força vence; em empate,
+    a defesa vence.
+        -> Cada tropa suma 10 × ataque + 5 × defensa + vida. La defensa también suma las
+           murallas, torres y otras estructuras defensivas. Solo cuentan las tropas de la
+           raza de la aldea, sueltas o refugiadas; trabajadores y curanderos no participan.
+           Gana la fuerza mayor; en caso de empate, gana la defensa.
+
+    Mensajes:
+    Esta vila está protegida durante o tutorial. -> Esta aldea está protegida durante el tutorial.
+    Esta vila está fora da sua faixa de nível. -> Esta aldea está fuera de tu rango de nivel.
+    Seu exército precisa aguardar entre os ataques. -> Tu ejército tiene que esperar entre ataques.
+    Esta vila está protegida após um saque. -> Esta aldea está protegida después de un saqueo.
+    Você já atacou esta vila nas últimas 6 horas. -> Ya atacaste esta aldea en las últimas 6 horas.
+    Sua conta não está habilitada para participar dos saques. -> Tu cuenta no está habilitada para participar en los saqueos.
+    O saque só está disponível entre contas aprovadas com vilas próprias.
+        -> El saqueo solo está disponible entre cuentas aprobadas con aldea propia.
+    Você não pode atacar sua própria vila. -> No puedes atacar tu propia aldea.
+    Solicitação de saque inválida. Atualize a página e tente novamente.
+        -> Solicitud de saqueo inválida. Actualiza la página e intenta de nuevo.
+    A solicitação de ataque expirou ou é inválida. Volte à lista de rivais e tente novamente.
+        -> La solicitud de ataque venció o no es válida. Vuelve a la lista de rivales e intenta de nuevo.
+    A solicitação de ataque não pertence à sua vila ou a este rival.
+        -> La solicitud de ataque no corresponde a tu aldea o a este rival.
+    Esta solicitação já foi usada para outra vila. -> Esta solicitud ya se usó para otra aldea.
+    Os recursos da vila estão inválidos; o saque foi cancelado.
+        -> Los recursos de la aldea no son válidos; se canceló el saqueo.
+    A transferência do saque aguarda recuperação. -> La transferencia del saqueo está esperando recuperarse.
+    Não foi possível finalizar o saque agora. A transferência será recuperada antes da próxima ação; atualize a página em instantes.
+        -> No se pudo terminar el saqueo ahora. La transferencia se recuperará antes de la próxima acción; actualiza la página en unos momentos.
+
+8.8 TESORO (/treasury)
+    Dinheiro gratuito para usar no jogo. -> Dinero gratis para usar en el juego.
+    Saldo de dinheiro -> Saldo de dinero
+    Bônus inicial / Resgate único -> Bono inicial / Cobro único
+    Resgatar bônus -> Cobrar bono
+    Recompensa diária / A cada 24 horas -> Recompensa diaria / Cada 24 horas
+    Resgatar recompensa -> Cobrar recompensa
+    Já resgatada -> Ya cobrada
+    Próximo resgate -> Próximo cobro
+    Atualizar -> Actualizar
+    Últimos resgates -> Últimos cobros
+    Nenhum resgate ainda. -> Todavía no hay cobros.
+    Sobre o dinheiro -> Sobre el dinero
+    Use no jogo para acelerar tarefas e fazer compras especiais. Reabra sua vila para carregar o saldo atualizado.
+        -> Úsalo en el juego para acelerar tareas y hacer compras especiales. Vuelve a abrir tu aldea para cargar el saldo actualizado.
+    É gratuito, diferente de ouro e não entra nos saques.
+        -> Es gratis, no es lo mismo que el oro y no se pierde en los saqueos.
+    A diária fica disponível 24 horas após cada resgate. Dias sem resgate não acumulam.
+        -> La diaria se habilita 24 horas después de cada cobro. Los días sin cobrar no se acumulan.
+
+    Mensajes:
+    Você recebeu N de dinheiro gratuito. Reabra a vila para usar o saldo.
+        -> Recibiste N de dinero gratis. Vuelve a abrir la aldea para usar el saldo.
+    Você já resgatou o bônus inicial desta vila. -> Ya cobraste el bono inicial de esta aldea.
+    O resgate diário fica disponível a cada 24 horas após o último resgate.
+        -> El cobro diario se habilita cada 24 horas después del último cobro.
+    Use parte do seu dinheiro antes de resgatar: o limite de saldo é 1.000.000.
+        -> Usa parte de tu dinero antes de cobrar: el saldo máximo es 1.000.000.
+    Escolha um resgate válido. -> Elige un cobro válido.
+    O saldo de dinheiro da vila está inválido. Contate o administrador.
+        -> El saldo de dinero de la aldea no es válido. Contacta al administrador.
+    Sua vila não foi encontrada. Entre novamente ou contate o administrador.
+        -> No se encontró tu aldea. Vuelve a entrar o contacta al administrador.
+    O resgate gratuito aguarda recuperação. -> El cobro gratuito está esperando recuperarse.
+    Não foi possível concluir o resgate agora. Atualize a página para recuperar a gravação antes de tentar novamente.
+        -> No se pudo completar el cobro ahora. Actualiza la página para recuperar lo guardado antes de intentar de nuevo.
+
+8.9 PANEL DE ADMINISTRACIÓN (solo lo ve el administrador)
+    Administração -> Administración
+    Aprovação de contas -> Aprobación de cuentas
+    Gerencie quem pode entrar no jogo. -> Administra quién puede entrar al juego.
+    Contas / Vilas / Jogador / Situação / Ações -> Cuentas / Aldeas / Jugador / Estado / Acciones
+    Conta administrativa -> Cuenta de administrador
+    Aprovar / Recusar / Suspender acesso -> Aprobar / Rechazar / Suspender acceso
+    Ver todas as contas / Filtrar contas -> Ver todas las cuentas / Filtrar cuentas
+    Gerenciar vilas / Gerenciar vila / Gerenciar contas -> Administrar aldeas / aldea / cuentas
+    Ajuste recursos e progresso das vilas dos jogadores. -> Ajusta los recursos y el progreso de las aldeas de los jugadores.
+    Vilas dos jogadores e seus recursos -> Aldeas de los jugadores y sus recursos
+    Vila / Ação -> Aldea / Acción
+    Save indisponível -> Partida guardada no disponible
+    Restaure o arquivo da vila para voltar a gerenciá-la. -> Restaura el archivo de la aldea para volver a administrarla.
+    Nenhuma vila disponível -> No hay aldeas disponibles
+    As vilas aparecem aqui quando o acesso de uma conta é aprovado.
+        -> Las aldeas aparecen aquí cuando se aprueba el acceso de una cuenta.
+    Os valores informados substituem os saldos e o progresso atuais.
+        -> Los valores ingresados reemplazan los saldos y el progreso actuales.
+    Voltar para as vilas -> Volver a las aldeas
+    Vila e progresso / Nome da vila / Nível / Tutorial -> Aldea y progreso / Nombre de la aldea / Nivel / Tutorial
+    Em andamento / Concluído -> En curso / Completado
+    Recursos / Dinheiro / Experiência -> Recursos / Dinero / Experiencia
+    Motivo da alteração -> Motivo del cambio
+    Fica registrado no histórico junto com os valores anteriores e novos.
+        -> Queda registrado en el historial junto con los valores anteriores y nuevos.
+    Salvar alterações -> Guardar cambios
+    Recarregar dados da vila -> Recargar datos de la aldea
+    Os valores digitados estão visíveis para consulta. Recarregue os dados atuais antes de fazer uma nova alteração.
+        -> Los valores escritos se muestran para consultarlos. Recarga los datos actuales antes de hacer otro cambio.
+    Se o jogador estiver com a vila aberta, ele verá um aviso para atualizá-la.
+        -> Si el jugador tiene la aldea abierta, verá un aviso para actualizarla.
+    Histórico de alterações administrativas -> Historial de cambios administrativos
+    As alterações feitas nesta tela serão registradas aqui. -> Los cambios hechos en esta pantalla se registrarán aquí.
+
+    Mensajes:
+    Acesso da conta atualizado. -> Acceso de la cuenta actualizado.
+    Vila atualizada. O jogador verá um aviso para recarregar o jogo.
+        -> Aldea actualizada. El jugador verá un aviso para recargar el juego.
+    A vila já estava com esses valores. -> La aldea ya tenía esos valores.
+    A vila mudou desde que esta tela foi aberta. Confira os valores atuais e tente novamente.
+        -> La aldea cambió desde que abriste esta pantalla. Revisa los valores actuales e intenta de nuevo.
+    Informe o motivo da alteração, com 3 a 200 caracteres. -> Ingresa el motivo del cambio, de 3 a 200 caracteres.
+    Informe um número inteiro válido para (campo). -> Ingresa un número entero válido para (campo).
+    Selecione somente os campos permitidos para editar a vila. -> Elige solo los campos permitidos para editar la aldea.
+    Esta conta ainda não possui uma vila vinculada. -> Esta cuenta todavía no tiene una aldea vinculada.
+    Esta conta já possui uma vila vinculada. -> Esta cuenta ya tiene una aldea vinculada.
+    Esta vila já pertence a outra conta. -> Esta aldea ya pertenece a otra cuenta.
+    O save desta vila não foi encontrado. Restaure o arquivo de backup antes de editar.
+        -> No se encontró la partida guardada de esta aldea. Restaura la copia de seguridad antes de editar.
+    A alteração administrativa aguarda recuperação. -> El cambio administrativo está esperando recuperarse.
+    Não foi possível concluir a alteração agora. Atualize a página para recuperar a gravação antes de tentar novamente.
+        -> No se pudo completar el cambio ahora. Actualiza la página para recuperar lo guardado antes de intentar de nuevo.
+    Esta página é exclusiva dos administradores. -> Esta página es solo para administradores.
+    A conta de administrador não pode ser desativada. -> La cuenta de administrador no se puede desactivar.
+    A conta de administrador deve estar aprovada. -> La cuenta de administrador debe estar aprobada.
+    Conta não encontrada. / Vila não encontrada. -> Cuenta no encontrada. / Aldea no encontrada.
+    Filtro de contas inválido. / Ação inválida. -> Filtro de cuentas inválido. / Acción inválida.
+    O status da conta é inválido. -> El estado de la cuenta no es válido.
+
+8.10 COMANDOS DE CONSOLA Y ERRORES TÉCNICOS (casi nunca se ven jugando)
+    Senha (mínimo de 10 caracteres) -> Contraseña (mínimo 10 caracteres)
+    Cria um administrador aprovado, sem senha padrão. -> Crea un administrador aprobado, sin contraseña por defecto.
+    Vincula um save existente e ainda não associado a uma conta.
+        -> Vincula una partida guardada existente que todavía no tiene cuenta.
+    O save informado não existe. Use o PID do arquivo em saves/.
+        -> La partida guardada indicada no existe. Usa el PID del archivo en saves/.
+    A chave em instance/secret_key está inválida... -> La clave de instance/secret_key no es válida
+        (hay que restaurarla desde la copia de seguridad o configurar SECRET_KEY con 32 caracteres o más).
+    SOCIAL_EMPIRES_LANGUAGE deve ser um destes idiomas: pt-BR, es.
+        -> SOCIAL_EMPIRES_LANGUAGE debe ser uno de estos idiomas: pt-BR, es.
+    Origem da solicitação inválida. -> Origen de la solicitud inválido (protección de seguridad).
+    Pacote de comandos inválido. -> Paquete de comandos inválido (el juego envió datos mal formados).
+    A vila desta sessão não pertence à sua conta. Entre novamente.
+        -> La aldea de esta sesión no pertenece a tu cuenta. Vuelve a entrar.
+    A vila não possui um mapa principal válido. -> La aldea no tiene un mapa principal válido.
+    Mapa da vila inválido. -> Mapa de la aldea inválido.
+    Etapa do tutorial inválida. -> Paso del tutorial inválido.
+    Não foi possível recuperar ... vila ausente ou inválida.
+        -> No se pudo recuperar ...: la aldea falta o no es válida.
