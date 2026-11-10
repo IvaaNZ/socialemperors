@@ -138,17 +138,16 @@ defecto de las aldeas ya están traducidos (ver sección 9). Queda:
 Criterio: 100 % = hecho y comprobado; 0 % = sin empezar. Cuando algo no lo
 pude comprobar yo, lo aclaro.
 
-A. Dejarlo andando ........................................... 92 %
+A. Dejarlo andando .......................................... 100 %
    1. Clonar el repo en /e ................................. 100 %
    2. Entorno virtual + pip install ....................... 100 %
    3. Crear admin y anotar usuario/contraseña ............. 100 %
       (hay 1 cuenta de administrador; no puedo ver si anotaste la clave)
    4. Prender el servidor y entrar desde Chrome ........... 100 %
       (comprobado: el juego carga y se juega en Chrome)
-   5. Copiar archivos de arte faltantes (404) .............. 50 %
-      (búsqueda hecha: faltan 6 archivos que tampoco están en los
-      repositorios de GitHub; falta decidir si se revisa el paquete
-      0.04a de 1,2 GB o se cierra así. Ver sección 11)
+   5. Copiar archivos de arte faltantes (404) ............. 100 %
+      (cerrada: los 6 archivos que faltan no están en el acervo
+      original y no impiden jugar. Ver sección 11)
    6. Comprobar la versión (git log / describe) ........... 100 %
 
 B. Cuidar lo que se haga ...................................... 100 %
@@ -196,9 +195,8 @@ F. Identidad propia y publicación ............................... 0 %
   31. Ponerlo online ........................................ 0 %
   32. Consultar con abogado o contador ...................... 0 %
 
-TOTAL DEL PLAN (32 tareas, promedio simple) .................. 52 %
-(historial: 47 % -> 50 % (A4 y D17) -> 52 % (A5 de 0 a 50 %).
-Si A5 se cierra sin bajar el paquete, A queda en 100 % y el total en 53 %)
+TOTAL DEL PLAN (32 tareas, promedio simple) .................. 53 %
+(historial: 47 % -> 50 % (A4 y D17) -> 52 % (A5 a 50 %) -> 53 % (A5 cerrada))
 
 
 8. TEXTOS QUE SIGUEN EN PORTUGUÉS Y QUÉ SIGNIFICAN
@@ -327,7 +325,7 @@ Resultado:
   - Algunas imágenes que parecían faltar están en assets/images_new/en/;
     el juego arma esa ruta con el idioma, así que funcionan.
 
-Pendiente: decidir si se baja el paquete 0.04a (1,2 GB,
-social-emperors_0.04a.zip, Releases de AcidCaos/socialemperors) para
-confirmar. Lo más probable es que tampoco los traiga, porque se arma con
-el mismo repositorio.
+Decisión: tarea cerrada sin bajar el paquete 0.04a (1,2 GB,
+social-emperors_0.04a.zip, Releases de AcidCaos/socialemperors). Se arma
+con el mismo repositorio, que no trae estos archivos. Si algún día se
+consiguen, basta con copiarlos a assets/ con esos nombres.
