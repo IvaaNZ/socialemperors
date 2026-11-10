@@ -689,7 +689,7 @@ def get_player_info_response():
         elif user in (Constant.NEIGHBOUR_ARTHUR_GUINEVERE_1, Constant.NEIGHBOUR_ARTHUR_GUINEVERE_2, Constant.NEIGHBOUR_ARTHUR_GUINEVERE_3):
             return (copy.deepcopy(get_neighbor_info(user, map if map is not None else 0)), 200)
         elif user.startswith("100000"):
-            return get_quest_map(user)
+            return get_quest_map(user, GAME_LANGUAGE)
         else:
             from sessions import neighbor_session
             if neighbor_session(user) is None:

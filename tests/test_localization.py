@@ -111,6 +111,15 @@ class LocalizationTests(unittest.TestCase):
         self.assertEqual({entry['id']: entry['name'] for entry in entries}[1548], 'POPUP_STORAGE_USE')
         self.assertEqual(len(entries), len({entry['id'] for entry in entries}), 'text ids must stay unique')
 
+    def test_quest_battle_names_are_translated_without_changing_the_files(self):
+        from quests import get_quest_map
+        quest, status = get_quest_map('100000020', 'es')
+        self.assertEqual(status, 200)
+        self.assertEqual(quest['playerInfo']['name'], 'Aventura Troll')
+        self.assertIn('Aventura', [game_map.get('n') for game_map in quest['privateState']['maps']])
+        original, _ = get_quest_map('100000020')
+        self.assertEqual(original['playerInfo']['name'], 'Troll Quest')
+
 
 if __name__ == '__main__':
     unittest.main()

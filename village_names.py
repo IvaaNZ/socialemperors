@@ -15,6 +15,8 @@ MIN_VILLAGE_NAME_LENGTH = 2
 MAX_VILLAGE_NAME_LENGTH = 32
 DEFAULT_VILLAGE_NAME = 'Meu Império'
 LEGACY_DEFAULT_VILLAGE_NAMES = frozenset(('My Empire', 'My empire'))
+# Default labels a save may keep from another server language (pt-BR and es).
+TRANSLATED_DEFAULT_VILLAGE_NAMES = frozenset(('Meu Império', 'Mi Imperio'))
 
 
 class VillageNameError(ValueError):
@@ -96,14 +98,15 @@ def rename_village(userid, value, map_index=None):
 
 
 def normalize_legacy_village_name(userid):
-    """Translate only the exact old default label of an owned home village.
+    """Translate only an exact default label of an owned home village.
 
     Custom names, secondary islands, and the player's name are preserved.
     The caller must hold the same lock used for every game mutation.
     """
     village = sessions.session(userid)
     names, index = _map_name_location(village)
-    if names[index] not in LEGACY_DEFAULT_VILLAGE_NAMES:
+    default_name = translate(DEFAULT_VILLAGE_NAME)
+    if names[index] == default_name or names[index] not in LEGACY_DEFAULT_VILLAGE_NAMES | TRANSLATED_DEFAULT_VILLAGE_NAMES:
         return False
-    rename_village(userid, translate(DEFAULT_VILLAGE_NAME))
+    rename_village(userid, default_name)
     return True

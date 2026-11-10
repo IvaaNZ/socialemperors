@@ -78,6 +78,24 @@ class VillageNameTests(unittest.TestCase):
         self.assertEqual(self.village['playerInfo']['map_names'][0], 'My Empire dos Dragões')
         self.assertEqual(self.village['playerInfo']['name'], 'Jogador original')
 
+    def test_default_name_saved_in_another_language_follows_the_server_language(self):
+        import portal_i18n
+        self.addCleanup(portal_i18n.set_portal_language, portal_i18n.portal_language())
+        portal_i18n.set_portal_language('es')
+        self.village['playerInfo']['map_names'][0] = 'Meu Império'
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertTrue(normalize_legacy_village_name('own-village'))
+        self.assertEqual(self.village['playerInfo']['map_names'], ['Mi Imperio', 'Ilha distante'])
+        with patch.object(sessions, 'save_session') as writer:
+            self.assertFalse(normalize_legacy_village_name('own-village'))
+            writer.assert_not_called()
+        portal_i18n.set_portal_language('pt-BR')
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertTrue(normalize_legacy_village_name('own-village'))
+        self.assertEqual(self.village['playerInfo']['map_names'][0], 'Meu Império')
+        self.village['playerInfo']['map_names'][0] = 'Mi Imperio del Sur'
+        self.assertFalse(normalize_legacy_village_name('own-village'))
+
     def test_unicode_validation_rejects_markup_controls_and_excess_length(self):
         self.assertEqual(validate_village_name(' Sa\u0303o Joa\u0303o '), 'São João')
         self.assertEqual(validate_village_name('Á' * MAX_VILLAGE_NAME_LENGTH), 'Á' * MAX_VILLAGE_NAME_LENGTH)

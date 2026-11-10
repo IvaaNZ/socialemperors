@@ -409,5 +409,15 @@
   "hours": "horas",
   "minutes": "minutos",
   "seconds": "segundos",
-  "You don't have enough cash to buy potions.": "No tienes suficiente dinero para comprar pociones."
+  "You don't have enough cash to buy potions.": "No tienes suficiente dinero para comprar pociones.",
+  "Quest": "Aventura",
+  "Troll Quest": "Aventura Troll",
+  "Desert Quest": "Aventura del Desierto",
+  "Arctic Quest": "Aventura Ártica",
+  "Human Quest": "Aventura Humana",
+  "Mineral Quest": "Aventura Mineral",
+  "Hero Quest": "Aventura de los Héroes",
+  "Rock Quest": "Aventura de la Roca",
+  "Boss": "Jefe",
+  "Emperor": "Emperador"
 }
