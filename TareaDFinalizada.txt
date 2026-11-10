@@ -163,14 +163,15 @@ C. Entender el repo ........................................... 100 %
   13. GUIA_AGREGAR_ITEMS.md ............................... 100 %
   14. Comparar lo que trae el repo con lo planeado ........ 100 %
 
-D. Español .................................................... 70 %
+D. Español .................................................... 73 %
   15. Elegir español neutro o rioplatense ................. 100 %
   16. Traducir los catálogos .............................. 100 %
       (juego y portal web; ver secciones 1 y 9)
-  17. Revisar jugando los textos en inglés o mezclados ..... 80 %
+  17. Revisar jugando los textos en inglés o mezclados ..... 90 %
       (revisados Construir, Almacén, Noticias, hechizos, bono del lunes,
-      mapa del mundo, aventuras y una batalla. Ver sección 12.
-      Falta: torneos y supervivencia, y las imágenes con texto en inglés)
+      mapa del mundo, aventuras y una batalla; rehechas en español las 15
+      imágenes más visibles. Ver sección 12. Comprobado por el usuario en
+      su servidor. Falta: torneos y supervivencia)
   18. Selector de idioma en el login (opcional) ............. 0 %
       (el código ya admite varios idiomas; falta el selector por cuenta)
 
@@ -196,7 +197,8 @@ F. Identidad propia y publicación ............................... 0 %
   32. Consultar con abogado o contador ...................... 0 %
 
 TOTAL DEL PLAN (32 tareas, promedio simple) .................. 54 %
-(historial: 47 % -> 50 % -> 52 % -> 53 % (A5 cerrada) -> 54 % (D17 a 80 %))
+(historial: 47 % -> 50 % -> 52 % -> 53 % (A5 cerrada) -> 54 % (D17 a 80 %)
+-> 54 % (D17 a 90 %; el promedio redondeado no cambia))
 
 
 8. TEXTOS QUE SIGUEN EN PORTUGUÉS Y QUÉ SIGNIFICAN
