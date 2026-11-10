@@ -1,0 +1,159 @@
+PUNTO C - Entender el repo antes de tocarlo
+Repo: E:\socialemperors - rama main - 09/11/2026
+==========================================================
+
+11. TRADUCCIÓN AL PORTUGUÉS: CÓMO FUNCIONA Y SI ES GLOBAL O POR JUGADOR
+-----------------------------------------------------------------------
+Se traduce por tres caminos, siempre en el servidor y sin modificar los originales:
+
+a) Config del juego (textos de datos)
+   - localization.py: load_catalog() une los JSON de config/locales/pt-BR-*.json
+     (core, interface, extended, collections, missions, auxiliary, items).
+     Son diccionarios "texto original en inglés" -> "texto en pt-BR".
+   - localize_game_config() solo reemplaza los campos visibles que figuran en
+     DISPLAY_FIELDS (name, title, description, text...). IDs, img_name, precios
+     y reglas quedan iguales. Si falta una traducción, se muestra el inglés.
+   - get_game_config.py: la versión pt-BR se calcula una vez y se cachea
+     (lru_cache). El motor del servidor sigue usando el config en inglés.
+
+b) SWF del cliente (textos incrustados en el Flash)
+   - swf_localization.py: recorre los tags del SWF y traduce DefineEditText,
+     DefineText/DefineText2 (glifos estáticos, con swf_static_text.py) y
+     sprites anidados. Además usa pt-BR-swf.json y pt-BR-static.json.
+   - swf_bitmap_art.py: reemplaza cuatro imágenes de la interfaz que tenían
+     texto en inglés (config/locales/artwork/, con checksums).
+   - server.py, portuguese_game_movie(): localize_swf -> patch_private_economy
+     -> patch_tutorial, en memoria y cacheado. El SWF original en assets/flash
+     no se modifica.
+
+c) Portal web (login, admin, Rivais, Tesouro): las plantillas HTML ya están
+   escritas en portugués.
+
+¿GLOBAL O POR JUGADOR? GLOBAL.
+   - get_game_config.php lee el parámetro "language", pero lo ignora y
+     siempre devuelve get_game_config('pt-BR').
+   - Hay un solo SWF traducido y cacheado para todos.
+   - No existe una preferencia de idioma por cuenta. Para que fuera por jugador
+     habría que guardar el idioma en la cuenta, usar el parámetro "language",
+     cachear un SWF por idioma y tener catálogos para cada idioma
+     (normalize_locale hoy solo distingue pt-BR de en).
+
+
+12. CÓMO SE RESUELVE UN ATAQUE Y QUÉ "IA" SE PUEDE MEJORAR
+----------------------------------------------------------
+Hay dos tipos de combate distintos:
+
+A) Saqueo entre jugadores (pantalla /rivals): TODO EN EL SERVIDOR (pvp.py)
+   - El SWF no participa: no hay animación. Es un cálculo sobre los saves.
+   - _public_village(): para la vila principal, suma el poder de cada unidad
+     con la raza de la vila, attack>0, life>0 y sin los grupos worker/healer,
+     incluidas las refugiadas en edificios:
+        poder = 10*attack + 5*defense + life
+     Defensa de la vila = poder de sus tropas + poder de los edificios de
+     category_id 2 (torres, murallas, castillos, refugios).
+   - raid(): valida la elegibilidad (cuentas aprobadas, tutorial completo,
+     no atacarse a sí mismo), los tiempos de espera (15 min entre ataques,
+     6 h por rival, 60 min de protección) y la diferencia de nivel.
+     ganó = ataque_atacante > defensa_defensor (el empate favorece al defensor).
+     Si gana, el atacante se lleva el 20% de oro, madera, comida y piedra
+     (el dinheiro nunca). Las tropas no mueren.
+   - Es idempotente (request_id) y usa un journal SQLite (instance/raids.sqlite3)
+     para recuperarse si se corta a mitad de la escritura.
+   - La vila abierta consulta cambios cada 15 s, se pausa y ofrece "Atualizar".
+
+B) Batallas dentro del juego (vecinos, misiones/quests, Arthur, jefes):
+   SE CORREN EN EL SWF
+   - El movimiento, la IA enemiga, el alcance, los disparos y el daño son
+     ActionScript del cliente original, ejecutado por Ruffle.
+   - El servidor solo recibe el resultado mediante comandos (command.py):
+     kill (quita una unidad del mapa y da XP), end_quest (oro/XP ganados que
+     informa el cliente), win_bonus (oro/dinero/héroe que informa el cliente),
+     set_strategy (guarda la estrategia defensiva elegida).
+   - El servidor confía en esos valores, por eso el README advierte sobre
+     trampas.
+
+Qué se puede mejorar:
+   - En el servidor (pvp.py, cambios baratos y seguros):
+     * La estrategia defensiva (privateState.strategy, ids 7-10) se guarda
+       pero no se usa en el PvP; podría ponderar ataque y defensa.
+     * Hoy gana siempre el número más grande. Se podría agregar algo de
+       variabilidad acotada, rendimientos decrecientes o un "ratio" de poder
+       para que no sea todo o nada.
+     * Ventajas por tipo (arqueros/infantería/caballería/voladores contra
+       torres y muros), usando subcategory_id, flying y attack_range, que hoy
+       se ignoran.
+     * Bajas: hoy las tropas no mueren ni se desgastan. Se podrían aplicar
+       bajas parciales o tiempos de recuperación, usando el graveyard que
+       existe en el config (el comando sell tiene un TODO para eso).
+     * Un saqueo proporcional al margen de victoria en lugar de un 20% fijo.
+     * Defensa simulada por rondas en lugar de una suma estática.
+   - Validación antitrampas: end_quest y win_bonus aceptan oro, XP y héroes del
+     cliente sin verificarlos. Habría que validarlos contra el config y la
+     misión. Es la mejora más importante si el juego va a ser competitivo.
+   - La IA de las batallas del SWF solo se puede cambiar parcheando el bytecode
+     ActionScript, como ya hacen swf_tutorial.py y swf_private_economy.py.
+     Es costoso y frágil; no lo recomiendo salvo para casos puntuales.
+   - Hay pendientes en command.py: questsRank, questTimes y collectables.
+
+
+13. GUÍA PARA AGREGAR EDIFICIOS Y UNIDADES
+------------------------------------------
+Creada en GUIA_AGREGAR_ITEMS.md (raíz del repo). Resumen:
+   - Los ítems se agregan con JSON Patch en mods/<nombre>.json (activado en
+     mods/mods.txt) o en config/patch/*.json. No se edita el JSON base.
+   - Conviene copiar un ítem parecido. Todos los valores son strings.
+     El id y el subcat_functional deben ser únicos.
+   - Los gráficos son assets/buildingsprites/<img_name>.swf y
+     assets/buildingthumbs/<img_name>.jpg (lo más simple es reutilizar uno).
+   - La traducción va en config/locales/pt-BR-items.json; si falta, falla
+     test_localization.
+   - Las stats influyen directamente en el PvP (fórmula del punto 12).
+   - tools/make_se_unit_patch.py sirve para crear unidades en lote.
+   - Después hay que reiniciar el servidor, recargar con Ctrl+F5 y correr
+     los tests.
+
+
+14. QUÉ TRAE EL REPO Y QUÉ NO, RESPECTO DE LO PLANEADO
+------------------------------------------------------
+Aclaración: en esta sesión no hay un plan previo mío. Comparo contra el plan
+documentado en el repo (PRODUCT.md, DESIGN.md y README).
+
+YA ESTÁ IMPLEMENTADO (coincide con el plan):
+   [x] Juego en el navegador con Ruffle 0.7.1 auto-hospedado, sin Flash.
+   [x] Registro + aprobación por admin + vila exclusiva por cuenta,
+       suspensión, CSRF, contraseñas hasheadas y límite de intentos de login.
+   [x] Panel de admin de vilas (recursos, dinheiro, nivel, tutorial) con
+       motivo obligatorio, historial y control de concurrencia.
+   [x] Nombre de vila editable (2 a 32 caracteres).
+   [x] Rivais: combate automático en el servidor, 20% de saqueo, cooldowns,
+       protección, ranking e historial; rediseño minimalista.
+   [x] Tesouro: bono inicial de 500 y diario de 100 configurables, sin pagos;
+       botón "Dinheiro" del SWF redirigido; rediseño minimalista.
+   [x] Todo en pt-BR (config + SWF + 4 artes) y el visual original preservado.
+   [x] Tutorial con reanudación y arreglo de las cosechas automáticas al cargar.
+   [x] Journals de recuperación ante fallos de escritura.
+   [x] Fix de assets detrás de HTTPS (último commit).
+   [x] 154 tests automatizados (pasan: "Ran 154 tests ... OK").
+
+NO ESTÁ / QUEDA PENDIENTE:
+   [ ] Validación de la economía en el servidor: compras, cosechas, bonos,
+       misiones y XP siguen confiando en el cliente. No apto para competencia
+       pública.
+   [ ] Idioma por jugador (hoy es global en pt-BR).
+   [ ] Batalla PvP animada: el saqueo es una fórmula, sin bajas, estrategia ni
+       ventajas por tipo de unidad.
+   [ ] Límite de intentos en el registro (hay que hacerlo en el proxy).
+   [ ] Archivos de despliegue: no hay WSGI, systemd ni Dockerfile versionados.
+       El README menciona "systemctl restart socialempires", pero el .service
+       no está en el repo. requirements.txt solo trae Flask, jsonpatch y
+       Werkzeug (falta un servidor WSGI).
+   [ ] Arte HD completo (las miniaturas siguen en 90x90).
+   [ ] Reescritura nativa en HTML5 (descartada como objetivo de largo plazo).
+   [ ] Asset faltante: fx/p.miniFireball2.swf (404).
+   [ ] TODOs en command.py: graveyard al vender/matar, questsRank/questTimes,
+       add_collectable.
+   [ ] Sin validar: todas las misiones, unidades, efectos y navegadores;
+       el clic del botón Dinheiro dentro del SWF no se verificó de forma
+       automatizada.
+   [ ] Sin definir en PRODUCT.md: cantidad de jugadores, hosting definitivo y
+       dispositivos prioritarios.
