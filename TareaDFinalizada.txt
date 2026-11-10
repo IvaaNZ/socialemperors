@@ -134,3 +134,63 @@ GUIA_AGREGAR_ITEMS.md
   c) Si se quiere idioma por jugador (punto 18): guardar el idioma en la
     cuenta, usar el parámetro "language" que el cliente ya envía y preparar
     un SWF traducido por idioma (el código ya los cachea por idioma).
+
+
+7. TAREAS Y PORCENTAJE DE AVANCE (según Tareas.txt, al 09/11/2026)
+-----------------------------------------------------------------
+Criterio: 100 % = hecho y comprobado; 0 % = sin empezar. Cuando algo no lo
+pude comprobar yo, lo aclaro.
+
+A. Dejarlo andando ........................................... 75 %
+   1. Clonar el repo en /e ................................. 100 %
+   2. Entorno virtual + pip install ....................... 100 %
+   3. Crear admin y anotar usuario/contraseña ............. 100 %
+      (hay 1 cuenta de administrador; no puedo ver si anotaste la clave)
+   4. Prender el servidor y entrar desde Chrome ............ 50 %
+      (las bases de datos existen; no comprobé que hayas entrado al juego)
+   5. Copiar archivos de arte faltantes (404) ............... 0 %
+      (sigue faltando fx/p.miniFireball2.swf)
+   6. Comprobar la versión (git log / describe) ........... 100 %
+
+B. Cuidar lo que se haga ...................................... 100 %
+   7. Rama propia mi-servidor ............................. 100 %
+   8. Fork en GitHub y subir el trabajo ................... 100 %
+      (el último commit, ce87118, todavía no está subido)
+   9. Commit después de cada etapa ........................ 100 %
+  10. Claude Code con contexto ............................ 100 %
+
+C. Entender el repo ........................................... 100 %
+  11. Explicar la traducción y si es global ............... 100 %
+  12. Explicar los ataques y la IA ........................ 100 %
+  13. GUIA_AGREGAR_ITEMS.md ............................... 100 %
+  14. Comparar lo que trae el repo con lo planeado ........ 100 %
+
+D. Español .................................................... 50 %
+  15. Elegir español neutro o rioplatense ................. 100 %
+  16. Traducir los catálogos .............................. 100 %
+  17. Revisar jugando los textos en inglés o mezclados ...... 0 %
+  18. Selector de idioma en el login (opcional) ............. 0 %
+      (el código ya admite varios idiomas; falta el selector por cuenta)
+
+E. Funciones de la lista ....................................... 5 %
+  19. Panel de admin más completo ......................... 50 %
+      (ya existían recursos y suspensión de cuentas; faltan estadísticas
+      de unidades y misiones)
+  20. Balance de unidades y misiones ........................ 0 %
+  21. Duelos PvP en vivo y ranked desde nivel 25 ............ 0 %
+  22. Clanes ................................................ 0 %
+  23. Casino ................................................ 0 %
+  24. Clima y ciclo día/noche ............................... 0 %
+  25. Editor de mundo ....................................... 0 %
+  26. Pase de temporada gratuito ............................ 0 %
+  27. Mejorar el HUD ........................................ 0 %
+  28. Mejorar la IA de combate .............................. 0 %
+      (solo está el análisis del punto 12)
+
+F. Identidad propia y publicación ............................... 0 %
+  29. Reemplazar arte, música y nombres ..................... 0 %
+  30. Decidir si habrá dos servidores ....................... 0 %
+  31. Ponerlo online ........................................ 0 %
+  32. Consultar con abogado o contador ...................... 0 %
+
+TOTAL DEL PLAN (32 tareas, promedio simple) .................. 47 %
