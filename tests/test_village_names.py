@@ -96,6 +96,21 @@ class VillageNameTests(unittest.TestCase):
         self.village['playerInfo']['map_names'][0] = 'Mi Imperio del Sur'
         self.assertFalse(normalize_legacy_village_name('own-village'))
 
+    def test_default_player_name_follows_the_server_language_but_custom_names_stay(self):
+        import portal_i18n
+        self.addCleanup(portal_i18n.set_portal_language, portal_i18n.portal_language())
+        portal_i18n.set_portal_language('es')
+        self.village['playerInfo']['map_names'][0] = 'Ciudad del Sol'
+        self.village['playerInfo']['name'] = 'Imperador'
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertTrue(normalize_legacy_village_name('own-village'))
+        self.assertEqual(self.village['playerInfo']['name'], 'Emperador')
+        self.assertEqual(json.loads(self.path.read_text(encoding='utf-8'))['playerInfo']['name'], 'Emperador')
+        self.assertEqual(self.village['playerInfo']['map_names'][0], 'Ciudad del Sol')
+        self.village['playerInfo']['name'] = 'Jogador original'
+        self.assertFalse(normalize_legacy_village_name('own-village'))
+        self.assertEqual(self.village['playerInfo']['name'], 'Jogador original')
+
     def test_unicode_validation_rejects_markup_controls_and_excess_length(self):
         self.assertEqual(validate_village_name(' Sa\u0303o Joa\u0303o '), 'São João')
         self.assertEqual(validate_village_name('Á' * MAX_VILLAGE_NAME_LENGTH), 'Á' * MAX_VILLAGE_NAME_LENGTH)

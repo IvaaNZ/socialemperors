@@ -17,6 +17,9 @@ DEFAULT_VILLAGE_NAME = 'Meu Império'
 LEGACY_DEFAULT_VILLAGE_NAMES = frozenset(('My Empire', 'My empire'))
 # Default labels a save may keep from another server language (pt-BR and es).
 TRANSLATED_DEFAULT_VILLAGE_NAMES = frozenset(('Meu Império', 'Mi Imperio'))
+# villages/initial.json names every new player "Imperador".
+DEFAULT_PLAYER_NAME = 'Imperador'
+DEFAULT_PLAYER_NAMES = frozenset(('Imperador', 'Emperador', 'Emperor'))
 
 
 class VillageNameError(ValueError):
@@ -98,15 +101,24 @@ def rename_village(userid, value, map_index=None):
 
 
 def normalize_legacy_village_name(userid):
-    """Translate only an exact default label of an owned home village.
+    """Translate only exact default labels of an owned home village.
 
-    Custom names, secondary islands, and the player's name are preserved.
-    The caller must hold the same lock used for every game mutation.
+    The home map name and the player name follow the server language while
+    they keep a default from the template. Custom names and secondary islands
+    are preserved. The caller must hold the same lock used for every game mutation.
     """
     village = sessions.session(userid)
     names, index = _map_name_location(village)
+    changed = False
+    player = village.get('playerInfo', {})
+    default_player = translate(DEFAULT_PLAYER_NAME)
+    if player.get('name') in DEFAULT_PLAYER_NAMES and player.get('name') != default_player:
+        player['name'] = default_player
+        changed = True
     default_name = translate(DEFAULT_VILLAGE_NAME)
-    if names[index] == default_name or names[index] not in LEGACY_DEFAULT_VILLAGE_NAMES | TRANSLATED_DEFAULT_VILLAGE_NAMES:
-        return False
-    rename_village(userid, default_name)
-    return True
+    if names[index] != default_name and names[index] in LEGACY_DEFAULT_VILLAGE_NAMES | TRANSLATED_DEFAULT_VILLAGE_NAMES:
+        rename_village(userid, default_name)
+        return True
+    if changed:
+        sessions.save_session(userid)
+    return changed
