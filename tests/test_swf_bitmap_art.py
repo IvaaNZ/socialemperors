@@ -76,6 +76,18 @@ class SwfBitmapArtTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, 'premultiplied ARGB'):
                     load_bitmap_art(220)
 
+    def test_spanish_buttons_have_their_own_art_and_share_identical_words(self):
+        for character_id in (220, 3967):
+            with self.subTest(character_id=character_id):
+                spanish = load_bitmap_art(character_id, 'es')
+                self.assertNotEqual(spanish, load_bitmap_art(character_id, 'pt-BR'))
+                width, height = BITMAP_RENDER_DIMENSIONS[character_id]
+                self.assertEqual(len(zlib.decompress(spanish)), width * height * 4)
+        # "Construir" and "ALIADO" are the same words in Spanish.
+        for character_id in (31, 3948):
+            with self.subTest(character_id=character_id):
+                self.assertEqual(load_bitmap_art(character_id, 'es'), load_bitmap_art(character_id, 'pt-BR'))
+
 
 if __name__ == '__main__':
     unittest.main()

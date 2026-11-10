@@ -163,14 +163,14 @@ C. Entender el repo ........................................... 100 %
   13. GUIA_AGREGAR_ITEMS.md ............................... 100 %
   14. Comparar lo que trae el repo con lo planeado ........ 100 %
 
-D. Español .................................................... 63 %
+D. Español .................................................... 70 %
   15. Elegir español neutro o rioplatense ................. 100 %
   16. Traducir los catálogos .............................. 100 %
       (juego y portal web; ver secciones 1 y 9)
-  17. Revisar jugando los textos en inglés o mezclados ..... 50 %
-      (revisados Construir, Almacén y Noticias en el navegador; se
-      arreglaron botones vacíos, textos cortados y 25 textos faltantes.
-      Falta recorrer el resto: batallas, misiones, aventuras, torneos)
+  17. Revisar jugando los textos en inglés o mezclados ..... 80 %
+      (revisados Construir, Almacén, Noticias, hechizos, bono del lunes,
+      mapa del mundo, aventuras y una batalla. Ver sección 12.
+      Falta: torneos y supervivencia, y las imágenes con texto en inglés)
   18. Selector de idioma en el login (opcional) ............. 0 %
       (el código ya admite varios idiomas; falta el selector por cuenta)
 
@@ -195,8 +195,8 @@ F. Identidad propia y publicación ............................... 0 %
   31. Ponerlo online ........................................ 0 %
   32. Consultar con abogado o contador ...................... 0 %
 
-TOTAL DEL PLAN (32 tareas, promedio simple) .................. 53 %
-(historial: 47 % -> 50 % (A4 y D17) -> 52 % (A5 a 50 %) -> 53 % (A5 cerrada))
+TOTAL DEL PLAN (32 tareas, promedio simple) .................. 54 %
+(historial: 47 % -> 50 % -> 52 % -> 53 % (A5 cerrada) -> 54 % (D17 a 80 %))
 
 
 8. TEXTOS QUE SIGUEN EN PORTUGUÉS Y QUÉ SIGNIFICAN
@@ -329,3 +329,37 @@ Decisión: tarea cerrada sin bajar el paquete 0.04a (1,2 GB,
 social-emperors_0.04a.zip, Releases de AcidCaos/socialemperors). Se arma
 con el mismo repositorio, que no trae estos archivos. Si algún día se
 consiguen, basta con copiarlos a assets/ con esos nombres.
+
+
+12. REVISIÓN JUGANDO (tarea D17), segunda parte
+-----------------------------------------------
+Recorrido en un servidor de prueba en español, con copias de la aldea:
+pantalla principal, Noticias, Capítulo 1, libro de hechizos, bono del
+lunes, mapa del mundo (ayuda, opciones, estrategia defensiva, resultados,
+cambio de isla), colección de unidades, panel de edificios, mapa de
+aventuras, inicio de aventura, batalla y resultado de la misión.
+
+Corregido:
+  - "Meu Império" -> "Mi Imperio": nombre por defecto guardado en la aldea.
+    Ahora sigue el idioma del servidor si no se cambió a mano.
+  - "Imperador" -> "Emperador": nombre por defecto del jugador (venía de
+    villages/initial.json).
+  - "Herramienta de área" se partía en el botón -> "Elegir área" (y las
+    misiones que la nombran).
+  - "CAMBIAR DE ISLA" se veía diminuto -> "MUDARSE".
+  - Nombres de aventuras en inglés ("Troll Quest", "Desert Quest"...) ->
+    se traducen al enviarlos ("Aventura Troll", "Aventura del Desierto"...).
+  - Botones dibujados en portugués: "Dinheiro" -> "Dinero" y "Adicionar
+    vizinhos" -> "Agregar vecinos" (imágenes nuevas hechas con
+    tools/make_es_artwork.py a partir de las de portugués).
+  - Revisión automática: ningún texto de los catálogos en español tiene
+    palabras en portugués.
+
+Sigue en inglés (son imágenes con el texto dibujado, también en el juego
+original): CAST SPELL, SPELLBOOK, MON DAY REWARD, HELP!, MY TOWN,
+Get More Cash, WORLD EXPLORER, BATTLE RESULTS, OPTIONS, GO!, ATTACKS
+SENT, ATTACKS RECEIVED, TRAIN, STORE, SHIP MAP 1, BATTLE REWARD,
+BATTLE MENU, ATTACKING y los consejos de las Noticias.
+
+Sin revisar: torneos y supervivencia (se entra desde edificios que la
+aldea no tiene).

@@ -1,4 +1,4 @@
-"""Load the Portuguese button images for the derived game movie.
+"""Load the translated button images for the derived game movie.
 
 The original SWF and every other bitmap remain intact. Two unexported textures
 use four times as many pixels on each axis, with matching shape matrices from
@@ -11,6 +11,7 @@ import struct
 import zlib
 
 from bundle import CONFIG_DIR
+from localization import normalize_locale
 from swf_hd_art import HD_BITMAP_IDS, HD_SCALE
 
 
@@ -22,10 +23,16 @@ BITMAP_RENDER_DIMENSIONS = {
 }
 
 
-def load_bitmap_art(character_id):
-    width, height = BITMAP_RENDER_DIMENSIONS[character_id]
+def artwork_path(character_id, language='pt-BR'):
+    """Packed artwork for a language, or the Portuguese one when the word is shared."""
     suffix = '-hd' if character_id in HD_BITMAP_IDS else ''
-    compressed = (ARTWORK_DIR / f'pt-BR-{character_id}{suffix}.argb.zlib').read_bytes()
+    localized = ARTWORK_DIR / f'{normalize_locale(language)}-{character_id}{suffix}.argb.zlib'
+    return localized if localized.exists() else ARTWORK_DIR / f'pt-BR-{character_id}{suffix}.argb.zlib'
+
+
+def load_bitmap_art(character_id, language='pt-BR'):
+    width, height = BITMAP_RENDER_DIMENSIONS[character_id]
+    compressed = artwork_path(character_id, language).read_bytes()
     try:
         pixels = zlib.decompress(compressed)
     except zlib.error as error:
@@ -39,7 +46,7 @@ def load_bitmap_art(character_id):
     return compressed
 
 
-def localize_bitmap_art(payload):
+def localize_bitmap_art(payload, language='pt-BR'):
     """Replace allowlisted textures and their validated dimensions."""
     character_id = struct.unpack_from('<H', payload)[0]
     if character_id not in BITMAP_DIMENSIONS:
@@ -48,4 +55,4 @@ def localize_bitmap_art(payload):
     if bitmap_format != 5 or (width, height) != BITMAP_DIMENSIONS[character_id]:
         raise ValueError(f'Unexpected original SWF bitmap layout for {character_id}')
     render_width, render_height = BITMAP_RENDER_DIMENSIONS[character_id]
-    return struct.pack('<HBHH', character_id, bitmap_format, render_width, render_height) + load_bitmap_art(character_id)
+    return struct.pack('<HBHH', character_id, bitmap_format, render_width, render_height) + load_bitmap_art(character_id, language)

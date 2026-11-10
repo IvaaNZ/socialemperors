@@ -100,5 +100,38 @@
     "packed": "pt-BR-220-hd.argb.zlib",
     "png_sha256": "38435c0199b958de75b35eddb88a2ba93a6f4dde9b6f43a2fbdbec210df0e1c8",
     "packed_sha256": "3450233898a31709066fa2301fe1e7a006f37ae04eb1e37469663fabd5199e8e"
+  },
+  {
+    "id": 220,
+    "width": 118,
+    "height": 33,
+    "text": "Dinero",
+    "editor": "tools/make_es_artwork.py (Pillow, Arial Bold over the pt-BR artwork)",
+    "png": "es-220.png",
+    "packed": "es-220.argb.zlib",
+    "png_sha256": "fd6a133511e468f1fad5df3ec793d02e3484720429e323f47044b5b2a0e5eca2",
+    "packed_sha256": "5667cea50393f41ecd09fe35582e483cc56ffc655531fa9fb57dd106557f56c6"
+  },
+  {
+    "id": 220,
+    "width": 472,
+    "height": 132,
+    "text": "Dinero",
+    "editor": "tools/make_es_artwork.py (Pillow, Arial Bold over the pt-BR artwork)",
+    "png": "es-220-hd.png",
+    "packed": "es-220-hd.argb.zlib",
+    "png_sha256": "765b8d7a3e72b8b85842fc8d196f6b2cc5dda836a0599009c20a5273fc9905d6",
+    "packed_sha256": "8772256a70b420c27b858a93fe76c332f881b7af8e8547b18c185d1488be41b4"
+  },
+  {
+    "id": 3967,
+    "width": 157,
+    "height": 59,
+    "text": "Agregar vecinos",
+    "editor": "tools/make_es_artwork.py (Pillow, Arial Bold over the pt-BR artwork)",
+    "png": "es-3967.png",
+    "packed": "es-3967.argb.zlib",
+    "png_sha256": "44eac9a26ec61b3a8714611fed99bfc00fe0b854bee250c624f3d5f7766f66f2",
+    "packed_sha256": "859012af70d1e4f614c68798f02642ef0b50a86b661fdb007fad51b06d860b59"
   }
 ]
