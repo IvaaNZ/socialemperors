@@ -259,3 +259,26 @@ README.md y tests/test_portal_i18n.py (nuevo).
 Pruebas: Ran 161 tests ... OK (5 nuevas). Además se abrieron en español
 todas las páginas (juego, nombre de la aldea, Rivales, Tesoro, admin,
 error 404) y ninguna mostró palabras en portugués.
+
+
+10. ARREGLO: BOTONES DEL JUEGO QUE NO SE VEÍAN (USAR, VENDER...)
+---------------------------------------------------------------
+Causa: algunos textos del SWF están en cuadros de ancho fijo que no
+permiten pasar a otra línea. La palabra traducida era más larga que la
+original y no entraba (ej.: el botón "USE" mide 42 px y "USAR" medía
+52 px). Pasaba igual en portugués.
+
+Arreglo (swf_localization.py): cuando un texto traducido no entra en su
+cuadro, el servidor achica la letra lo justo para que entre. Ejemplos:
+"USAR" pasa de tamaño 18 a 13 y "VENDER" de 18 a 17. Se ajustaron 139
+textos en español y 132 en portugués; ninguno queda fuera de su cuadro.
+Además, si a la fuente del cuadro le falta una letra, queda el texto
+original en vez de una palabra incompleta: el contador de tiempo dice
+"DIA" (su fuente no trae "Í") y "SEC" (no trae la letra "G").
+
+Pendiente: la pestaña "New"/"Nuevo" del menú Construir. Su nombre lo pone
+el juego mientras se ejecuta, no está en el archivo, así que este arreglo
+no la cubre. Hay que ver en el juego si falta la pestaña entera o solo el
+texto.
+
+Para verlo: reiniciar el servidor y recargar el juego con Ctrl+F5.

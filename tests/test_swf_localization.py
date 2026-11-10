@@ -8,7 +8,7 @@ import unittest
 
 from swf_localization import (
     decode_swf, edit_text_offset, encode_tag, iter_tags, localize_swf,
-    translate_edit_text,
+    translate_edit_text, _cstring_end,
 )
 
 
@@ -74,6 +74,26 @@ class SwfLocalizationTests(unittest.TestCase):
             '<p align="center"><font size="18">Avançar</font></p>',
         )
         self.assertEqual(translate_edit_text('Uncatalogued mod text', {}), 'Uncatalogued mod text')
+
+    def test_translated_buttons_shrink_to_fit_and_missing_glyphs_keep_source(self):
+        def labels(data):
+            found = {}
+            for code, payload in flattened_tags(data):
+                if code == 37 and edit_text_offset(payload) is not None:
+                    offset = edit_text_offset(payload)
+                    found[struct.unpack_from('<H', payload)[0]] = payload[offset:_cstring_end(payload, offset)].decode('utf-8')
+            return found
+
+        original = Path('assets/flash/SocialEmpires0926bsec.swf').read_bytes()
+        source = labels(original)
+        spanish = labels(localize_swf(original, language='es'))
+        # The storage USE button is 42 px wide; USAR at 18 pt would not fit.
+        self.assertIn('size="18"', source[3624])
+        self.assertIn('USAR', spanish[3624])
+        self.assertLess(int(re.search(r'size="(\d+)"', spanish[3624]).group(1)), 18)
+        # The countdown font has no G, so SEC stays instead of rendering "SE".
+        self.assertEqual(spanish[3614], source[3614])
+        self.assertIn('DIA', spanish[3611])
 
 
 if __name__ == '__main__':
