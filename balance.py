@@ -12,6 +12,9 @@ Decisions (Tareas.txt point 20):
       - the Orc Battering Ram and the Imperial Elf Catapult are siege units
         the config files under combat groups, so they get the siege rule.
   * Units bought with cash are left unchanged (the owner's decision).
+  * In-game stats: the Orc Battering Ram (14,000 gold) had attack 500 and
+    life 5,000, over three times the damage of 15,000-gold units; it now
+    has attack 150 and life 3,000, in battles and in raids alike.
 """
 
 MISSION_REWARD_TOP = 454      # Highest original reward (the last missions).
@@ -24,6 +27,11 @@ KAMIKAZE_ATTACK_WEIGHT = 1
 SIEGE_ATTACK_WEIGHT = 5
 SIEGE_LIKE_UNITS = frozenset({2074, 2012})  # Orc Battering Ram, Imperial Elf Catapult
 _BALANCED_CONFIGS = set()
+# unit id -> {field: (original value, balanced value)}; originals guard against
+# changing a different unit if the config ever changes.
+UNIT_CHANGES = {
+    2074: {'attack': (500, 150), 'life': (5000, 3000)},  # Orc Battering Ram
+}
 
 
 def _number(value, default=0):
@@ -67,6 +75,26 @@ def apply_mission_rewards(config):
             changed += 1
     _BALANCED_CONFIGS.add(id(config))
     return changed
+
+
+def apply_unit_changes(config):
+    """Change the listed unit stats in place, once; returns how many changed."""
+    if ('units', id(config)) in _BALANCED_CONFIGS:
+        return 0
+    changed = 0
+    for item in config.get('items', []):
+        changes = UNIT_CHANGES.get(_number(item.get('id'), -1)) if isinstance(item, dict) else None
+        for field, (original, balanced) in (changes or {}).items():
+            if _number(item.get(field)) != original:
+                raise ValueError(f"Unexpected {field} for unit {item.get('id')}: {item.get(field)!r}")
+            item[field] = balanced if isinstance(item[field], int) else str(balanced)
+            changed += 1
+    _BALANCED_CONFIGS.add(('units', id(config)))
+    return changed
+
+
+def apply_balance(config):
+    return apply_mission_rewards(config) + apply_unit_changes(config)
 
 
 def unit_groups(item):

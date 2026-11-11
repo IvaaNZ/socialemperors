@@ -59,7 +59,19 @@ class PvpPowerTests(unittest.TestCase):
         self.assertEqual(pvp_unit_power(get_item_from_id(521)), 355)    # Catapult, was 655
         self.assertEqual(pvp_unit_power(get_item_from_id(522)), 455)    # Cannon, was 855
         self.assertEqual(pvp_unit_power(get_item_from_id(2012)), 955)   # Imperial Elf Catapult, was 1605
-        self.assertEqual(pvp_unit_power(get_item_from_id(2074)), 7505)  # Orc Battering Ram, was 10005
+        self.assertEqual(pvp_unit_power(get_item_from_id(2074)), 3755)  # Orc Battering Ram, was 10005
+
+    def test_orc_battering_ram_is_lowered_in_the_game_too(self):
+        ram = get_item_from_id(2074)
+        self.assertEqual((int(ram['attack']), int(ram['life'])), (150, 3000))
+        spanish = next(item for item in get_game_config('es')['items'] if str(item['id']) == '2074')
+        self.assertEqual((int(spanish['attack']), int(spanish['life'])), (150, 3000))
+        config = {'items': [{'id': '2074', 'attack': '500', 'life': '5000'}]}
+        self.assertEqual(balance.apply_unit_changes(config), 2)
+        self.assertEqual(config['items'][0], {'id': '2074', 'attack': '150', 'life': '3000'})
+        self.assertEqual(balance.apply_unit_changes(config), 0)
+        with self.assertRaises(ValueError):
+            balance.apply_unit_changes({'items': [{'id': 2074, 'attack': 1, 'life': 5000}]})
 
     def test_raid_strength_uses_the_balanced_formula(self):
         import pvp

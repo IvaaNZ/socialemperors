@@ -175,13 +175,13 @@ D. Español ................................................... 100 %
   18. Selector de idioma en el login (opcional) ........... 100 %
       (cada cuenta guarda su idioma; ver sección 14)
 
-E. Funciones de la lista ...................................... 19 %
+E. Funciones de la lista ...................................... 20 %
   19. Panel de admin más completo ........................ 100 %
       (recursos, bloqueos de cuentas, estadísticas de unidades y de
       misiones; ver sección 15)
-  20. Balance de unidades y misiones ....................... 90 %
-      (hecho: fórmula PvP corregida y misiones escaladas; falta decidir
-      si se baja el Ariete orco también dentro del juego. Ver sección 16)
+  20. Balance de unidades y misiones ...................... 100 %
+      (fórmula PvP corregida, misiones escaladas y Ariete orco bajado en
+      el juego. Ver sección 16)
   21. Duelos PvP en vivo y ranked desde nivel 25 ............ 0 %
   22. Clanes ................................................ 0 %
   23. Casino ................................................ 0 %
@@ -198,10 +198,10 @@ F. Identidad propia y publicación ............................... 0 %
   31. Ponerlo online ........................................ 0 %
   32. Consultar con abogado o contador ...................... 0 %
 
-TOTAL DEL PLAN (32 tareas, promedio simple) .................. 62 %
+TOTAL DEL PLAN (32 tareas, promedio simple) .................. 63 %
 (historial: 47 % -> 50 % -> 52 % -> 53 % (A5 cerrada) -> 54 % (D17 a 80 %)
 -> 54 % (D17 a 90 %) -> 55 % (D17 a 100 %) -> 58 % (D18 hecho: bloque D al 100 %)
--> 59 % (E19 hecho) -> 62 % (E20 a 90 %))
+-> 59 % (E19 hecho) -> 62 % (E20 a 90 %) -> 63 % (E20 hecho))
 
 
 8. TEXTOS QUE SIGUEN EN PORTUGUÉS Y QUÉ SIGNIFICAN
@@ -508,6 +508,7 @@ Cambios (balance.py, con todos los números en un solo lugar):
     avance (misión 60: 200, misión 100: 590, misión 150: 1.610, la última:
     4.990 de oro). El juego muestra y el servidor paga el mismo monto.
 
-Pendiente de decidir: el Ariete orco (14.000 de oro) sigue siendo la unidad
-más fuerte del juego, también dentro de las batallas (ataque 500, vida
-5.000). Se puede bajar en el juego o dejarlo como está.
+  - Ariete orco (14.000 de oro): era la unidad más fuerte del juego, con
+    ataque 500 y vida 5.000 (más del triple de daño que las unidades de
+    15.000). Ahora tiene ataque 150 y vida 3.000, en las batallas del juego
+    y en los saqueos (fuerza en saqueos: 10.005 -> 3.755).
