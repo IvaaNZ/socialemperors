@@ -4,6 +4,7 @@ from sessions import session, save_session
 from get_game_config import get_game_config, get_level_from_xp, get_name_from_item_id, get_attribute_from_mission_id, get_xp_from_level, get_attribute_from_item_id, get_item_from_subcat_functional
 from constants import Constant
 from engine import apply_cost, apply_collect, apply_collect_xp, timestamp_now
+from monday_bonus import MondayBonusError, claim_monday_bonus
 from village_names import set_village_name
 from tutorial import record_tutorial_step
 
@@ -537,6 +538,12 @@ def do_command(USERID, cmd, args):
         # save["maps"]["lastQuestTimes"] [quest_id] = TODO min (... , duration_sec)
 
         print(f"Ended quest {quest_id}.")
+
+    elif cmd == Constant.CMD_COLLECT_MONDAY_BONUS:
+        try:
+            print("Monday bonus:", claim_monday_bonus(save, args, timestamp_now()))
+        except MondayBonusError as error:
+            print("Monday bonus rejected:", error)
 
     elif cmd == Constant.CMD_ADD_COLLECTABLE:
         collection_id = args[0]
