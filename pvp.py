@@ -19,6 +19,7 @@ import uuid
 from get_game_config import get_item_from_id
 from sessions import session, save_session
 import sessions as village_sessions
+from balance import pvp_unit_power
 from portal_i18n import translate
 
 
@@ -29,7 +30,8 @@ PAIR_COOLDOWN_SECONDS = 6 * 60 * 60
 RESOURCE_KEYS = ('coins', 'wood', 'food', 'stone')
 HISTORY_LIMIT = 20
 POWER_DESCRIPTION = (
-    'Cada tropa soma 10 × ataque + 5 × defesa + vida. A defesa soma também '
+    'Cada tropa soma 10 × ataque + 5 × defesa + vida; nos kamikazes o ataque '
+    'conta uma vez e nas máquinas de cerco, pela metade. A defesa soma também '
     'as muralhas, torres e outras estruturas de defesa. Só contam tropas '
     'da raça da vila, soltas ou abrigadas; trabalhadores e curandeiros não '
     'participam. A maior força vence; em empate, a defesa vence.'
@@ -92,7 +94,8 @@ def _item(item_id):
 
 
 def _power(item):
-    return 10 * _number(item.get('attack')) + 5 * _number(item.get('defense')) + _number(item.get('life'))
+    # 10 x attack + 5 x defense + life, with the kamikaze and siege fixes in balance.py.
+    return pvp_unit_power(item)
 
 
 def _combatant(item, race):

@@ -175,11 +175,13 @@ D. Español ................................................... 100 %
   18. Selector de idioma en el login (opcional) ........... 100 %
       (cada cuenta guarda su idioma; ver sección 14)
 
-E. Funciones de la lista ...................................... 10 %
+E. Funciones de la lista ...................................... 19 %
   19. Panel de admin más completo ........................ 100 %
       (recursos, bloqueos de cuentas, estadísticas de unidades y de
       misiones; ver sección 15)
-  20. Balance de unidades y misiones ........................ 0 %
+  20. Balance de unidades y misiones ....................... 90 %
+      (hecho: fórmula PvP corregida y misiones escaladas; falta decidir
+      si se baja el Ariete orco también dentro del juego. Ver sección 16)
   21. Duelos PvP en vivo y ranked desde nivel 25 ............ 0 %
   22. Clanes ................................................ 0 %
   23. Casino ................................................ 0 %
@@ -196,10 +198,10 @@ F. Identidad propia y publicación ............................... 0 %
   31. Ponerlo online ........................................ 0 %
   32. Consultar con abogado o contador ...................... 0 %
 
-TOTAL DEL PLAN (32 tareas, promedio simple) .................. 59 %
+TOTAL DEL PLAN (32 tareas, promedio simple) .................. 62 %
 (historial: 47 % -> 50 % -> 52 % -> 53 % (A5 cerrada) -> 54 % (D17 a 80 %)
 -> 54 % (D17 a 90 %) -> 55 % (D17 a 100 %) -> 58 % (D18 hecho: bloque D al 100 %)
--> 59 % (E19 hecho))
+-> 59 % (E19 hecho) -> 62 % (E20 a 90 %))
 
 
 8. TEXTOS QUE SIGUEN EN PORTUGUÉS Y QUÉ SIGNIFICAN
@@ -482,3 +484,30 @@ no cambia ninguna partida).
   - Los nombres salen en el idioma del administrador, y los números con
     el separador de cada idioma (1.000 / 1,000 en inglés; 1,5 / 1.5).
 Probado en un servidor de prueba con la copia de tu aldea y 3 imperios.
+
+
+16. BALANCE DE UNIDADES Y MISIONES (tarea E20)
+----------------------------------------------
+Análisis (771 unidades, 229 misiones):
+  - Las unidades que se compran con dinero cuestan 5-15 de dinero y tienen
+    una fuerza mediana de 2.655, contra 672 de las de oro. Por decisión del
+    dueño quedan igual.
+  - La fórmula de los saqueos (10 × ataque + 5 × defensa + vida) inflaba
+    las unidades con mucho ataque y poca vida: el Kamikaze (nivel 1, 400 de
+    oro) valía 5.205, más que las mejores tropas de nivel 8.
+  - Las misiones pagaban de 10 a 454 de oro, poco para los precios de las
+    unidades en los niveles altos (5.000 a 15.000).
+
+Cambios (balance.py, con todos los números en un solo lugar):
+  - Saqueos PvP: se mantiene la fórmula, con arreglos. En los kamikazes el
+    ataque cuenta una vez (Kamikaze 5.205 -> 705); en las máquinas de asedio
+    cuenta a la mitad (Catapulta 655 -> 355, Cañón 855 -> 455). El Ariete
+    orco y la Catapulta élfica imperial también cuentan como asedio. El
+    texto de las reglas en Rivales lo explica.
+  - Misiones: las primeras quedan igual y las siguientes suben con el
+    avance (misión 60: 200, misión 100: 590, misión 150: 1.610, la última:
+    4.990 de oro). El juego muestra y el servidor paga el mismo monto.
+
+Pendiente de decidir: el Ariete orco (14.000 de oro) sigue siendo la unidad
+más fuerte del juego, también dentro de las batallas (ataque 500, vida
+5.000). Se puede bajar en el juego o dejarlo como está.

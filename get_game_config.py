@@ -70,6 +70,9 @@ def patch_game_config():
 
 print (" [+] Applying config patches and mods...")
 patch_game_config()
+# Private-server balance (balance.py): mission rewards grow with progression.
+from balance import apply_mission_rewards  # noqa: E402
+apply_mission_rewards(__game_config)
 
 @lru_cache(maxsize=None)
 def _localized_game_config(locale: str) -> dict:
