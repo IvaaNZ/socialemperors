@@ -17,6 +17,7 @@ from portal_i18n import load_portal_catalog, set_portal_language, translate, tra
 _boot_directory = tempfile.TemporaryDirectory(prefix='socialemperors-tests-')
 with patch.dict(os.environ, {
     'SOCIAL_EMPIRES_DATA_DIR': _boot_directory.name,
+    'SOCIAL_EMPIRES_LANGUAGE': 'pt-BR',  # These tests cover the Portuguese texts.
     'SOCIAL_EMPIRES_SAVES_DIR': str(Path(_boot_directory.name) / 'saves'),
 }):
     with contextlib.redirect_stdout(io.StringIO()):

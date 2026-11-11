@@ -6,15 +6,14 @@ RESUMEN
 -------
 El juego ya puede funcionar en español neutro. El idioma sigue siendo GLOBAL
 (el mismo para todos los jugadores) y se elige al arrancar el servidor.
-Por defecto sigue en portugués, así que nada cambia si no se configura.
-
-Para jugar en español (Windows, PowerShell):
-    $env:SOCIAL_EMPIRES_LANGUAGE = "es"
-    .venv\Scripts\python server.py
-En Git Bash / Linux:
-    SOCIAL_EMPIRES_LANGUAGE=es .venv/Scripts/python server.py
+Por defecto arranca en español: alcanza con
+    .venv/Scripts/python server.py      (Git Bash / MSYS2)
+    .venv\Scripts\python server.py      (PowerShell)
+Para jugar en portugués:
+    SOCIAL_EMPIRES_LANGUAGE=pt-BR .venv/Scripts/python server.py
+    $env:SOCIAL_EMPIRES_LANGUAGE = "pt-BR"; .venv\Scripts\python server.py
 Luego recargar la pestaña del juego con Ctrl+F5.
-Valores aceptados: pt-BR (por defecto) o es. Cualquier otro valor frena el
+Valores aceptados: es (por defecto) o pt-BR. Cualquier otro valor frena el
 arranque con un mensaje de error claro.
 
 
@@ -73,7 +72,7 @@ swf_localization.py
   - load_swf_catalog(idioma) y localize_swf(..., language=...) aceptan el idioma.
 
 server.py
-  - Nueva variable de entorno SOCIAL_EMPIRES_LANGUAGE (pt-BR por defecto),
+  - Nueva variable de entorno SOCIAL_EMPIRES_LANGUAGE (es por defecto),
     validada al arrancar.
   - get_game_config.php y el SWF servido usan ese idioma.
   - portuguese_game_movie() pasó a llamarse localized_game_movie().

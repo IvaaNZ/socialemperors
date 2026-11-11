@@ -66,7 +66,7 @@ def language_setting(name, default):
     return value
 
 
-GAME_LANGUAGE = language_setting('SOCIAL_EMPIRES_LANGUAGE', 'pt-BR')
+GAME_LANGUAGE = language_setting('SOCIAL_EMPIRES_LANGUAGE', 'es')
 set_portal_language(GAME_LANGUAGE)
 app.jinja_env.globals['_'] = _
 

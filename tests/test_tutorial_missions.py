@@ -32,6 +32,7 @@ class TutorialMissionTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix='socialemperors-mission-api-') as directory:
             with patch.dict(os.environ, {
                 'SOCIAL_EMPIRES_DATA_DIR': directory,
+                'SOCIAL_EMPIRES_LANGUAGE': 'pt-BR',  # These tests cover the Portuguese texts.
                 'SOCIAL_EMPIRES_SAVES_DIR': str(Path(directory) / 'saves'),
             }), contextlib.redirect_stdout(io.StringIO()):
                 import server

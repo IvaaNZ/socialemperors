@@ -16,6 +16,7 @@ from auth import AccountStore
 _boot_directory = tempfile.TemporaryDirectory(prefix='socialemperors-tests-')
 with patch.dict(os.environ, {
     'SOCIAL_EMPIRES_DATA_DIR': _boot_directory.name,
+    'SOCIAL_EMPIRES_LANGUAGE': 'pt-BR',  # These tests cover the Portuguese texts.
     'SOCIAL_EMPIRES_SAVES_DIR': str(Path(_boot_directory.name) / 'saves'),
 }):
     with contextlib.redirect_stdout(io.StringIO()):
@@ -150,6 +151,18 @@ class AccessTests(unittest.TestCase):
                 self.assertEqual(configuration['eventsUrl'], prefix + '/village/events')
                 self.assertIn(f'src="{prefix}/js/game.js"', page.text)
                 self.assertNotIn('http://', configuration['baseUrl'])
+
+    def test_language_defaults_to_spanish_and_rejects_unknown_values(self):
+        with patch.dict(os.environ, {}, clear=False):
+            os.environ.pop('SOCIAL_EMPIRES_LANGUAGE', None)
+            self.assertEqual(server.language_setting('SOCIAL_EMPIRES_LANGUAGE', 'es'), 'es')
+            os.environ['SOCIAL_EMPIRES_LANGUAGE'] = 'pt-BR'
+            self.assertEqual(server.language_setting('SOCIAL_EMPIRES_LANGUAGE', 'es'), 'pt-BR')
+            os.environ['SOCIAL_EMPIRES_LANGUAGE'] = 'fr'
+            with self.assertRaises(RuntimeError):
+                server.language_setting('SOCIAL_EMPIRES_LANGUAGE', 'es')
+        source = Path(server.__file__).read_text(encoding='utf-8')
+        self.assertIn("GAME_LANGUAGE = language_setting('SOCIAL_EMPIRES_LANGUAGE', 'es')", source)
 
     def test_game_configuration_is_portuguese_with_bundled_font_language(self):
         self.create_player(status='approved')

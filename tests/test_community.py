@@ -17,6 +17,7 @@ from pvp import RaidService
 _boot_directory = tempfile.TemporaryDirectory(prefix='socialemperors-community-boot-')
 with patch.dict(os.environ, {
     'SOCIAL_EMPIRES_DATA_DIR': _boot_directory.name,
+    'SOCIAL_EMPIRES_LANGUAGE': 'pt-BR',  # These tests cover the Portuguese texts.
     'SOCIAL_EMPIRES_SAVES_DIR': str(Path(_boot_directory.name) / 'saves'),
 }), contextlib.redirect_stdout(io.StringIO()):
     import server
