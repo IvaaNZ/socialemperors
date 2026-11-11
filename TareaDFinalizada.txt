@@ -512,3 +512,23 @@ Cambios (balance.py, con todos los números en un solo lugar):
     ataque 500 y vida 5.000 (más del triple de daño que las unidades de
     15.000). Ahora tiene ataque 150 y vida 3.000, en las batallas del juego
     y en los saqueos (fuerza en saqueos: 10.005 -> 3.755).
+
+
+17. ÁREA DE ATAQUE DE LAS UNIDADES (pedido extra)
+--------------------------------------------------
+En las batallas, ataques y misiones (y también en la aldea) se dibuja el
+alcance de ataque en el suelo, debajo de las unidades:
+  - Azul: tus unidades seleccionadas (y edificios defensivos, como el
+    Ayuntamiento o las torres, cuando los seleccionas).
+  - Rojo: las unidades enemigas que tienen a una de tus unidades
+    seleccionadas dentro de su alcance más 3 baldosas.
+  - La forma es un rombo: es el cuadrado de baldosas que el juego usa de
+    verdad para decidir si un objetivo está al alcance, visto en el suelo
+    isométrico. Borde de color y relleno suave.
+Cómo se hizo: el juego no tenía esta función, así que se agregó código
+nuevo al juego al servirlo (swf_range_overlay.py), siguiendo la función de
+depuración del propio juego que dibuja marcas por unidad. swf_abc.py lee y
+vuelve a armar el código del juego byte por byte (comprobado con el juego
+completo) y solo se agregan una función, un campo y una llamada por cuadro.
+Probado en la aldea, en un ataque a otro jugador y en una aventura.
+
