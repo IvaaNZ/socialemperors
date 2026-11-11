@@ -357,5 +357,11 @@
   "Recompensas pendentes": "Pending rewards",
   "Todas as recompensas foram recebidas.": "All rewards have been collected.",
   "Últimas missões concluídas": "Latest completed missions",
-  "Nenhuma missão concluída ainda.": "No missions completed yet."
+  "Nenhuma missão concluída ainda.": "No missions completed yet.",
+
+  "A solicitação não pôde ser processada. Atualize a página e tente novamente.": "The request could not be processed. Refresh the page and try again.",
+  "Você não tem permissão para acessar esta página.": "You do not have permission to open this page.",
+  "Esta página não existe. Confira o endereço ou volte ao início.": "This page does not exist. Check the address or go back to the start.",
+  "O envio é grande demais.": "The upload is too large.",
+  "O servidor está indisponível no momento. Tente novamente em instantes.": "The server is unavailable right now. Try again in a moment."
 }

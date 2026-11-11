@@ -367,5 +367,11 @@
   "Recompensas pendentes": "Recompensas pendientes",
   "Todas as recompensas foram recebidas.": "Se cobraron todas las recompensas.",
   "Últimas missões concluídas": "Últimas misiones completadas",
-  "Nenhuma missão concluída ainda.": "Todavía no hay misiones completadas."
+  "Nenhuma missão concluída ainda.": "Todavía no hay misiones completadas.",
+
+  "A solicitação não pôde ser processada. Atualize a página e tente novamente.": "No se pudo procesar la solicitud. Actualiza la página e intenta de nuevo.",
+  "Você não tem permissão para acessar esta página.": "No tienes permiso para entrar a esta página.",
+  "Esta página não existe. Confira o endereço ou volte ao início.": "Esta página no existe. Revisa la dirección o vuelve al inicio.",
+  "O envio é grande demais.": "El envío es demasiado grande.",
+  "O servidor está indisponível no momento. Tente novamente em instantes.": "El servidor no está disponible en este momento. Intenta de nuevo en unos momentos."
 }

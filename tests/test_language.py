@@ -129,6 +129,25 @@ class LanguageTests(unittest.TestCase):
         self.assertEqual(page.count('class="language-toggle"'), 1)
         self.assertIn('<span>Idioma</span>', page)
 
+    def test_unknown_pages_show_a_translated_message(self):
+        self.choose('es')
+        response = self.client.get('/no-existe')
+        self.assertEqual(response.status_code, 404)
+        page = response.get_data(as_text=True)
+        self.assertIn('Esta página no existe.', page)
+        self.assertNotIn('The requested URL was not found', page)
+
+    def test_admin_addresses_lead_to_the_accounts_page(self):
+        self.assertEqual(self.client.get('/admin/').status_code, 403)
+        self.store.create_admin('Administrador', 'admin@example.com', 'secret-password')
+        self.login('admin@example.com')
+        for path in ('/admin/', '/admin/accounts', '/admin/accounts/1'):
+            with self.subTest(path=path):
+                response = self.client.get(path)
+                self.assertEqual(response.status_code, 302)
+                self.assertTrue(response.headers['Location'].endswith('/admin'))
+        self.assertEqual(self.client.get('/admin').status_code, 200)
+
     def test_registration_keeps_the_chosen_language(self):
         self.choose('es')
         self.client.post('/register', data={

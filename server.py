@@ -311,9 +311,22 @@ def response_headers(response):
 @app.errorhandler(413)
 @app.errorhandler(503)
 def access_error(error):
+    message = error.description
+    if message == type(error).description:
+        # Werkzeug's built-in English text: show our own translated message instead.
+        message = DEFAULT_ERROR_MESSAGES.get(error.code, message)
     if request.path.startswith(DYNAMIC_GAME_PREFIX):
-        return {'error': _(error.description)}, error.code
-    return render_template('error.html', status_code=error.code, message=_(error.description)), error.code
+        return {'error': _(message)}, error.code
+    return render_template('error.html', status_code=error.code, message=_(message)), error.code
+
+
+DEFAULT_ERROR_MESSAGES = {
+    400: 'A solicitação não pôde ser processada. Atualize a página e tente novamente.',
+    403: 'Você não tem permissão para acessar esta página.',
+    404: 'Esta página não existe. Confira o endereço ou volte ao início.',
+    413: 'O envio é grande demais.',
+    503: 'O servidor está indisponível no momento. Tente novamente em instantes.',
+}
 
 print (" [+] Configuring server routes...")
 
@@ -419,6 +432,15 @@ def admin_accounts():
         abort(400, description='Filtro de contas inválido.')
     all_accounts = accounts().list_accounts()
     return render_template('admin.html', accounts=[account for account in all_accounts if selected_filter == 'all' or account['status'] == selected_filter], pending_count=sum(account['status'] == 'pending' for account in all_accounts), selected_filter=selected_filter)
+
+
+@app.get('/admin/')
+@app.get('/admin/accounts')
+@app.get('/admin/accounts/<int:account_id>')
+def admin_accounts_alias(account_id=None):
+    """Addresses people type or reload (e.g. after approving) lead to the accounts page."""
+    require_admin()
+    return redirect(url_for('admin_accounts'))
 
 
 @app.post('/admin/accounts/<int:account_id>')
