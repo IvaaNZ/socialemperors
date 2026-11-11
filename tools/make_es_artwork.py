@@ -226,7 +226,9 @@ def save(manifest, image, name, character_id, text, editor):
 def main():
     manifest_path = ARTWORK / 'manifest.json'
     manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
-    manifest = [entry for entry in manifest if not entry.get('png', '').startswith('es-')]
+    # es-vec-* entries belong to tools/make_es_vector_art.py.
+    manifest = [entry for entry in manifest
+                if not entry.get('png', '').startswith('es-') or entry['png'].startswith('es-vec-')]
     for suffix, job in PT_JOBS.items():
         save(manifest, repaint_pt(suffix), suffix, int(suffix.split('-')[0]), job[0],
              'tools/make_es_artwork.py (Pillow, Arial Bold over the pt-BR artwork)')

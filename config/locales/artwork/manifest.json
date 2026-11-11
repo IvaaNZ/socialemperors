@@ -102,6 +102,105 @@
     "packed_sha256": "3450233898a31709066fa2301fe1e7a006f37ae04eb1e37469663fabd5199e8e"
   },
   {
+    "id": 678,
+    "width": 266,
+    "height": 200,
+    "text": "PREMIO",
+    "editor": "tools/make_es_vector_art.py (rasterized original shapes, Arial Black)",
+    "png": "es-vec-678.png",
+    "packed": "es-vec-678.argb.zlib",
+    "png_sha256": "94d4318730c66d43634b60fb3ea1b8a71205bbe4a26f6f881e658bc4a1a9bdbe",
+    "packed_sha256": "445ad60db80b50e757e573fdf98bbfefd4cf5e20fc63983ff173615eb11484b4"
+  },
+  {
+    "id": 688,
+    "width": 50,
+    "height": 49,
+    "text": "NES",
+    "editor": "tools/make_es_vector_art.py (rasterized original shapes, Arial Black)",
+    "png": "es-vec-688.png",
+    "packed": "es-vec-688.argb.zlib",
+    "png_sha256": "7a9b195b5dc71aa2523c32c2269651a8156ae069d1f4327a598c563682f51747",
+    "packed_sha256": "7df73d86fab15898b0681f8890f78640b863bb0bd45a5a2b86878839de54cca6"
+  },
+  {
+    "id": 690,
+    "width": 58,
+    "height": 47,
+    "text": "LU",
+    "editor": "tools/make_es_vector_art.py (rasterized original shapes, Arial Black)",
+    "png": "es-vec-690.png",
+    "packed": "es-vec-690.argb.zlib",
+    "png_sha256": "0468eca29ff7f4a16c2771d4750721fcb2927c6a032cd5aad538bc772323dbab",
+    "packed_sha256": "e934561edf13b23c6570545a95d83ef1427a59232296aef9e563ea5e2ce53d27"
+  },
+  {
+    "id": 692,
+    "width": 45,
+    "height": 44,
+    "text": "NES",
+    "editor": "tools/make_es_vector_art.py (rasterized original shapes, Arial Black)",
+    "png": "es-vec-692.png",
+    "packed": "es-vec-692.argb.zlib",
+    "png_sha256": "79bcf623e979eb8437cbd5bbd98d3dc2e5965cba3a448e46dc9ab41a6e87b31b",
+    "packed_sha256": "68fb8dad621aa1c8d1bbdcd3331dc4884ef4a75097f600929586f6a18e99d8d9"
+  },
+  {
+    "id": 694,
+    "width": 52,
+    "height": 42,
+    "text": "LU",
+    "editor": "tools/make_es_vector_art.py (rasterized original shapes, Arial Black)",
+    "png": "es-vec-694.png",
+    "packed": "es-vec-694.argb.zlib",
+    "png_sha256": "70e7ed452ec9bdbd14f986c91268df65338007163879b1fc0574a1fa11e23213",
+    "packed_sha256": "edbf81a4fedbb1d3f4e2d2d680c78975a525b83eaa490ab57dc5f026aaa8df59"
+  },
+  {
+    "id": 848,
+    "width": 50,
+    "height": 49,
+    "text": "NES",
+    "editor": "tools/make_es_vector_art.py (rasterized original shapes, Arial Black)",
+    "png": "es-vec-848.png",
+    "packed": "es-vec-848.argb.zlib",
+    "png_sha256": "5bc7ce050a4eecda030af37771a66b8957713e89debd1d9759b18ea14d2cc99a",
+    "packed_sha256": "cc99a269f0bc2b050b532a83f5adc2c1ebb910d6bc1a65a50cb136f46e34b7a5"
+  },
+  {
+    "id": 850,
+    "width": 57,
+    "height": 47,
+    "text": "LU",
+    "editor": "tools/make_es_vector_art.py (rasterized original shapes, Arial Black)",
+    "png": "es-vec-850.png",
+    "packed": "es-vec-850.argb.zlib",
+    "png_sha256": "d4cd6e370231cf883594ef3742b9b8a276d9e93c46a27bf87a923b7697d29ddc",
+    "packed_sha256": "8980d1685c30f75c05e316fa7018871d6f1036e80a8cdb9c05f42e662d95735a"
+  },
+  {
+    "id": 852,
+    "width": 45,
+    "height": 44,
+    "text": "NES",
+    "editor": "tools/make_es_vector_art.py (rasterized original shapes, Arial Black)",
+    "png": "es-vec-852.png",
+    "packed": "es-vec-852.argb.zlib",
+    "png_sha256": "262a97ea1447218c677407b18604bc7e589ee9ef60b610625c8d79e06a8280f3",
+    "packed_sha256": "815c29f527ec7e6086b2980f9c4d1b59ea1808884284b0b723f6bc87b808bd29"
+  },
+  {
+    "id": 854,
+    "width": 53,
+    "height": 42,
+    "text": "LU",
+    "editor": "tools/make_es_vector_art.py (rasterized original shapes, Arial Black)",
+    "png": "es-vec-854.png",
+    "packed": "es-vec-854.argb.zlib",
+    "png_sha256": "662c10afc127494ef43c2b86d2315393cc2588d02b861f1147a3ebb8b7b9d51e",
+    "packed_sha256": "ef47ffcd11f74b41ad61cab1ab8e722cc76b26a179e221f70f61b38d6d3c2c75"
+  },
+  {
     "id": 220,
     "width": 118,
     "height": 33,

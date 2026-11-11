@@ -10,6 +10,7 @@ import zlib
 import swf_bitmap_art
 from swf_bitmap_art import BITMAP_DIMENSIONS, BITMAP_RENDER_DIMENSIONS, load_bitmap_art, localize_bitmap_art
 from swf_hd_art import HD_BITMAP_IDS, upgrade_shape_bitmap_fill
+from swf_layout_fixes import _move_tick
 from swf_localization import localize_swf
 from test_swf_localization import flattened_tags
 
@@ -36,8 +37,13 @@ class SwfBitmapArtTests(unittest.TestCase):
         localized_tags = flattened_tags(localized)
         self.assertEqual([code for code, _ in source_tags], [code for code, _ in localized_tags])
         changed_bitmaps = set()
+        moved_ticks = 0
         for (code, source), (_, translated) in zip(source_tags, localized_tags):
-            if code == 36 and source != translated:
+            if code == 26 and source != translated:
+                # Only the daily bonus ticks move (swf_layout_fixes).
+                self.assertEqual(translated, _move_tick(source))
+                moved_ticks += 1
+            elif code == 36 and source != translated:
                 character_id, bitmap_format, width, height = struct.unpack_from('<HBHH', source)
                 self.assertIn(character_id, BITMAP_DIMENSIONS)
                 self.assertEqual(source[:3], translated[:3])
@@ -53,6 +59,7 @@ class SwfBitmapArtTests(unittest.TestCase):
                 # identifiers remain identical despite translated display text.
                 self.assertEqual(source, translated)
         self.assertEqual(changed_bitmaps, set(BITMAP_DIMENSIONS))
+        self.assertEqual(moved_ticks, 5)
         self.assertEqual(original, Path('assets/flash/SocialEmpires0926bsec.swf').read_bytes())
 
     def test_unknown_bitmaps_and_explicit_text_catalog_keep_original_images(self):

@@ -15,6 +15,8 @@ from bundle import CONFIG_DIR
 from localization import load_catalog, normalize_locale
 from swf_bitmap_art import localize_bitmap_art
 from swf_hd_art import upgrade_shape_bitmap_fill
+from swf_layout_fixes import fix_sprite_layout
+from swf_vector_art import localize_vector_art
 from swf_static_text import build_font_maps, localize_static_text
 
 
@@ -242,6 +244,8 @@ def localize_swf(data, catalog=None, language='pt-BR'):
                         payload = payload[:offset] + translated.encode('utf-8') + b'\0'
             elif code == 39:  # DefineSprite: ID + frame count + its own tag stream
                 payload = payload[:4] + rewrite_tags(payload[4:])
+                if use_bitmap_art:
+                    payload = fix_sprite_layout(payload, encode_tag)
             elif code in (11, 33):  # DefineText / DefineText2 embedded glyph labels
                 payload = localize_static_text(payload, fonts, catalog, code)
             elif code in (6, 35, 36) and use_bitmap_art:  # Allowlisted translated UI images
@@ -250,7 +254,14 @@ def localize_swf(data, catalog=None, language='pt-BR'):
                     code = 36  # A translated JPEG bitmap is served as Lossless2.
                 payload = localized
             elif code in (2, 22, 32, 83) and use_bitmap_art:
-                payload = upgrade_shape_bitmap_fill(payload, code)
+                replaced = localize_vector_art(code, payload, language)
+                if len(replaced) > 1:  # Lettering drawn as shapes: bitmap first, then the shape using it.
+                    for extra_code, extra_payload in replaced[:-1]:
+                        rewritten.append(encode_tag(extra_code, extra_payload))
+                    code, payload = replaced[-1]
+                    long_length = False
+                else:
+                    payload = upgrade_shape_bitmap_fill(payload, code)
             rewritten.append(encode_tag(code, payload, long_length))
         return b''.join(rewritten)
 

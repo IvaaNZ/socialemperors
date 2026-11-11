@@ -23,8 +23,8 @@ ESTADO DE LOS PUNTOS DEL BLOQUE D
     (sin voseo), vocabulario latinoamericano general.
 16. Traducir los catálogos tomando el portugués como modelo: HECHO
     (juego y portal web; ver secciones 1 y 9).
-17. Revisar jugando qué textos quedan en inglés o mezclados: PENDIENTE
-    (hay que jugar; abajo hay una lista de lo que ya sé que falta).
+17. Revisar jugando qué textos quedan en inglés o mezclados: HECHO
+    (ver secciones 12 y 13; los torneos no existen en este servidor).
 18. Selector de idioma en el login, guardado en la cuenta: NO HECHO
     (era opcional; ver "Próximo paso sugerido").
 
@@ -152,7 +152,7 @@ A. Dejarlo andando .......................................... 100 %
 B. Cuidar lo que se haga ...................................... 100 %
    7. Rama propia mi-servidor ............................. 100 %
    8. Fork en GitHub y subir el trabajo ................... 100 %
-      (todo subido; el último commit es b6fba47)
+      (todo subido al fork origin, rama mi-servidor)
    9. Commit después de cada etapa ........................ 100 %
   10. Claude Code con contexto ............................ 100 %
 
@@ -162,15 +162,16 @@ C. Entender el repo ........................................... 100 %
   13. GUIA_AGREGAR_ITEMS.md ............................... 100 %
   14. Comparar lo que trae el repo con lo planeado ........ 100 %
 
-D. Español .................................................... 73 %
+D. Español .................................................... 75 %
   15. Elegir español neutro o rioplatense ................. 100 %
   16. Traducir los catálogos .............................. 100 %
       (juego y portal web; ver secciones 1 y 9)
-  17. Revisar jugando los textos en inglés o mezclados ..... 90 %
-      (revisados Construir, Almacén, Noticias, hechizos, bono del lunes,
-      mapa del mundo, aventuras y una batalla; rehechas en español las 15
-      imágenes más visibles. Ver sección 12. Comprobado por el usuario en
-      su servidor. Falta: torneos y supervivencia)
+  17. Revisar jugando los textos en inglés o mezclados .... 100 %
+      (revisado todo lo que se puede jugar: Construir, Almacén, Noticias,
+      hechizos, bono diario, cofre del lunes, mapa del mundo, aventuras,
+      batallas, Rivales y supervivencia. Ver secciones 12 y 13.
+      Los torneos no se pueden revisar: el servidor no los tiene
+      programados (get_tournament_info.php da 404 en cualquier idioma))
   18. Selector de idioma en el login (opcional) ............. 0 %
       (el código ya admite varios idiomas; falta el selector por cuenta)
 
@@ -195,9 +196,9 @@ F. Identidad propia y publicación ............................... 0 %
   31. Ponerlo online ........................................ 0 %
   32. Consultar con abogado o contador ...................... 0 %
 
-TOTAL DEL PLAN (32 tareas, promedio simple) .................. 54 %
+TOTAL DEL PLAN (32 tareas, promedio simple) .................. 55 %
 (historial: 47 % -> 50 % -> 52 % -> 53 % (A5 cerrada) -> 54 % (D17 a 80 %)
--> 54 % (D17 a 90 %; el promedio redondeado no cambia))
+-> 54 % (D17 a 90 %) -> 55 % (D17 a 100 %))
 
 
 8. TEXTOS QUE SIGUEN EN PORTUGUÉS Y QUÉ SIGNIFICAN
@@ -374,11 +375,50 @@ en portugués quedan las originales.
 Siguen en inglés por decisión (son ~30 imágenes menos visibles): CANCEL,
 MY WORLD, MAP, SPYING, SAILING, RESUME, ATTACK, SPY, PROFILE, CONQUER,
 NEW, +INFO, UNLOCK AT LEVEL, ONLY THIS WEEK, COMPLETED!, CASH, ENTER,
-VISIT MARKET, SET WEATHER, LET'S SAIL, LET'S FLY, ENTER SURVIVAL, SAVE ME,
+VISIT MARKET, SET WEATHER, LET'S SAIL, LET'S FLY, SAVE ME,
 LEARN SPELLS, GET UNITS, OPEN, GET ALLIES, OBTAINED!, Get More Coins,
 BUY NOW, los consejos de las Noticias, y las imágenes de otros archivos
-(MON DAY REWARD, HELP!, SHIP MAP 1). La herramienta permite agregarlas
-después sumando una línea por imagen.
+(HELP!, SHIP MAP 1). La herramienta permite agregarlas después sumando
+una línea por imagen. ENTER SURVIVAL y MON DAY REWARD ya están en
+español (sección 13).
 
-Sin revisar: torneos y supervivencia (se entra desde edificios que la
-aldea no tiene).
+
+13. REVISIÓN JUGANDO (tarea D17), tercera parte
+-----------------------------------------------
+Probado en un servidor de prueba con copias de la aldea y cuentas de prueba
+(después se borraron; la partida real no se tocó).
+
+Batallas entre jugadores:
+  - Se crearon 3 imperios con tropas y torres. Los saqueos desde Rivales
+    dan victoria o derrota según la fuerza, respetan la protección de 60
+    minutos, la espera de 15 minutos y el rango de nivel.
+  - El ataque dentro del juego a un vecino funciona y se ve en español
+    ("ATACANDO", "Resultado de la batalla", unidades vivas y caídas).
+
+Supervivencia: se entra desde la Arena de supervivencia. Ayuda, elección
+de mapa, partida y salida, todo en español.
+
+Torneos: el botón no abre nada porque el servidor no tiene programada esa
+parte (get_tournament_info.php da 404). No es un problema de traducción.
+
+Corregido en esta parte:
+  - ENTER SURVIVAL -> ENTRAR A SUPERVIVENCIA y HURRY UP! -> ¡ACELERAR!
+    (imágenes nuevas; HURRY UP! estaba en un formato JPEG viejo que ahora
+    también se puede reemplazar).
+  - "Gods & Colossus" -> "Dioses y Colosos" (portugués: "Deuses e
+    Colossos"). Estaba escrito dentro del código del juego; se cambia ese
+    texto después de los parches del código (swf_abc_strings.py).
+  - Botón del cofre del lunes: MON DAY REWARD -> LU NES / PREMIO. Estaba
+    dibujado con formas vectoriales; tools/make_es_vector_art.py las dibuja,
+    escribe el texto nuevo con la misma inclinación y swf_vector_art.py
+    reemplaza esas formas por las imágenes (solo en español).
+  - Bono diario: la palomita verde del día cobrado tapaba "oro" en
+    "250 de oro". Las palomitas suben 25 px y quedan sobre el ícono del
+    premio (swf_layout_fixes.py; en los dos idiomas).
+  - Tooltip "logros más" -> "Más logros".
+  - Cofre del lunes: el servidor no guardaba la recompensa (comando
+    weekly_reward sin programar). Ahora se entrega una vez por lunes,
+    con los montos de la configuración, y queda anotada la fecha, así
+    al recargar no se pierde ni se repite (monday_bonus.py).
+  - El servidor arranca en español por defecto (SOCIAL_EMPIRES_LANGUAGE=es).
+    Para portugués: SOCIAL_EMPIRES_LANGUAGE=pt-BR.
