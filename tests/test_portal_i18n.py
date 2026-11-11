@@ -51,6 +51,19 @@ class SpanishPortalTests(unittest.TestCase):
                 self.assertTrue(translated)
                 self.assertEqual(sorted(re.findall(r'\{\w+\}', source)), sorted(re.findall(r'\{\w+\}', translated)))
 
+    def test_english_catalog_covers_the_same_texts(self):
+        spanish = json.loads((ROOT / 'config' / 'locales' / 'es-portal.json').read_text(encoding='utf-8'))
+        english = json.loads((ROOT / 'config' / 'locales' / 'en-portal.json').read_text(encoding='utf-8'))
+        self.assertEqual(sorted(english), sorted(spanish))
+        self.assertEqual(sorted(source for source in template_sources() if source not in english), [])
+        for source, translated in english.items():
+            with self.subTest(source=source):
+                self.assertTrue(translated)
+                self.assertEqual(sorted(re.findall(r'\{\w+\}', source)), sorted(re.findall(r'\{\w+\}', translated)))
+        set_portal_language('en')
+        self.assertEqual(translate('Minha vila'), 'My village')
+        self.assertEqual(translate('Nível {level}', level=7), 'Level 7')
+
     def test_translation_fills_values_and_matches_dynamic_messages(self):
         self.assertEqual(translate('Minha vila'), 'Mi aldea')
         self.assertEqual(translate('Nível {level}', level=7), 'Nivel 7')

@@ -105,6 +105,28 @@ class LanguageTests(unittest.TestCase):
         self.assertNotEqual(spanish.headers['ETag'], portuguese.headers['ETag'])
         self.assertEqual(spanish.data, server.localized_game_movie('es')[0])
 
+    def test_english_portal_and_original_english_game(self):
+        self.choose('en')
+        page = self.client.get('/login').get_data(as_text=True)
+        self.assertIn('<html lang="en" translate="no">', page)
+        self.assertIn('Enter your village', page)
+        self.assertIn('flags/us.svg', page)
+        player = self.store.create_account('Jogador', 'player@example.com', 'secret-password', status='approved')
+        self.login()
+        self.assertEqual(self.store.get(player['id'])['language'], 'en')
+        self.assertEqual(self.game_config()['items'][0]['name'], 'House I')
+        self.assertIn('My village', self.client.get('/treasury').get_data(as_text=True))
+
+    def test_selector_offers_each_language_with_its_flag(self):
+        page = self.client.get('/login').get_data(as_text=True)
+        for code, name, flag in (('es', 'Español', 'es.svg'), ('pt-BR', 'Português', 'br.svg'), ('en', 'English', 'us.svg')):
+            with self.subTest(code=code):
+                self.assertIn(f'value="{code}"', page)
+                self.assertIn(f'aria-label="{name}"', page)
+                self.assertIn(f'flags/{flag}', page)
+                self.assertEqual(self.client.get(f'/img/flags/{flag}').mimetype, 'image/svg+xml')
+        self.assertIn('aria-pressed="true"', page)
+
     def test_registration_keeps_the_chosen_language(self):
         self.choose('es')
         self.client.post('/register', data={

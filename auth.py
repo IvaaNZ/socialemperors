@@ -14,7 +14,7 @@ import threading
 from flask import abort, request, session
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from localization import SUPPORTED_LOCALES
+from localization import PLAYER_LANGUAGES
 
 
 ACCOUNT_STATUSES = frozenset({"pending", "approved", "rejected"})
@@ -172,7 +172,7 @@ class AccountStore:
     def _validate_language(language):
         if language is None:
             return None
-        if not isinstance(language, str) or language not in SUPPORTED_LOCALES:
+        if not isinstance(language, str) or language not in PLAYER_LANGUAGES:
             raise AccountError("O idioma escolhido não é válido.")
         return language
 

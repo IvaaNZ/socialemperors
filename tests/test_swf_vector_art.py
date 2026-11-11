@@ -74,6 +74,12 @@ class VectorArtTests(unittest.TestCase):
         for shape_id in VECTOR_ART['es']:
             self.assertEqual(localized[shape_id], source[shape_id])
 
+    def test_english_movie_keeps_every_original_image_and_shape(self):
+        english = localize_swf(self.original, language='en')
+        source = [(c, p) for c, p, _ in top_level(self.original) if c in (2, 6, 20, 21, 22, 32, 35, 36, 83)]
+        localized = [(c, p) for c, p, _ in top_level(english) if c in (2, 6, 20, 21, 22, 32, 35, 36, 83)]
+        self.assertEqual(localized, source)
+
     def test_daily_ticks_move_up_in_both_languages_only(self):
         source = sprite_ticks(self.original)
         self.assertEqual({name: matrix[5] for name, matrix in source.items()}, ORIGINAL_TICK_Y)

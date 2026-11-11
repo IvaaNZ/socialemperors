@@ -220,6 +220,8 @@ def translate_edit_text(text, catalog):
 def localize_swf(data, catalog=None, language='pt-BR'):
     """Return a derivative movie; never overwrite or mutate the source bytes."""
     use_bitmap_art = catalog is None
+    # English is the movie's own language: its drawn words stay the originals.
+    translate_art = use_bitmap_art and normalize_locale(language) != 'en'
     catalog = load_swf_catalog(language) if catalog is None else catalog
     body, header_length = decode_swf(data)
     fonts = build_font_maps(body)
@@ -248,12 +250,12 @@ def localize_swf(data, catalog=None, language='pt-BR'):
                     payload = fix_sprite_layout(payload, encode_tag)
             elif code in (11, 33):  # DefineText / DefineText2 embedded glyph labels
                 payload = localize_static_text(payload, fonts, catalog, code)
-            elif code in (6, 35, 36) and use_bitmap_art:  # Allowlisted translated UI images
+            elif code in (6, 35, 36) and translate_art:  # Allowlisted translated UI images
                 localized = localize_bitmap_art(payload, language, code)
                 if localized is not payload:
                     code = 36  # A translated JPEG bitmap is served as Lossless2.
                 payload = localized
-            elif code in (2, 22, 32, 83) and use_bitmap_art:
+            elif code in (2, 22, 32, 83) and translate_art:
                 replaced = localize_vector_art(code, payload, language)
                 if len(replaced) > 1:  # Lettering drawn as shapes: bitmap first, then the shape using it.
                     for extra_code, extra_payload in replaced[:-1]:

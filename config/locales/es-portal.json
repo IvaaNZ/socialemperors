@@ -337,6 +337,5 @@
   "{name} deve ser um inteiro entre 1 e {limit}.": "{name} debe ser un número entero entre 1 y {limit}.",
 
   "Idioma": "Idioma",
-  "Mudar": "Cambiar",
   "O idioma escolhido não é válido.": "El idioma elegido no es válido."
 }

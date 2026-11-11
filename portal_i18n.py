@@ -51,8 +51,7 @@ def load_portal_catalog(locale):
 
 def set_portal_language(language):
     global _active_locale
-    locale = normalize_locale(language)
-    _active_locale = SOURCE_LOCALE if locale == 'en' else locale
+    _active_locale = normalize_locale(language)
 
 
 def portal_language():

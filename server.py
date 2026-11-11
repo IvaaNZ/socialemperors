@@ -38,7 +38,7 @@ from engine import timestamp_now
 from version import version_name
 from constants import Constant
 from quests import get_quest_map
-from localization import LANGUAGE_NAMES, SUPPORTED_LOCALES
+from localization import LANGUAGE_FLAGS, LANGUAGE_NAMES, PLAYER_LANGUAGES
 from portal_i18n import set_portal_language, portal_language, translate as _, translations_for
 from swf_localization import localize_swf
 from village_names import rename_village, normalize_legacy_village_name, VillageNameError, MAX_VILLAGE_NAME_LENGTH
@@ -61,8 +61,8 @@ data_dir.mkdir(parents=True, exist_ok=True)
 
 def language_setting(name, default):
     value = os.environ.get(name, default)
-    if value not in SUPPORTED_LOCALES:
-        raise RuntimeError(f'{name} deve ser um destes idiomas / debe ser uno de estos idiomas: {", ".join(SUPPORTED_LOCALES)}.')
+    if value not in PLAYER_LANGUAGES:
+        raise RuntimeError(f'{name} deve ser um destes idiomas / debe ser uno de estos idiomas: {", ".join(PLAYER_LANGUAGES)}.')
     return value
 
 
@@ -232,16 +232,16 @@ def ensure_village(account):
 @app.context_processor
 def access_context():
     return dict(current_account=getattr(g, 'account', None), csrf_token=csrf_token, version=version_name,
-                portal_lang=portal_language(), languages=LANGUAGE_NAMES)
+                portal_lang=portal_language(), languages=LANGUAGE_NAMES, language_flags=LANGUAGE_FLAGS)
 
 
 def chosen_language():
     """The account's language, else one picked in this browser session, else None."""
     account = g.get('account')
-    if account and account.get('language') in SUPPORTED_LOCALES:
+    if account and account.get('language') in PLAYER_LANGUAGES:
         return account['language']
     language = session.get('language')
-    return language if language in SUPPORTED_LOCALES else None
+    return language if language in PLAYER_LANGUAGES else None
 
 
 def game_language():
@@ -324,7 +324,7 @@ def login():
         validate_csrf()
         email = values['email']
         address = request.remote_addr or 'unknown'
-        picked = session.get('language') if session.get('language') in SUPPORTED_LOCALES else None
+        picked = session.get('language') if session.get('language') in PLAYER_LANGUAGES else None
         try:
             accounts().check_login_allowed(email, address)
             account = accounts().authenticate(email, request.form.get('password', ''))
@@ -363,7 +363,7 @@ def register():
             password = request.form.get('password', '')
             if password != request.form.get('password_confirm', ''):
                 raise AccountError('As senhas não conferem.')
-            language = session.get('language') if session.get('language') in SUPPORTED_LOCALES else None
+            language = session.get('language') if session.get('language') in PLAYER_LANGUAGES else None
             accounts().create_account(values['name'], values['email'], password, language=language)
             flash('Cadastro recebido! Aguarde a aprovação do administrador para entrar na sua vila.', 'success')
             return redirect(url_for('login'))
@@ -377,7 +377,7 @@ def change_language():
     """Switch the portal and game language; saved in the account when logged in."""
     validate_csrf()
     language = request.form.get('language', '')
-    if language not in SUPPORTED_LOCALES:
+    if language not in PLAYER_LANGUAGES:
         abort(400, description='O idioma escolhido não é válido.')
     session['language'] = language
     if g.account:

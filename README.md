@@ -63,7 +63,7 @@ Os valores podem ser configurados por `SOCIAL_EMPIRES_INITIAL_CASH` e `SOCIAL_EM
 
 O jogo recebe os textos em português do Brasil, incluindo tutorial, menus, missões e nomes de unidades e construções. Os catálogos de tradução ficam em `config/locales/pt-BR-*.json`; o conteúdo original permanece disponível para a lógica interna do servidor. Os arquivos de fontes mantêm seus nomes originais para preservar a compatibilidade com o cliente.
 
-Também há catálogos em espanhol neutro em `config/locales/es-*.json`, com as mesmas chaves dos catálogos em português. Cada jogador escolhe o idioma no seletor do topo das páginas (inclusive no login); a escolha fica salva na conta e vale para o portal e para o jogo. Quem ainda não escolheu usa o idioma padrão do servidor: espanhol, ou o definido em `SOCIAL_EMPIRES_LANGUAGE` (por exemplo `pt-BR`). O portal web (login, cadastro, administração, Rivais, Tesouro e mensagens do servidor) segue o idioma do jogador: os textos ficam em português no código e `config/locales/es-portal.json` traz a tradução, com as frases em português como chave. Duas das quatro artes com texto ("Dinheiro" e "Adicionar vizinhos") continuam em português.
+Também há catálogos em espanhol neutro em `config/locales/es-*.json`, com as mesmas chaves dos catálogos em português. Cada jogador escolhe o idioma (Español, Português ou English, com as bandeiras) no seletor do topo das páginas, inclusive no login; a escolha fica salva na conta e vale para o portal e para o jogo. Em inglês o jogo usa os textos e as artes originais, e o portal usa `config/locales/en-portal.json`. Quem ainda não escolheu usa o idioma padrão do servidor: espanhol, ou o definido em `SOCIAL_EMPIRES_LANGUAGE` (por exemplo `pt-BR`). O portal web (login, cadastro, administração, Rivais, Tesouro e mensagens do servidor) segue o idioma do jogador: os textos ficam em português no código e `config/locales/es-portal.json` traz a tradução, com as frases em português como chave. Duas das quatro artes com texto ("Dinheiro" e "Adicionar vizinhos") continuam em português.
 
 Os rótulos gravados dentro do SWF também são traduzidos, incluindo **Próximo**, **Construir** e **Ajudar**. O servidor prepara uma cópia em memória e a reutiliza nas próximas requisições, preservando o SWF original. Quatro artes da interface com texto em inglês foram localizadas com a ferramenta integrada de geração de imagens, preservando suas proporções, seu tamanho em cena e a transparência. Os PNGs, arquivos usados pelo jogo, prompts exatos e checksums estão em [`config/locales/artwork/`](config/locales/artwork/manifest.json).
 
@@ -125,7 +125,7 @@ Faça backup de **contas, chave, os três journals e saves juntos**, com o servi
 | `SOCIAL_EMPIRES_SAVES_DIR` | Sobrescreve apenas o diretório dos saves, inclusive para reutilizar saves existentes. |
 | `SOCIAL_EMPIRES_INITIAL_CASH` | Bônus inicial gratuito; padrão `500`, inteiro de 1 a 1.000.000. |
 | `SOCIAL_EMPIRES_DAILY_CASH` | Recompensa gratuita a cada 24 horas; padrão `100`, inteiro de 1 a 1.000.000. |
-| `SOCIAL_EMPIRES_LANGUAGE` | Idioma padrão para quem ainda não escolheu um no seletor: `es` (espanhol neutro, padrão) ou `pt-BR`. |
+| `SOCIAL_EMPIRES_LANGUAGE` | Idioma padrão para quem ainda não escolheu um no seletor: `es` (espanhol neutro, padrão), `pt-BR` ou `en`. |
 | `SECRET_KEY` | Chave opcional de pelo menos 32 caracteres; mantenha estável entre reinícios. |
 | `COOKIE_SECURE=1` | Envia o cookie de sessão somente por HTTPS; use com HTTPS configurado. |
 

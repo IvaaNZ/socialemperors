@@ -28,9 +28,14 @@ DISPLAY_FIELDS = {
 }
 
 
+# Languages with translated game catalogs. English is the game's own source text.
 SUPPORTED_LOCALES = ('pt-BR', 'es')
+# Languages a player can choose (portal and game), in selector order.
+PLAYER_LANGUAGES = ('es', 'pt-BR', 'en')
 # Each language is named in itself in the language selector.
-LANGUAGE_NAMES = {'es': 'Español', 'pt-BR': 'Português'}
+LANGUAGE_NAMES = {'es': 'Español', 'pt-BR': 'Português', 'en': 'English'}
+# Flag images in templates/img/flags/ (Brazilian Portuguese, neutral Spanish, English).
+LANGUAGE_FLAGS = {'es': 'es.svg', 'pt-BR': 'br.svg', 'en': 'us.svg'}
 # Specific item names take precedence over short generic UI wording.
 CATALOG_PARTS = ('core', 'interface', 'extended', 'collections', 'missions', 'auxiliary', 'items')
 
