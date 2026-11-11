@@ -12,7 +12,10 @@ ground and below those units:
   * your units that are selected (they carry the selection pedestal,
     `iconoSeleccionado`): blue area;
   * enemy units with one of your selected units within their reach plus
-    NEAR_TILES (measured from the units' current positions): red area.
+    NEAR_TILES (measured from the units' current positions): red area;
+  * in battles (attacks, adventures, survival, tournaments), enemy towers
+    and castles — buildings with attack and range — always show their red
+    area, so you can see the ground they cover.
 
 The area is the game's own range test (`BBox.intersectsRange`): a square of
 iAttackRange tiles around the unit's tile, which on the isometric ground is a
@@ -36,6 +39,7 @@ LINE_ALPHA = 0.85
 FILL_ALPHA = 0.14
 LINE_WIDTH = 2
 NEAR_TILES = 3
+BATTLE_MODES = (3, 6)  # Constants.GAME_MODE_ASSAULT .. GAME_MODE_TOURNAMENT (campaign, survival between)
 SHAPE_SLOT = '__rangeShape'
 DRAW_METHOD = '__drawRanges'
 DO_ABC = 82
@@ -46,6 +50,7 @@ NAMES = {
     'IsoUnit': 'core.isoengine', 'eContainer': '', 'PlayerID': '', 'Constants': 'core', 'PLAYER_ENEMY': '',
     'PLAYER_SELF': '', 'x': '', 'y': '', 'buildingReference': '', 'Config': 'core', 'EI_TILE_WIDTH_PIXELS': '',
     'EI_TILE_HEIGHT_PIXELS': '', 'addChildAt': '', 'iconoSeleccionado': '', 'iAttackRange': '',
+    'Main': '', 'gameMode': '', 'uiAttack': '',
     'graphics': '', 'clear': '', 'lineStyle': '', 'beginFill': '', 'endFill': '', 'moveTo': '', 'lineTo': '',
     'Shape': 'flash.display', 'parent': '', 'length': '', 'getChildIndex': '', 'setChildIndex': '',
     'numChildren': '', 'addChild': '',
@@ -142,7 +147,8 @@ def build_draw_method(abc, slot):
     # locals: 1 layer, 2 shape, 3 tile width, 4 tile height, 5 selected units,
     # 6 element, 7/8 loop index/object, 9 show, 10 colour, 11 range, 12 selected element,
     # 13/14 inner loop index/object, 15 dx, 16 dy, 17 graphics, 18 cx, 19 cy, 20 half width, 21 half height,
-    # 22 child index, 23 lowest child index among the units drawn (-1: none)
+    # 22 child index, 23 lowest child index among the units drawn (-1: none),
+    # 24 game mode, 25 in a battle
     elements = [('getlex', n['Base']), ('getproperty', n['Iso']), ('getproperty', n['vIsoElements'])]
     selected_body = _filters(n, 6, 'next_sel') + [
         ('getlocal', 6), ('getproperty', n['PlayerID']), ('getlex', n['Constants']), ('getproperty', n['PLAYER_SELF']),
@@ -186,6 +192,13 @@ def build_draw_method(abc, slot):
         ('getlocal', 6), ('getproperty', n['PlayerID']), ('getlex', n['Constants']), ('getproperty', n['PLAYER_ENEMY']),
         ('ifne', 'next_draw'),
         ('pushint', red), ('setlocal', 10),
+        # In battles, enemy towers and castles (buildings that attack) always show their area.
+        ('getlocal', 25), ('iffalse', 'near_check'),
+        ('getlocal', 6), ('getlex', n['IsoUnit']), ('istypelate',), ('iftrue', 'near_check'),
+        ('getlocal', 6), ('getproperty', n['uiAttack']), ('pushbyte', 0), ('ifngt', 'near_check'),
+        ('getlocal', 6), ('getproperty', n['iAttackRange']), ('pushbyte', 0), ('ifngt', 'near_check'),
+        ('pushtrue',), ('setlocal', 9), ('jump', 'check'),
+        ('label:', 'near_check'),
         ('getlocal', 6), ('getproperty', n['iAttackRange']), ('pushbyte', NEAR_TILES), ('add',), ('setlocal', 11),
     ] + _loop([('getlocal', 5)], 14, 13, 12, near_body, 'near') + [
         ('label:', 'check'),
@@ -231,8 +244,17 @@ def build_draw_method(abc, slot):
         ('getlex', n['Config']), ('getproperty', n['EI_TILE_WIDTH_PIXELS']), ('setlocal', 3),
         ('getlex', n['Config']), ('getproperty', n['EI_TILE_HEIGHT_PIXELS']), ('setlocal', 4),
         ('newarray', 0), ('setlocal', 5),
+        # Battle = attack, adventure, survival or tournament (game modes 3 to 6).
+        ('pushfalse',), ('setlocal', 25),
+        ('getlex', n['Base']), ('getproperty', n['Main']), ('getproperty', n['gameMode']), ('setlocal', 24),
+        ('getlocal', 24), ('pushbyte', BATTLE_MODES[0]), ('iflt', 'not_battle'),
+        ('getlocal', 24), ('pushbyte', BATTLE_MODES[1]), ('ifgt', 'not_battle'),
+        ('pushtrue',), ('setlocal', 25),
+        ('label:', 'not_battle'),
     ] + _loop(elements, 8, 7, 6, selected_body, 'sel') + [
-        ('getlocal', 5), ('getproperty', n['length']), ('pushbyte', 0), ('ifeq', 'end'),
+        ('getlocal', 5), ('getproperty', n['length']), ('pushbyte', 0), ('ifne', 'has_selection'),
+        ('getlocal', 25), ('iffalse', 'end'),
+        ('label:', 'has_selection'),
         ('pushbyte', -1 & 0xFF), ('setlocal', 23),
     ] + _loop(elements, 8, 7, 6, draw_body, 'draw') + [
         # Put the shape right below the lowest unit drawn: above the ground, below the units.
@@ -267,7 +289,7 @@ def add_range_overlay_to_abc(abc):
     method_index = len(abc.methods)
     abc.methods.append({'return_type': 0, 'param_types': [], 'name': abc.add_string(DRAW_METHOD), 'flags': 0,
                         'options': None, 'param_names': None})
-    abc.bodies.append({'method': method_index, 'max_stack': 8, 'local_count': 24,
+    abc.bodies.append({'method': method_index, 'max_stack': 8, 'local_count': 26,
                        'init_scope_depth': reference['init_scope_depth'],
                        'max_scope_depth': reference['init_scope_depth'] + 1,
                        'code': code, 'exceptions': [], 'traits': []})

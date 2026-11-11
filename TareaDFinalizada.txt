@@ -522,6 +522,9 @@ alcance de ataque en el suelo, debajo de las unidades:
     Ayuntamiento o las torres, cuando los seleccionas).
   - Rojo: las unidades enemigas que tienen a una de tus unidades
     seleccionadas dentro de su alcance más 3 baldosas.
+  - Rojo, siempre en batalla (ataques, aventuras, supervivencia y torneos):
+    las torres y castillos enemigos, para ver qué zonas cubren. En tu
+    aldea se ven solo al seleccionarlos.
   - La forma es un rombo: es el cuadrado de baldosas que el juego usa de
     verdad para decidir si un objetivo está al alcance, visto en el suelo
     isométrico. Borde de color y relleno suave.

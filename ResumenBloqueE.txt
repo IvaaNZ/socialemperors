@@ -1,0 +1,95 @@
+RESUMEN DEL BLOQUE E (funciones de la lista) - actualizado el 11/11/2026
+=======================================================================
+
+Avance del bloque E: 20 % (2 de 10 puntos terminados, más un pedido extra).
+El detalle completo está en TareaDFinalizada.txt (secciones 15, 16 y 17).
+
+
+PUNTO 19. PANEL DE ADMINISTRACIÓN MÁS COMPLETO ................... 100 %
+-----------------------------------------------------------------------
+Pedido: recursos, bloqueos, estadísticas de unidades y misiones.
+
+Ya existía:
+  - Editar oro, madera, comida, piedra, dinero, nivel y tutorial de cada
+    aldea, con motivo obligatorio e historial de cambios.
+  - Aprobar, rechazar o suspender cuentas (los bloqueos).
+
+Se agregó (village_stats.py; solo lee las partidas, no cambia nada):
+  - Administración > Aldeas: "Resumen de las aldeas" con el total de
+    aldeas, tropas de combate, trabajadores, animales y el promedio de
+    misiones completadas, y las 5 tropas más comunes del servidor. La
+    tabla suma las columnas "Tropas" y "Misiones" (por ejemplo, 6 de 229,
+    con las recompensas pendientes).
+  - Al administrar una aldea: sección "Ejército" con cada unidad, su tipo
+    (combate, trabajador, curandero o animal) y dónde está (en el mapa,
+    refugiada en un edificio o en el almacén); sección "Misiones" con el
+    avance, las recompensas pendientes y las últimas completadas.
+  - Se cuentan todas las islas. Vacas, caballos y otros animales van
+    aparte para no inflar el ejército.
+  - Los nombres salen en el idioma del administrador y los números con el
+    separador de cada idioma (1.000 / 1,000 en inglés).
+
+Arreglo de paso: direcciones como /admin/ o /admin/accounts daban error
+404 ("No se pudo continuar"); ahora llevan a la página de cuentas, y las
+páginas de error muestran un mensaje traducido.
+
+
+PUNTO 20. BALANCE DE UNIDADES Y MISIONES ......................... 100 %
+-----------------------------------------------------------------------
+Pedido: balance de unidades y misiones, sobre todo para PvP y ranked.
+
+Análisis (771 unidades, 229 misiones):
+  - Las unidades que se compran con dinero (gratis en este servidor) son
+    mucho más fuertes que las de oro. Por decisión del dueño quedan igual.
+  - La fórmula de los saqueos (10 × ataque + 5 × defensa + vida) inflaba
+    las unidades con mucho ataque y poca vida.
+  - Las misiones pagaban de 10 a 454 de oro, poco para los precios de los
+    niveles altos.
+
+Cambios (balance.py, todos los números en un solo lugar):
+  - Saqueos PvP: misma fórmula, con arreglos.
+      Kamikaze 5.205 -> 705 (explota una sola vez: su ataque cuenta una vez).
+      Catapultas, cañones y arietes: su ataque cuenta a la mitad
+      (Catapulta 655 -> 355, Cañón 855 -> 455).
+      El texto de las reglas en "Rivales" lo explica.
+  - Misiones: las primeras pagan igual y las siguientes suben con el
+    avance (misión 100: 590 de oro, la última: 4.990). El juego muestra y
+    el servidor paga el mismo monto.
+  - Ariete orco (14.000 de oro), la unidad más fuerte del juego: ataque
+    500 -> 150 y vida 5.000 -> 3.000, en las batallas y en los saqueos.
+
+
+PEDIDO EXTRA. ÁREA DE ATAQUE DE LAS UNIDADES, TORRES Y CASTILLOS
+-----------------------------------------------------------------------
+En el suelo, debajo de las unidades, se dibuja la zona que cada una
+alcanza con su ataque: un rombo con borde de color y relleno suave. Es la
+misma zona que el juego usa para decidir si algo está al alcance.
+  - Azul: tus unidades seleccionadas, y tus torres y castillos cuando los
+    seleccionas.
+  - Rojo: las unidades enemigas que tienen a una de tus unidades
+    seleccionadas dentro de su alcance más 3 baldosas.
+  - Rojo, siempre en batalla: las torres y castillos enemigos (edificios
+    que atacan) en los ataques, aventuras, supervivencia y torneos, para
+    ver qué zonas cubren aunque no tengas nada seleccionado. En tu aldea
+    se ven solo al seleccionarlos, para no llenar la pantalla.
+  - No molesta a los clics: se siguen seleccionando unidades y dando
+    órdenes como siempre.
+
+Cómo se hizo: el juego no traía esta función. swf_abc.py lee el código del
+juego y lo vuelve a armar byte por byte (comprobado con el juego
+completo), y swf_range_overlay.py le agrega una función que dibuja las
+áreas en cada cuadro. Solo se agrega código nuevo; lo original no cambia.
+Probado en la aldea, en ataques a otros jugadores (con 16 torres
+enemigas) y en una aventura.
+
+
+PUNTOS QUE SIGUEN
+-----------------
+  21. Duelos PvP en vivo y ranked desde nivel 25 ........................ 0 %
+  22. Clanes ............................................................ 0 %
+  23. Casino ............................................................ 0 %
+  24. Clima y ciclo día/noche ........................................... 0 %
+  25. Editor de mundo ................................................... 0 %
+  26. Pase de temporada gratuito ........................................ 0 %
+  27. Mejorar el HUD .................................................... 0 %
+  28. Mejorar la IA de combate .......................................... 0 %
