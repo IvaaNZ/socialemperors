@@ -14,6 +14,8 @@ import threading
 from flask import abort, request, session
 from werkzeug.security import check_password_hash, generate_password_hash
 
+from localization import SUPPORTED_LOCALES
+
 
 ACCOUNT_STATUSES = frozenset({"pending", "approved", "rejected"})
 LOGIN_WINDOW_SECONDS = 15 * 60
@@ -43,6 +45,8 @@ def _public_account(row):
         "is_admin": bool(row["is_admin"]),
         "village_id": row["village_id"],
         "created_at": row["created_at"],
+        # None means the server's default language.
+        "language": row["language"] if "language" in row.keys() else None,
     }
 
 
@@ -81,6 +85,9 @@ class AccountStore:
                     ON login_throttles (expires_at);
                 """
             )
+            columns = {row["name"] for row in connection.execute("PRAGMA table_info(accounts)")}
+            if "language" not in columns:  # Databases created before the language selector.
+                connection.execute("ALTER TABLE accounts ADD COLUMN language TEXT")
 
     @contextmanager
     def _connection(self):
@@ -92,10 +99,10 @@ class AccountStore:
         finally:
             connection.close()
 
-    def create_account(self, name, email, password, *, is_admin=False, status="pending"):
-        return self._create_account(name, email, password, is_admin, status, None)
+    def create_account(self, name, email, password, *, is_admin=False, status="pending", language=None):
+        return self._create_account(name, email, password, is_admin, status, None, language)
 
-    def _create_account(self, name, email, password, is_admin, status, village_id):
+    def _create_account(self, name, email, password, is_admin, status, village_id, language=None):
         name = name.strip() if isinstance(name, str) else ""
         email = _normalized_email(email)
         if not 2 <= len(name) <= 60:
@@ -109,6 +116,7 @@ class AccountStore:
             raise AccountError("A conta de administrador deve estar aprovada.")
         if village_id is not None:
             village_id = self._validate_village_id(village_id)
+        language = self._validate_language(language)
 
         password_hash = generate_password_hash(password)
         created_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
@@ -116,9 +124,9 @@ class AccountStore:
             with self._connection() as connection:
                 cursor = connection.execute(
                     """INSERT INTO accounts
-                       (name, email, password_hash, status, is_admin, village_id, created_at)
-                       VALUES (?, ?, ?, ?, ?, ?, ?)""",
-                    (name, email, password_hash, status, int(bool(is_admin)), village_id, created_at),
+                       (name, email, password_hash, status, is_admin, village_id, created_at, language)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+                    (name, email, password_hash, status, int(bool(is_admin)), village_id, created_at, language),
                 )
                 row = connection.execute(
                     "SELECT * FROM accounts WHERE id = ?", (cursor.lastrowid,)
@@ -159,6 +167,25 @@ class AccountStore:
                             created_at, id"""
             ).fetchall()
         return [_public_account(row) for row in rows]
+
+    @staticmethod
+    def _validate_language(language):
+        if language is None:
+            return None
+        if not isinstance(language, str) or language not in SUPPORTED_LOCALES:
+            raise AccountError("O idioma escolhido não é válido.")
+        return language
+
+    def set_language(self, account_id, language):
+        """Store the account's language; None returns it to the server default."""
+        language = self._validate_language(language)
+        with self._connection() as connection:
+            cursor = connection.execute("UPDATE accounts SET language = ? WHERE id = ?", (language, account_id))
+            if cursor.rowcount != 1:
+                raise AccountError("Conta não encontrada.")
+            return _public_account(
+                connection.execute("SELECT * FROM accounts WHERE id = ?", (account_id,)).fetchone()
+            )
 
     @staticmethod
     def _validate_status(status):

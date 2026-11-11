@@ -1,7 +1,8 @@
 <!DOCTYPE html>
-<html lang="{{ portal_lang }}">
+<html lang="{{ portal_lang }}" translate="no">
 <head>
     <meta charset="utf-8">
+    <meta name="google" content="notranslate">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>{{ save_info.name }} · Social Empires</title>
     <link rel="icon" href="{{ url_for('images', path='icon.gif') }}">
@@ -35,6 +36,7 @@
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button class="text-button" type="submit">{{ _('Sair da conta') }}</button>
             </form>
+            {% include '_language_form.html' %}
         </nav>
     </header>
     <main class="game-main">

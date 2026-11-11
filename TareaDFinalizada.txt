@@ -25,8 +25,8 @@ ESTADO DE LOS PUNTOS DEL BLOQUE D
     (juego y portal web; ver secciones 1 y 9).
 17. Revisar jugando qué textos quedan en inglés o mezclados: HECHO
     (ver secciones 12 y 13; los torneos no existen en este servidor).
-18. Selector de idioma en el login, guardado en la cuenta: NO HECHO
-    (era opcional; ver "Próximo paso sugerido").
+18. Selector de idioma en el login, guardado en la cuenta: HECHO
+    (ver sección 14).
 
 
 1. CATÁLOGOS NUEVOS (config/locales/)
@@ -162,7 +162,7 @@ C. Entender el repo ........................................... 100 %
   13. GUIA_AGREGAR_ITEMS.md ............................... 100 %
   14. Comparar lo que trae el repo con lo planeado ........ 100 %
 
-D. Español .................................................... 75 %
+D. Español ................................................... 100 %
   15. Elegir español neutro o rioplatense ................. 100 %
   16. Traducir los catálogos .............................. 100 %
       (juego y portal web; ver secciones 1 y 9)
@@ -172,8 +172,8 @@ D. Español .................................................... 75 %
       batallas, Rivales y supervivencia. Ver secciones 12 y 13.
       Los torneos no se pueden revisar: el servidor no los tiene
       programados (get_tournament_info.php da 404 en cualquier idioma))
-  18. Selector de idioma en el login (opcional) ............. 0 %
-      (el código ya admite varios idiomas; falta el selector por cuenta)
+  18. Selector de idioma en el login (opcional) ........... 100 %
+      (cada cuenta guarda su idioma; ver sección 14)
 
 E. Funciones de la lista ....................................... 5 %
   19. Panel de admin más completo ......................... 50 %
@@ -196,9 +196,9 @@ F. Identidad propia y publicación ............................... 0 %
   31. Ponerlo online ........................................ 0 %
   32. Consultar con abogado o contador ...................... 0 %
 
-TOTAL DEL PLAN (32 tareas, promedio simple) .................. 55 %
+TOTAL DEL PLAN (32 tareas, promedio simple) .................. 58 %
 (historial: 47 % -> 50 % -> 52 % -> 53 % (A5 cerrada) -> 54 % (D17 a 80 %)
--> 54 % (D17 a 90 %) -> 55 % (D17 a 100 %))
+-> 54 % (D17 a 90 %) -> 55 % (D17 a 100 %) -> 58 % (D18 hecho: bloque D al 100 %))
 
 
 8. TEXTOS QUE SIGUEN EN PORTUGUÉS Y QUÉ SIGNIFICAN
@@ -422,3 +422,25 @@ Corregido en esta parte:
     al recargar no se pierde ni se repite (monday_bonus.py).
   - El servidor arranca en español por defecto (SOCIAL_EMPIRES_LANGUAGE=es).
     Para portugués: SOCIAL_EMPIRES_LANGUAGE=pt-BR.
+
+
+14. SELECTOR DE IDIOMA POR CUENTA (tarea D18)
+---------------------------------------------
+Ahora cada jugador elige su idioma; ya no es uno solo para todo el servidor.
+  - Arriba de cada página (login, registro, portal y la página del juego)
+    hay un selector "Idioma" con Español y Português, y el botón "Cambiar".
+  - Si se elige en el login o en el registro, queda guardado en la cuenta
+    al entrar o al registrarse. Si se cambia ya adentro, se guarda al
+    momento. Al volver a entrar (otro día u otro navegador) sigue ese idioma.
+  - El portal y el juego (configuración, SWF, aventuras y nombres por
+    defecto) se sirven en el idioma de cada jugador. Cambiarlo recarga la
+    página y el juego.
+  - Quien no eligió usa el idioma por defecto del servidor (español, o el
+    de SOCIAL_EMPIRES_LANGUAGE).
+  - Las cuentas existentes siguen funcionando: la base de datos suma la
+    columna "language" sola al arrancar.
+  - Las páginas piden al navegador que no las traduzca solo: Chrome
+    traducía el portugués al español por su cuenta y mezclaba todo.
+Probado en un servidor de prueba: cambio en el login, entrada al juego en
+portugués, idioma guardado tras reiniciar el servidor, y cambio a español
+desde la página del juego.

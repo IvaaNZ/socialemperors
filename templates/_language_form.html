@@ -1,0 +1,12 @@
+{# Language selector: the choice is kept in the session and saved in the account. #}
+<form class="language-form" action="{{ url_for('change_language') }}" method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="next" value="{{ request.path }}">
+    <label class="language-label" for="language-select">{{ _('Idioma') }}</label>
+    <select id="language-select" name="language">
+        {% for code, name in languages.items() %}
+            <option value="{{ code }}" lang="{{ code }}" {% if code == portal_lang %}selected{% endif %}>{{ name }}</option>
+        {% endfor %}
+    </select>
+    <button class="language-button" type="submit">{{ _('Mudar') }}</button>
+</form>

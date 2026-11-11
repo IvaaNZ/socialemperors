@@ -29,6 +29,8 @@ DISPLAY_FIELDS = {
 
 
 SUPPORTED_LOCALES = ('pt-BR', 'es')
+# Each language is named in itself in the language selector.
+LANGUAGE_NAMES = {'es': 'Español', 'pt-BR': 'Português'}
 # Specific item names take precedence over short generic UI wording.
 CATALOG_PARTS = ('core', 'interface', 'extended', 'collections', 'missions', 'auxiliary', 'items')
 

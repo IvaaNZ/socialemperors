@@ -80,7 +80,7 @@ class SpanishPortalTests(unittest.TestCase):
         client = server.app.test_client()
 
         page = client.get('/login').get_data(as_text=True)
-        self.assertIn('<html lang="es">', page)
+        self.assertIn('<html lang="es" translate="no">', page)
         self.assertIn('Entra a tu aldea', page)
         self.assertIn('Contraseña', page)
         self.assertNotIn('Entre na sua vila', page)

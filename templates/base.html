@@ -1,7 +1,8 @@
 <!DOCTYPE html>
-<html lang="{{ portal_lang }}">
+<html lang="{{ portal_lang }}" translate="no">
 <head>
     <meta charset="utf-8">
+    <meta name="google" content="notranslate">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#3b5998">
     <title>{% block title %}Social Empires{% endblock %}</title>
@@ -32,6 +33,7 @@
                 {% else %}
                     <a href="{{ url_for('register') }}">{{ _('Criar conta') }}</a>
                 {% endif %}
+                {% include '_language_form.html' %}
             </nav>
         </div>
     </header>

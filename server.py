@@ -38,7 +38,7 @@ from engine import timestamp_now
 from version import version_name
 from constants import Constant
 from quests import get_quest_map
-from localization import SUPPORTED_LOCALES
+from localization import LANGUAGE_NAMES, SUPPORTED_LOCALES
 from portal_i18n import set_portal_language, portal_language, translate as _, translations_for
 from swf_localization import localize_swf
 from village_names import rename_village, normalize_legacy_village_name, VillageNameError, MAX_VILLAGE_NAME_LENGTH
@@ -231,12 +231,30 @@ def ensure_village(account):
 
 @app.context_processor
 def access_context():
-    return dict(current_account=getattr(g, 'account', None), csrf_token=csrf_token, version=version_name, portal_lang=portal_language())
+    return dict(current_account=getattr(g, 'account', None), csrf_token=csrf_token, version=version_name,
+                portal_lang=portal_language(), languages=LANGUAGE_NAMES)
+
+
+def chosen_language():
+    """The account's language, else one picked in this browser session, else None."""
+    account = g.get('account')
+    if account and account.get('language') in SUPPORTED_LOCALES:
+        return account['language']
+    language = session.get('language')
+    return language if language in SUPPORTED_LOCALES else None
+
+
+def game_language():
+    """Language for this request's game data: the player's choice or the server default."""
+    return g.get('language') or GAME_LANGUAGE
 
 
 @app.before_request
 def protect_access():
     g.account = accounts().get(session.get('account_id'))
+    chosen = chosen_language()
+    g.language = chosen or GAME_LANGUAGE
+    g.portal_language = chosen  # None keeps the server's portal language.
     protected = request.path in ('/play.html', '/ruffle.html', '/new.html', '/null', '/village', '/village/events', '/rivals', '/treasury', '/treasury/claim') or request.path.startswith((STATIC_GAME_PREFIX, DYNAMIC_GAME_PREFIX, '/rivals/'))
     if not protected:
         return
@@ -306,6 +324,7 @@ def login():
         validate_csrf()
         email = values['email']
         address = request.remote_addr or 'unknown'
+        picked = session.get('language') if session.get('language') in SUPPORTED_LOCALES else None
         try:
             accounts().check_login_allowed(email, address)
             account = accounts().authenticate(email, request.form.get('password', ''))
@@ -319,6 +338,9 @@ def login():
             else:
                 account = ensure_village(account)
                 accounts().clear_login_failures(email, address)
+                if picked and account.get('language') != picked:
+                    # A language chosen on the login page is saved in the account.
+                    account = accounts().set_language(account['id'], picked)
                 session.clear()
                 session.permanent = True
                 session['account_id'] = account['id']
@@ -341,12 +363,30 @@ def register():
             password = request.form.get('password', '')
             if password != request.form.get('password_confirm', ''):
                 raise AccountError('As senhas não conferem.')
-            accounts().create_account(values['name'], values['email'], password)
+            language = session.get('language') if session.get('language') in SUPPORTED_LOCALES else None
+            accounts().create_account(values['name'], values['email'], password, language=language)
             flash('Cadastro recebido! Aguarde a aprovação do administrador para entrar na sua vila.', 'success')
             return redirect(url_for('login'))
         except AccountError as exc:
             error = str(exc)
     return render_template('register.html', error=error, values=values)
+
+
+@app.post('/language')
+def change_language():
+    """Switch the portal and game language; saved in the account when logged in."""
+    validate_csrf()
+    language = request.form.get('language', '')
+    if language not in SUPPORTED_LOCALES:
+        abort(400, description='O idioma escolhido não é válido.')
+    session['language'] = language
+    if g.account:
+        accounts().set_language(g.account['id'], language)
+    destination = request.form.get('next', '')
+    # Only local paths: never redirect to another site.
+    if not destination.startswith('/') or destination.startswith('//') or '\\' in destination:
+        destination = url_for('play') if g.account else url_for('login')
+    return redirect(destination)
 
 
 @app.post('/logout')
@@ -635,17 +675,22 @@ def similar_05122012_dynamic():
 @app.route("/default01.static.socialpointgames.com/static/socialempires/<path:path>")
 def static_assets_loader(path):
     if path == f'flash/{GAME_VERSION}':
-        movie, checksum = localized_game_movie()
-        return send_file(BytesIO(movie), mimetype='application/x-shockwave-flash', download_name=GAME_VERSION, etag=checksum, conditional=True)
+        movie, checksum = localized_game_movie(game_language())
+        response = send_file(BytesIO(movie), mimetype='application/x-shockwave-flash', download_name=GAME_VERSION, etag=checksum, conditional=True)
+        # One URL, one movie per language: always revalidate (the ETag differs per language).
+        response.headers['Cache-Control'] = 'private, no-cache'
+        response.headers['Vary'] = 'Cookie'
+        return response
     return send_from_directory(ASSETS_DIR, path)
 
 
-@lru_cache(maxsize=1)
-def localized_game_movie():
+@lru_cache(maxsize=None)
+def localized_game_movie(language=None):
+    language = language or GAME_LANGUAGE
     original = (Path(ASSETS_DIR) / 'flash' / GAME_VERSION).read_bytes()
-    patched = patch_tutorial(patch_private_economy(localize_swf(original, language=GAME_LANGUAGE)))
+    patched = patch_tutorial(patch_private_economy(localize_swf(original, language=language)))
     # Bytecode strings change last: the audited patches above pin the ABC checksum.
-    translated = localize_abc_strings(patched, GAME_LANGUAGE)
+    translated = localize_abc_strings(patched, language)
     return translated, hashlib.sha256(translated).hexdigest()
 
 ## GAME DYNAMIC
@@ -669,7 +714,7 @@ def get_game_config_response():
         spdebug = request.values['spdebug']
     language = request.values['language']
 
-    return get_game_config(GAME_LANGUAGE)
+    return get_game_config(game_language())
 
 @app.route("/dynamic.flash1.dev.socialpoint.es/appsfb/socialempiresdev/srvempires/get_player_info.php", methods=['POST'])
 def get_player_info_response():
@@ -692,7 +737,7 @@ def get_player_info_response():
         elif user in (Constant.NEIGHBOUR_ARTHUR_GUINEVERE_1, Constant.NEIGHBOUR_ARTHUR_GUINEVERE_2, Constant.NEIGHBOUR_ARTHUR_GUINEVERE_3):
             return (copy.deepcopy(get_neighbor_info(user, map if map is not None else 0)), 200)
         elif user.startswith("100000"):
-            return get_quest_map(user, GAME_LANGUAGE)
+            return get_quest_map(user, game_language())
         else:
             from sessions import neighbor_session
             if neighbor_session(user) is None:

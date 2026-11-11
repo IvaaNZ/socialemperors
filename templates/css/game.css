@@ -99,3 +99,9 @@ body.tab-expanded .game-footer, body.tab-expanded .mobile-hint { display: none; 
     .game-footer { flex-direction: column; gap: 4px; }
     .mobile-hint { display: block; }
 }
+
+/* Language selector (templates/_language_form.html) */
+.language-form { display: flex; align-items: center; gap: 6px; }
+.language-label { font-size: 13px; }
+.language-form select, .language-button { min-height: 30px; padding: 2px 8px; border: 1px solid #b9c7bc; border-radius: 6px; background: #fff; font: inherit; font-size: 13px; }
+.language-button { color: var(--primary); font-weight: 700; cursor: pointer; }

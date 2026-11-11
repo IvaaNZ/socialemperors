@@ -1,5 +1,7 @@
 """Translate the web portal and server messages from their Portuguese source.
 
+Each request may choose its own language (g.portal_language, set by the
+server from the account or session); otherwise the server default applies.
 Portuguese remains the source language of templates and Python messages, so
 existing behaviour is unchanged when no catalog exists for the active locale.
 Catalog keys are the exact Portuguese text. A key containing ``{name}``
@@ -11,6 +13,8 @@ import json
 import re
 from functools import lru_cache
 from pathlib import Path
+
+from flask import g, has_request_context
 
 from bundle import CONFIG_DIR
 from localization import normalize_locale
@@ -52,6 +56,11 @@ def set_portal_language(language):
 
 
 def portal_language():
+    """The request's chosen language (account or session), else the server's."""
+    if has_request_context():
+        chosen = g.get('portal_language')
+        if chosen:
+            return chosen
     return _active_locale
 
 
@@ -59,7 +68,7 @@ def translate(text, **values):
     """Translate Portuguese portal text, then fill optional named values."""
     if not isinstance(text, str) or not text:
         return text
-    catalog, patterns = load_portal_catalog(_active_locale)
+    catalog, patterns = load_portal_catalog(portal_language())
     translated = catalog.get(text)
     if translated is None:
         translated = text

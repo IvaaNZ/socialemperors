@@ -334,5 +334,9 @@
   "Administrador criado: {email}. Entre e acesse /admin para aprovar os cadastros.": "Administrador creado: {email}. Entra y abre /admin para aprobar los registros.",
   "SECRET_KEY deve ter pelo menos 32 caracteres.": "SECRET_KEY debe tener al menos 32 caracteres.",
   "A chave em instance/secret_key está inválida. Restaure o arquivo de backup ou configure SECRET_KEY com pelo menos 32 caracteres.": "La clave de instance/secret_key no es válida. Restaura la copia de seguridad o configura SECRET_KEY con al menos 32 caracteres.",
-  "{name} deve ser um inteiro entre 1 e {limit}.": "{name} debe ser un número entero entre 1 y {limit}."
+  "{name} deve ser um inteiro entre 1 e {limit}.": "{name} debe ser un número entero entre 1 y {limit}.",
+
+  "Idioma": "Idioma",
+  "Mudar": "Cambiar",
+  "O idioma escolhido não é válido.": "El idioma elegido no es válido."
 }
