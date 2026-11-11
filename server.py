@@ -45,6 +45,7 @@ from village_names import rename_village, normalize_legacy_village_name, Village
 from pvp import RaidService, RaidError
 from admin_villages import AdminVillageService, AdminVillageError, AdminVillageConflict, EDITABLE_FIELDS, RESOURCE_LIMIT, CASH_LIMIT
 from economy import EconomyService, EconomyError
+from swf_abc_strings import localize_abc_strings
 from swf_private_economy import patch_private_economy
 from swf_tutorial import patch_tutorial
 from tutorial import TutorialError
@@ -642,7 +643,9 @@ def static_assets_loader(path):
 @lru_cache(maxsize=1)
 def localized_game_movie():
     original = (Path(ASSETS_DIR) / 'flash' / GAME_VERSION).read_bytes()
-    translated = patch_tutorial(patch_private_economy(localize_swf(original, language=GAME_LANGUAGE)))
+    patched = patch_tutorial(patch_private_economy(localize_swf(original, language=GAME_LANGUAGE)))
+    # Bytecode strings change last: the audited patches above pin the ABC checksum.
+    translated = localize_abc_strings(patched, GAME_LANGUAGE)
     return translated, hashlib.sha256(translated).hexdigest()
 
 ## GAME DYNAMIC

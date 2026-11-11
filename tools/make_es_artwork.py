@@ -64,6 +64,8 @@ SWF_JOBS = {
     3545: ('ENTRENAR', (1, 18, 54, 37), 'light', WHITE, (95, 55, 20)),
     3582: ('Más dinero', (17, 19, 141, 38), 'white-flat', WHITE, None),
     792: ('Más dinero', (17, 19, 141, 38), 'white-flat', WHITE, None),
+    3491: ('ENTRAR A\nSUPERVIVENCIA', (8, 65, 115, 95), 'light', WHITE, (120, 20, 20), 1.0),
+    3524: ('¡ACELERAR!', (16, 3, 114, 21), 'light', WHITE, (150, 25, 25), 1.0),
 }
 
 
@@ -72,7 +74,7 @@ def swf_bitmaps():
     body, header = decode_swf(GAME_MOVIE.read_bytes())
     images = {}
     for code, payload, _ in iter_tags(body[header:]):
-        if code not in (35, 36) or len(payload) < 2:
+        if code not in (6, 35, 36) or len(payload) < 2:
             continue
         character_id = struct.unpack_from('<H', payload)[0]
         if character_id not in SWF_JOBS:
@@ -87,6 +89,8 @@ def swf_bitmaps():
                     r, g, b = (min(255, value * 255 // a) for value in (r, g, b))
                 rgba += bytes((r, g, b, a))
             images[character_id] = Image.frombytes('RGBA', (width, height), bytes(rgba))
+        elif code == 6:  # DefineBits holding a complete opaque JPEG.
+            images[character_id] = Image.open(io.BytesIO(payload[2:])).convert('RGBA')
         else:
             size = struct.unpack_from('<I', payload, 2)[0]
             image = Image.open(io.BytesIO(payload[6:6 + size])).convert('RGBA')

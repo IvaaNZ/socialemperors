@@ -96,7 +96,7 @@ class SwfBitmapArtTests(unittest.TestCase):
         def bitmaps(data):
             found = {}
             for code, payload in flattened_tags(data):
-                if code in (35, 36) and len(payload) >= 2:
+                if code in (6, 35, 36) and len(payload) >= 2:
                     found[struct.unpack_from('<H', payload)[0]] = (code, payload)
             return found
 

@@ -8,7 +8,7 @@ Assets contain Flash format-5 premultiplied ARGB pixels, packed in preparation.
 BITMAP_DIMENSIONS lists the images translated for every language (Portuguese
 art, reused when Spanish spells the word the same). LANGUAGE_BITMAP_DIMENSIONS
 lists images only one language replaces; the rest keep the original English art.
-Some of those originals are JPEG bitmaps with alpha (DefineBitsJPEG3); their
+Some of those originals are JPEG bitmaps (DefineBits or DefineBitsJPEG3); their
 translation is served as a lossless bitmap with the same character id and size.
 """
 
@@ -32,7 +32,7 @@ LANGUAGE_BITMAP_DIMENSIONS = {
         147: (83, 82), 149: (93, 85), 233: (128, 29), 234: (238, 27), 792: (157, 59),
         798: (62, 75), 1028: (63, 44), 1034: (105, 47), 1038: (84, 52), 1042: (111, 105),
         1529: (159, 33), 1534: (159, 33), 2421: (186, 60), 3431: (49, 48), 3545: (54, 55),
-        3582: (157, 59),
+        3491: (124, 99), 3524: (130, 25), 3582: (157, 59),
     },
 }
 LOSSLESS2 = 36

@@ -289,6 +289,28 @@
     "packed_sha256": "db02fcf57334e56becac630dcdef39f9b80e8f45ff8b167622b5992d43d20e7b"
   },
   {
+    "id": 3491,
+    "width": 124,
+    "height": 99,
+    "text": "ENTRAR A SUPERVIVENCIA",
+    "editor": "tools/make_es_artwork.py (Pillow, Arial Bold over the original bitmap)",
+    "png": "es-3491.png",
+    "packed": "es-3491.argb.zlib",
+    "png_sha256": "c3302c8bbf56c090a1da8b49fb3f4bb6a68be9057ce3fc151b11f866f97de8ef",
+    "packed_sha256": "59569485e9da2ab102bd5297d2890f15d6e669a209d2705df2415855da1cd450"
+  },
+  {
+    "id": 3524,
+    "width": 130,
+    "height": 25,
+    "text": "¡ACELERAR!",
+    "editor": "tools/make_es_artwork.py (Pillow, Arial Bold over the original bitmap)",
+    "png": "es-3524.png",
+    "packed": "es-3524.argb.zlib",
+    "png_sha256": "25740212f1a1f4c897459fa826177eb47b53241ed438bcbe1af58761153e88ba",
+    "packed_sha256": "9a354e9b38948c54ed1f789261a534de3aaa0671695c059cf29cc3fcf7964e02"
+  },
+  {
     "id": 3545,
     "width": 54,
     "height": 55,
