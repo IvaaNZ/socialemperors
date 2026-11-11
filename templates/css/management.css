@@ -59,3 +59,26 @@
     .management-resources { max-width: 380px; }
     .management-fields { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Unit and mission statistics (village_stats.py) */
+.stats-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 0 0 22px; }
+.stat-card { padding: 14px 16px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.stat-card dt { color: var(--muted); font-size: .82rem; font-weight: 700; }
+.stat-card dd { margin: 4px 0 0; color: var(--ink); font-size: 1.45rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.stats-subtitle { margin: 0 0 10px; color: var(--ink); font-size: 1rem; }
+.stats-ranking { max-width: 480px; margin: 0 0 8px; padding: 0; list-style: none; counter-reset: rank; }
+.stats-ranking li { display: flex; justify-content: space-between; gap: 16px; padding: 8px 0; border-bottom: 1px solid var(--line); counter-increment: rank; }
+.stats-ranking li::before { content: counter(rank) "."; min-width: 1.6em; color: var(--muted); }
+.stats-ranking li span:first-of-type { flex: 1; }
+.stats-value, .stats-table .numeric { font-variant-numeric: tabular-nums; text-align: right; }
+.stats-table { margin-bottom: 8px; }
+.stats-progress-label { margin-bottom: 8px; color: var(--ink); }
+.stats-progress { height: 10px; margin-bottom: 22px; border-radius: 5px; background: var(--line); overflow: hidden; }
+.stats-progress span { display: block; height: 100%; background: var(--blue); }
+.stats-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; }
+.stats-list { margin: 0; padding-left: 18px; }
+.stats-list li { padding: 3px 0; }
+.stats-note { color: var(--muted); }
+@media (max-width: 680px) {
+    .stats-columns { grid-template-columns: 1fr; }
+}

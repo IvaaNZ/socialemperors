@@ -28,6 +28,7 @@ from get_game_config import get_game_config, patch_game_config
 print (" [+] Loading players...")
 from get_player_info import get_player_info, get_neighbor_info
 from sessions import load_saved_villages, all_saves_userid, save_info, new_village, fb_friends_str, session as village_session
+from village_stats import summary as stats_summary, village_stats
 load_saved_villages()
 
 print (" [+] Loading server...")
@@ -209,7 +210,16 @@ def game_script_texts():
 
 @app.template_filter('game_number')
 def game_number(value):
-    return f'{int(value):,}'.replace(',', '.')
+    """Whole number with the viewer's thousands separator (1.000 / 1,000 in English)."""
+    text = f'{int(value):,}'
+    return text if portal_language() == 'en' else text.replace(',', '.')
+
+
+@app.template_filter('game_decimal')
+def game_decimal(value):
+    """One decimal place with the viewer's decimal mark (1,5 / 1.5 in English)."""
+    text = f'{float(value):.1f}'
+    return text if portal_language() == 'en' else text.replace('.', ',')
 
 
 @app.template_filter('game_datetime')
@@ -446,9 +456,10 @@ def admin_villages():
                 entries.append({'account': account, 'unavailable': True})
                 continue
             village = village_admin().get(userid)
-            entries.append({'account': account, 'village': village,
+            entries.append({'account': account, 'village': village, 'stats': village_stats(village_session(userid), game_language()),
                             'resources': village['resources'], 'cash': village['cash'], 'unavailable': False})
-    return render_template('admin_villages.html', villages=entries)
+    overview = stats_summary([entry['stats'] for entry in entries if not entry['unavailable']])
+    return render_template('admin_villages.html', villages=entries, overview=overview)
 
 
 def administrative_history(userid):
@@ -511,7 +522,8 @@ def admin_village(account_id):
                 flash('Vila atualizada. O jogador verá um aviso para recarregar o jogo.' if result['changed_fields'] else 'A vila já estava com esses valores.', 'success')
                 return redirect(url_for('admin_village', account_id=account_id), code=303)
         history = administrative_history(account['village_id'])
-    return render_template('admin_village.html', account=account, village=village, values=values,
+        stats = village_stats(village_session(account['village_id']), game_language())
+    return render_template('admin_village.html', account=account, village=village, values=values, stats=stats,
                            error=error, conflict=conflict, expected_revision=expected_revision, history=history,
                            limits={'resource_max': RESOURCE_LIMIT, 'cash_max': CASH_LIMIT,
                                    'name_max_length': MAX_VILLAGE_NAME_LENGTH, 'max_level': village['max_level']}), response_status

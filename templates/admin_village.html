@@ -63,6 +63,53 @@
         {% else %}<p>{{ _('Se o jogador estiver com a vila aberta, ele verá um aviso para atualizá-la.') }}</p>{% endif %}
     </div>
 </form>
+{% set kind_labels = {'combat': _('Combate'), 'worker': _('Trabalhador'), 'healer': _('Curandeiro'), 'animal': _('Animal')} %}
+<section class="management-section" aria-labelledby="army-title">
+    <h2 id="army-title">{{ _('Exército') }}</h2>
+    <dl class="stats-cards">
+        <div class="stat-card"><dt>{{ _('Tropas de combate') }}</dt><dd>{{ stats.units.totals.combat | game_number }}</dd></div>
+        <div class="stat-card"><dt>{{ _('Trabalhadores') }}</dt><dd>{{ stats.units.totals.worker | game_number }}</dd></div>
+        <div class="stat-card"><dt>{{ _('Curandeiros') }}</dt><dd>{{ stats.units.totals.healer | game_number }}</dd></div>
+        <div class="stat-card"><dt>{{ _('Animais') }}</dt><dd>{{ stats.units.totals.animal | game_number }}</dd></div>
+    </dl>
+    {% if stats.units.units %}
+    <table class="management-table stats-table">
+        <caption class="sr-only">{{ _('Unidades da vila por tipo') }}</caption>
+        <thead><tr><th scope="col">{{ _('Unidade') }}</th><th scope="col">{{ _('Tipo') }}</th><th scope="col" class="numeric">{{ _('No mapa') }}</th><th scope="col" class="numeric">{{ _('Abrigadas') }}</th><th scope="col" class="numeric">{{ _('No armazém') }}</th><th scope="col" class="numeric">{{ _('Total') }}</th></tr></thead>
+        <tbody>
+            {% for unit in stats.units.units %}
+            <tr>
+                <td data-label="{{ _('Unidade') }}"><strong>{{ unit.name }}</strong></td>
+                <td data-label="{{ _('Tipo') }}">{{ kind_labels[unit.kind] }}</td>
+                <td data-label="{{ _('No mapa') }}" class="numeric">{{ unit.on_map | game_number }}</td>
+                <td data-label="{{ _('Abrigadas') }}" class="numeric">{{ unit.sheltered | game_number }}</td>
+                <td data-label="{{ _('No armazém') }}" class="numeric">{{ unit.stored | game_number }}</td>
+                <td data-label="{{ _('Total') }}" class="numeric"><strong>{{ unit.total | game_number }}</strong></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}<p class="management-empty">{{ _('Esta vila ainda não tem unidades.') }}</p>{% endif %}
+</section>
+<section class="management-section" aria-labelledby="missions-title">
+    <h2 id="missions-title">{{ _('Missões') }}</h2>
+    <p class="stats-progress-label">{{ _('{completed} de {total} missões concluídas ({percent}%)', completed=stats.missions.completed, total=stats.missions.total, percent=stats.missions.percent) }}</p>
+    <div class="stats-progress" aria-hidden="true"><span style="width: {{ stats.missions.percent }}%"></span></div>
+    <div class="stats-columns">
+        <div>
+            <h3 class="stats-subtitle">{{ _('Recompensas pendentes') }}</h3>
+            {% if stats.missions.pending_rewards %}
+            <ul class="stats-list">{% for mission in stats.missions.pending_rewards %}<li>{{ mission.name }}</li>{% endfor %}</ul>
+            {% else %}<p class="stats-note">{{ _('Todas as recompensas foram recebidas.') }}</p>{% endif %}
+        </div>
+        <div>
+            <h3 class="stats-subtitle">{{ _('Últimas missões concluídas') }}</h3>
+            {% if stats.missions.recent %}
+            <ul class="stats-list">{% for mission in stats.missions.recent %}<li>{{ mission.name }}</li>{% endfor %}</ul>
+            {% else %}<p class="stats-note">{{ _('Nenhuma missão concluída ainda.') }}</p>{% endif %}
+        </div>
+    </div>
+</section>
 <section class="management-section" aria-labelledby="history-title">
     <h2 id="history-title">{{ _('Histórico de alterações administrativas') }}</h2>
     {% if history %}

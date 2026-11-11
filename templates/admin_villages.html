@@ -12,9 +12,27 @@
     <a href="{{ url_for('admin_villages') }}" aria-current="page">{{ _('Vilas') }}</a>
 </nav>
 {% if villages %}
+{% if overview.villages %}
+<section class="management-section stats-overview" aria-labelledby="stats-title">
+    <h2 id="stats-title">{{ _('Resumo das vilas') }}</h2>
+    <dl class="stats-cards">
+        <div class="stat-card"><dt>{{ _('Vilas') }}</dt><dd>{{ overview.villages | game_number }}</dd></div>
+        <div class="stat-card"><dt>{{ _('Tropas de combate') }}</dt><dd>{{ overview.combat | game_number }}</dd></div>
+        <div class="stat-card"><dt>{{ _('Trabalhadores') }}</dt><dd>{{ overview.worker | game_number }}</dd></div>
+        <div class="stat-card"><dt>{{ _('Animais') }}</dt><dd>{{ overview.animal | game_number }}</dd></div>
+        <div class="stat-card"><dt>{{ _('Média de missões concluídas') }}</dt><dd>{{ overview.missions_average | game_decimal }}</dd></div>
+    </dl>
+    {% if overview.top_units %}
+    <h3 class="stats-subtitle">{{ _('Tropas mais comuns') }}</h3>
+    <ol class="stats-ranking">
+        {% for unit in overview.top_units %}<li><span>{{ unit.name }}</span><span class="stats-value">{{ unit.total | game_number }}</span></li>{% endfor %}
+    </ol>
+    {% endif %}
+</section>
+{% endif %}
 <table class="management-table">
     <caption class="sr-only">{{ _('Vilas dos jogadores e seus recursos') }}</caption>
-    <thead><tr><th scope="col">{{ _('Jogador') }}</th><th scope="col">{{ _('Vila') }}</th><th scope="col">{{ _('Recursos') }}</th><th scope="col"><span class="sr-only">{{ _('Ação') }}</span></th></tr></thead>
+    <thead><tr><th scope="col">{{ _('Jogador') }}</th><th scope="col">{{ _('Vila') }}</th><th scope="col">{{ _('Recursos') }}</th><th scope="col">{{ _('Tropas') }}</th><th scope="col">{{ _('Missões') }}</th><th scope="col"><span class="sr-only">{{ _('Ação') }}</span></th></tr></thead>
     <tbody>
         {% for entry in villages %}
         <tr>
@@ -24,7 +42,7 @@
                 <span class="status status-{{ entry.account.status }}">{{ status_labels.get(entry.account.status, entry.account.status) }}</span>
             </td>
             {% if entry.unavailable %}
-            <td colspan="3" data-label="{{ _('Vila') }}"><strong>{{ _('Save indisponível') }}</strong><span class="player-detail">{{ _('Restaure o arquivo da vila para voltar a gerenciá-la.') }}</span></td>
+            <td colspan="5" data-label="{{ _('Vila') }}"><strong>{{ _('Save indisponível') }}</strong><span class="player-detail">{{ _('Restaure o arquivo da vila para voltar a gerenciá-la.') }}</span></td>
             {% else %}
             <td data-label="{{ _('Vila') }}">
                 <strong>{{ entry.village.name }}</strong>
@@ -37,6 +55,14 @@
                     {% endfor %}
                     <span>{{ _('Dinheiro') }}: {{ entry.cash | game_number }}</span>
                 </div>
+            </td>
+            <td data-label="{{ _('Tropas') }}">
+                <strong>{{ entry.stats.units.totals.combat | game_number }}</strong>
+                <span class="player-detail">{{ _('{count} unidades no total', count=entry.stats.units.totals.units | game_number) }}</span>
+            </td>
+            <td data-label="{{ _('Missões') }}">
+                <strong>{{ _('{completed} de {total}', completed=entry.stats.missions.completed, total=entry.stats.missions.total) }}</strong>
+                {% if entry.stats.missions.pending_rewards %}<span class="player-detail">{{ _('{count} recompensas pendentes', count=entry.stats.missions.pending_rewards | length) }}</span>{% endif %}
             </td>
             <td data-label="{{ _('Gerenciamento') }}"><a class="button button-secondary button-small manage-link" href="{{ url_for('admin_village', account_id=entry.account.id) }}" aria-label="{{ _('Gerenciar vila de {name}', name=entry.account.name) }}">{{ _('Gerenciar vila') }}</a></td>
             {% endif %}
