@@ -1,0 +1,30 @@
+/* Live duels (SE_DUELS=on only). Works on the portal and the game page. */
+.duel-notice { position: fixed; right: 16px; bottom: 16px; z-index: 1000; width: min(360px, calc(100vw - 32px)); padding: 16px 18px; border: 1px solid #c9d3e2; border-radius: 10px; background: #fff; color: #22304a; box-shadow: 0 12px 32px rgba(0, 0, 0, .22); font: 15px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; }
+.duel-notice[hidden] { display: none; }
+.duel-notice-text { margin: 0 0 6px; font-weight: 700; }
+.duel-notice-detail { margin: 0 0 12px; color: #5f6c7f; font-size: 13px; font-variant-numeric: tabular-nums; }
+.duel-notice-detail:empty { display: none; }
+.duel-notice-actions { display: flex; gap: 8px; justify-content: flex-end; }
+.duel-button { min-height: 36px; padding: 6px 14px; border: 1px solid #c9d3e2; border-radius: 6px; background: #fff; color: #22304a; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.duel-button-primary { border-color: #3b5998; background: #3b5998; color: #fff; }
+.duel-button:focus-visible { outline: 2px solid #3b5998; outline-offset: 2px; }
+
+.duels-main { max-width: 900px; margin: 40px auto; padding: 0 28px; }
+.duels-main section { margin-top: 32px; }
+.duels-main h2 { margin-bottom: 12px; }
+.duels-heading p, .duels-note, .duels-empty, .duels-meta { color: var(--muted, #5f6c7f); }
+.duels-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin: 0; }
+.duels-cards div { padding: 14px 16px; border: 1px solid var(--line, #d8dfe9); border-radius: 8px; background: var(--surface, #fff); }
+.duels-cards dt { color: var(--muted, #5f6c7f); font-size: .82rem; font-weight: 700; }
+.duels-cards dd { margin: 4px 0 0; font-size: 1.4rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.duels-online, .duels-history { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line, #d8dfe9); }
+.duels-online li, .duels-history li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 16px; padding: 12px 0; border-bottom: 1px solid var(--line, #d8dfe9); }
+.duels-history li { flex-direction: column; align-items: flex-start; }
+.duels-busy { color: var(--muted, #5f6c7f); font-size: .85rem; }
+.duel-won strong { color: #1f7a3a; }
+.duel-lost strong { color: #b3261e; }
+.duels-table { width: 100%; border-collapse: collapse; }
+.duels-table th, .duels-table td { padding: 10px 8px; border-bottom: 1px solid var(--line, #d8dfe9); text-align: left; }
+.duels-table .numeric { text-align: right; font-variant-numeric: tabular-nums; }
+.duels-rules ul { padding-left: 20px; }
+@media (max-width: 600px) { .duels-main { padding: 0 16px; } }

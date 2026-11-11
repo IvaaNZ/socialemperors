@@ -22,7 +22,7 @@
                     <span class="account-name">{{ current_account.name }}</span>
                     <a href="/play.html">{{ _('Minha vila') }}</a>
                     <a href="{{ url_for('rival_villages') }}" {% if request.endpoint == 'rival_villages' %}aria-current="page"{% endif %}>{{ _('Rivais e saques') }}</a>
-                    <a href="{{ url_for('treasury') }}" {% if request.endpoint == 'treasury' %}aria-current="page"{% endif %}>{{ _('Tesouro') }}</a>
+                    <a href="{{ url_for('treasury') }}" {% if request.endpoint == 'treasury' %}aria-current="page"{% endif %}>{{ _('Tesouro') }}</a>{% if duels_enabled %}<a href="{{ url_for('duels_page') }}" {% if request.endpoint == 'duels_page' %}aria-current="page"{% endif %}>{{ _('Duelos') }}</a>{% endif %}
                     {% if current_account.is_admin %}<a href="{{ url_for('admin_accounts') }}" {% if request.endpoint in ['admin_accounts', 'admin_villages', 'admin_village'] %}aria-current="page"{% endif %}>{{ _('Administração') }}</a>{% endif %}
                     <form action="{{ url_for('logout') }}" method="post">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -46,6 +46,6 @@
         {% block content %}{% endblock %}
     </main>
     <footer class="site-footer">Social Emperors <span aria-hidden="true">·</span> {{ version | default('') }}</footer>
-    {% block scripts %}{% endblock %}
+    {% if duel_config %}{% include '_duels.html' %}{% endif %}{% block scripts %}{% endblock %}
 </body>
 </html>

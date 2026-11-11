@@ -30,7 +30,7 @@
         </a>
         <nav aria-label="{{ _('Conta') }}">
             <a href="/rivals">{{ _('Rivais e saques') }}</a>
-            <a href="{{ url_for('treasury') }}">{{ _('Tesouro') }}</a>
+            <a href="{{ url_for('treasury') }}">{{ _('Tesouro') }}</a>{% if duels_enabled %}<a href="{{ url_for('duels_page') }}">{{ _('Duelos') }}</a>{% endif %}
             {% if current_account and current_account.is_admin %}<a href="/admin">{{ _('Administração') }}</a>{% endif %}
             <form action="/logout" method="post">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -92,6 +92,6 @@
             <span>{{ version }}</span>
         </div>
         <p class="mobile-hint">{{ _('Para ver melhor sua vila no celular, use a tela na horizontal.') }}</p>
-    </main>
+    </main>{% if duel_config %}{% include '_duels.html' %}{% endif %}
 </body>
 </html>

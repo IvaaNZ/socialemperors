@@ -883,7 +883,16 @@ def create_admin(name, email, password, village_id):
         raise click.ClickException(_(str(exc))) from exc
     click.echo(_('Administrador criado: {email}. Entre e acesse /admin para aprovar os cadastros.', email=account['email']))
 
+# Live duels (duels.py, duels_web.py): off unless SE_DUELS=on. Off, nothing of
+# them is imported or registered and the server keeps one request at a time.
+DUELS_ENABLED = os.environ.get('SE_DUELS', 'off').strip().lower() in ('on', '1', 'true', 'yes')
+app.jinja_env.globals['duels_enabled'] = DUELS_ENABLED
+if DUELS_ENABLED:
+    from duels_web import install_duels
+    install_duels(app, accounts, village_lock, all_saves_userid, village_session, data_dir, game_number)
+
 print (" [+] Running server...")
 
 if __name__ == '__main__':
-    app.run(host=host, port=port, debug=False, threaded=False)
+    # Duels hold open WebSockets, so they need threads; village_lock guards the saves.
+    app.run(host=host, port=port, debug=False, threaded=DUELS_ENABLED)

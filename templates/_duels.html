@@ -1,0 +1,9 @@
+{# Live duels (SE_DUELS=on only): challenge notices on every page. #}
+<link rel="stylesheet" href="{{ url_for('css', path='duels.css') }}">
+<script id="duel-config" type="application/json">{{ duel_config | tojson }}</script>
+<div id="duel-notice" class="duel-notice" role="dialog" aria-live="polite" aria-labelledby="duel-notice-text" hidden>
+    <p id="duel-notice-text" class="duel-notice-text"></p>
+    <p id="duel-notice-detail" class="duel-notice-detail"></p>
+    <div class="duel-notice-actions"></div>
+</div>
+<script src="{{ url_for('javascript', path='duels.js') }}" defer></script>

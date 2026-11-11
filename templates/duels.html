@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block title %}{{ _('Duelos') }} · Social Empires{% endblock %}
+{% block main_class %}duels-main{% endblock %}
+{% block content %}
+<div class="duels-heading">
+    <h1>{{ _('Duelos') }}</h1>
+    <p>{{ _('Desafie um jogador conectado. Se ele aceitar, vence o exército mais forte; ninguém perde tropas nem recursos.') }}</p>
+</div>
+<section class="duels-me" aria-labelledby="duels-me-title">
+    <h2 id="duels-me-title" class="sr-only">{{ _('Seu exército') }}</h2>
+    <dl class="duels-cards">
+        <div><dt>{{ _('Sua força de duelo') }}</dt><dd>{{ me.power | game_number }}</dd></div>
+        <div><dt>{{ _('Tropas que contam') }}</dt><dd>{{ me.troops | game_number }} / {{ army_limit }}</dd></div>
+        <div><dt>{{ _('Pontos do ranking') }}</dt><dd>{{ my_rating | game_number }}</dd></div>
+    </dl>
+    {% if me.level < ranked_level %}<p class="duels-note">{{ _('Seus duelos são amistosos até sua vila principal chegar ao nível {level}.', level=ranked_level) }}</p>{% endif %}
+</section>
+<section aria-labelledby="duels-online-title">
+    <h2 id="duels-online-title">{{ _('Jogadores conectados') }}</h2>
+    <ul id="duel-online" class="duels-online" aria-live="polite"><li class="duels-empty">{{ _('Conectando aos duelos…') }}</li></ul>
+</section>
+<section aria-labelledby="duels-ranking-title">
+    <h2 id="duels-ranking-title">{{ _('Ranking de duelos') }}</h2>
+    {% if ranking %}
+    <table class="duels-table">
+        <thead><tr><th scope="col">#</th><th scope="col">{{ _('Jogador') }}</th><th scope="col" class="numeric">{{ _('Pontos') }}</th><th scope="col" class="numeric">{{ _('Vitórias') }}</th><th scope="col" class="numeric">{{ _('Derrotas') }}</th><th scope="col" class="numeric">{{ _('Empates') }}</th></tr></thead>
+        <tbody>
+            {% for row in ranking %}
+            <tr><td>{{ loop.index }}</td><td>{{ row.name }}</td><td class="numeric">{{ row.rating | game_number }}</td><td class="numeric">{{ row.wins }}</td><td class="numeric">{{ row.losses }}</td><td class="numeric">{{ row.draws }}</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}<p class="duels-empty">{{ _('Ainda não há duelos ranqueados.') }}</p>{% endif %}
+</section>
+<section aria-labelledby="duels-history-title">
+    <h2 id="duels-history-title">{{ _('Seus últimos duelos') }}</h2>
+    {% if history %}
+    <ul class="duels-history">
+        {% for duel in history %}
+        <li class="duel-{{ duel.outcome }}">
+            <strong>{% if duel.outcome == 'won' %}{{ _('Vitória contra {name}!', name=duel.other) }}{% elif duel.outcome == 'lost' %}{{ _('Derrota contra {name}.', name=duel.other) }}{% else %}{{ _('Empate contra {name}.', name=duel.other) }}{% endif %}</strong>
+            <span>{{ _('Sua força: {mine} · Força de {name}: {theirs}', mine=duel.mine | game_number, name=duel.other, theirs=duel.theirs | game_number) }}</span>
+            <span class="duels-meta">{{ duel.created_label }} · {% if duel.ranked %}{{ _('Ranqueado') }}{% else %}{{ _('Amistoso') }}{% endif %}</span>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}<p class="duels-empty">{{ _('Nenhum duelo ainda.') }}</p>{% endif %}
+</section>
+<section class="duels-rules" aria-labelledby="duels-rules-title">
+    <h2 id="duels-rules-title">{{ _('Regras dos duelos') }}</h2>
+    <ul>
+        <li>{{ _('O desafio vence em {seconds} segundos se não houver resposta.', seconds=challenge_seconds) }}</li>
+        <li>{{ _('Conta a força das suas {limit} tropas mais fortes, com a mesma fórmula dos saques.', limit=army_limit) }}</li>
+        <li>{{ _('Só conta para o ranking se as duas vilas principais tiverem nível {level} ou mais.', level=ranked_level) }}</li>
+    </ul>
+</section>
+{% endblock %}
