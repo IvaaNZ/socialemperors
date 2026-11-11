@@ -83,9 +83,29 @@ Probado en la aldea, en ataques a otros jugadores (con 16 torres
 enemigas) y en una aventura.
 
 
+PUNTO 21. DUELOS PVP EN VIVO Y RANKED DESDE NIVEL 25 (en curso, rama duelos-en-vivo)
+-----------------------------------------------------------------------
+Hecho (fase 1): retos en vivo entre jugadores conectados, con resultado
+calculado por el servidor según la fuerza de las 30 mejores tropas,
+guardado en duels.sqlite3 y con ranking Elo (desde nivel 25 de la aldea
+principal). Se enciende con SE_DUELS=on. Detalle en DUELOS_PLAN.md y
+DECISIONS.md.
+
+En curso (opción B): ver la batalla. Al aceptar el reto, cada jugador entra
+a la arena y pelea contra el ejército del otro manejado por la IA del juego,
+como en los torneos originales y en Supervivencia.
+
+PENDIENTE (opción A): duelo en vivo de verdad. Los dos jugadores manejan su
+ejército al mismo tiempo en la arena y ven la misma batalla, sin desfase. El
+combate lo calcula el servidor (no se puede hacer trampa) y los dos juegos
+solo lo dibujan. Es el trabajo más grande del plan (unas 4 a 6 semanas):
+motor de combate en el servidor y un modo del juego que dibuje lo que manda
+el servidor. Las unidades con habilidades especiales quedarían fuera en la
+primera versión.
+
+
 PUNTOS QUE SIGUEN
 -----------------
-  21. Duelos PvP en vivo y ranked desde nivel 25 ........................ 0 %
   22. Clanes ............................................................ 0 %
   23. Casino ............................................................ 0 %
   24. Clima y ciclo día/noche ........................................... 0 %
