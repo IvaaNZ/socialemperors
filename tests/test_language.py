@@ -122,10 +122,12 @@ class LanguageTests(unittest.TestCase):
         for code, name, flag in (('es', 'Español', 'es.svg'), ('pt-BR', 'Português', 'br.svg'), ('en', 'English', 'us.svg')):
             with self.subTest(code=code):
                 self.assertIn(f'value="{code}"', page)
-                self.assertIn(f'aria-label="{name}"', page)
+                self.assertIn(f'<span>{name}</span>', page)
                 self.assertIn(f'flags/{flag}', page)
                 self.assertEqual(self.client.get(f'/img/flags/{flag}').mimetype, 'image/svg+xml')
         self.assertIn('aria-pressed="true"', page)
+        self.assertEqual(page.count('class="language-toggle"'), 1)
+        self.assertIn('<span>Idioma</span>', page)
 
     def test_registration_keeps_the_chosen_language(self):
         self.choose('es')

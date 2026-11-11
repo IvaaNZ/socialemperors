@@ -1,12 +1,19 @@
-{# Language selector: the choice is kept in the session and saved in the account. #}
-<form class="language-form" action="{{ url_for('change_language') }}" method="post" aria-label="{{ _('Idioma') }}">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <input type="hidden" name="next" value="{{ request.path }}">
-    {% for code, name in languages.items() %}
-        <button class="language-option" type="submit" name="language" value="{{ code }}" lang="{{ code }}"
-                title="{{ name }}" aria-label="{{ name }}" aria-pressed="{{ 'true' if code == portal_lang else 'false' }}">
-            <img src="{{ url_for('images', path='flags/' ~ language_flags[code]) }}" alt="" width="20" height="14">
-            <span aria-hidden="true">{{ code.split('-')[0] | upper }}</span>
-        </button>
-    {% endfor %}
-</form>
+{# Language menu: one "Idioma" button that opens the three languages.
+   The choice is kept in the session and saved in the account. #}
+<details class="language-menu">
+    <summary class="language-toggle">
+        <img src="{{ url_for('images', path='flags/' ~ language_flags[portal_lang]) }}" alt="" width="20" height="14">
+        <span>{{ _('Idioma') }}</span>
+    </summary>
+    <form class="language-form" action="{{ url_for('change_language') }}" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="next" value="{{ request.path }}">
+        {% for code, name in languages.items() %}
+            <button class="language-option" type="submit" name="language" value="{{ code }}" lang="{{ code }}"
+                    aria-pressed="{{ 'true' if code == portal_lang else 'false' }}">
+                <img src="{{ url_for('images', path='flags/' ~ language_flags[code]) }}" alt="" width="20" height="14">
+                <span>{{ name }}</span>
+            </button>
+        {% endfor %}
+    </form>
+</details>

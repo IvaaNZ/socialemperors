@@ -428,8 +428,9 @@ Corregido en esta parte:
 ---------------------------------------------
 Ahora cada jugador elige su idioma; ya no es uno solo para todo el servidor.
   - Arriba de cada página (login, registro, portal y la página del juego)
-    hay tres botones con bandera: ES (España), PT (Brasil) y EN (Estados
-    Unidos). Las banderas son imágenes SVG en templates/img/flags/, porque
+    hay un solo botón "Idioma" con la bandera del idioma actual; al abrirlo
+    aparecen Español (España), Português (Brasil) y English (Estados
+    Unidos), cada uno con su bandera. Las banderas son imágenes SVG en templates/img/flags/, porque
     Windows no muestra los emojis de banderas.
   - Si se elige en el login o en el registro, queda guardado en la cuenta
     al entrar o al registrarse. Si se cambia ya adentro, se guarda al
