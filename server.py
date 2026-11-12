@@ -902,6 +902,8 @@ if DUELS_ENABLED:
     from duels_web import install_duels
     install_duels(app, accounts, village_lock, all_saves_userid, village_session, data_dir, game_number,
                   validate_game_key)
+    if CLANS_ENABLED:  # finished duels count for clan challenges
+        app.extensions['duels'].result_listeners.append(app.extensions['clans'].record_duel)
 
 print (" [+] Running server...")
 

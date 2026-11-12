@@ -21,6 +21,10 @@
     let pendingStart = null;  // a battle this page should take the player to
     let launchedDuel = null;
     const gameContainer = document.getElementById("game-player");
+    // Clans (SE_CLANS=on): tags next to the names and the rivals of an active clan challenge.
+    const clanElement = document.getElementById("clan-duels");
+    const clanInfo = clanElement ? JSON.parse(clanElement.textContent) : { tags: {}, rivals: [] };
+    const clanRivals = new Set(clanInfo.rivals || []);
     // Pages of this player in this browser talk to each other (BroadcastChannel):
     // the page the player is looking at takes them to the arena, and the other
     // pages stand aside so only one opens it.
@@ -201,8 +205,15 @@
         onlineList.replaceChildren(...others.map((player) => {
             const item = document.createElement("li");
             const name = document.createElement("span");
-            name.textContent = player.name;
+            const tag = clanInfo.tags && clanInfo.tags[String(player.id)];
+            name.textContent = (tag ? "[" + tag + "] " : "") + player.name;
             item.append(name);
+            if (clanRivals.has(player.id)) {
+                const rival = document.createElement("span");
+                rival.className = "duels-rival";
+                rival.textContent = texts.clan_rival;
+                name.append(" ", rival);
+            }
             if (player.busy) {
                 const busy = document.createElement("span");
                 busy.className = "duels-busy";
@@ -280,6 +291,23 @@
         case "duel_result":
             showResult(message);
             break;
+        case "clan_challenge": {
+            const clanName = "[" + message.clan.tag + "] " + message.clan.name;
+            showNotice(fill(texts.clan_challenge, { name: clanName }),
+                fill(texts.clan_challenge_detail, { count: message.best_of, minutes: message.minutes }), [
+                    button(texts.clan_challenge_open, () => { window.location.href = message.url; }, true),
+                    button(texts.close, hideNotice),
+                ]);
+            break;
+        }
+        case "clan_challenge_answer": {
+            const clanName = "[" + message.clan.tag + "] " + message.clan.name;
+            showNotice(fill(message.accepted ? texts.clan_challenge_accepted : texts.clan_challenge_declined, { name: clanName }), "", [
+                button(texts.clan_challenge_open, () => { window.location.href = message.url; }, true),
+                button(texts.close, hideNotice),
+            ]);
+            break;
+        }
         case "error":
             showMessage(texts["error_" + message.code] || texts.error_invalid);
             break;

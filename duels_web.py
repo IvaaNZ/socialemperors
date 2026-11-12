@@ -100,6 +100,12 @@ def duel_texts():
         'error_target_not_ready': _('O outro jogador ainda não pode duelar.'),
         'error_gone': _('Este desafio não existe mais.'),
         'error_invalid': _('Mensagem inválida.'),
+        'clan_rival': _('Clã rival'),
+        'clan_challenge': _('{name} desafiou o seu clã!'),
+        'clan_challenge_detail': _('Melhor de {count} duelos. Você tem {minutes} min para responder.'),
+        'clan_challenge_open': _('Ver desafio'),
+        'clan_challenge_accepted': _('{name} aceitou o desafio do seu clã!'),
+        'clan_challenge_declined': _('{name} recusou o desafio do seu clã.'),
     }
 
 
@@ -356,6 +362,7 @@ def install_duels(app, accounts, village_lock, all_saves_userid, village_session
             flash('Este duelo já foi resolvido.' if error.code == 'gone' else 'Ação inválida.', 'error')
             return redirect(url_for('admin_duels'))
         hub.deliver_result(hub.result_message(duel))  # both players hear the decision
+        hub.notify_result(duel)  # a validated duel counts for a clan challenge
         flash('Duelo validado: conta para o ranking.' if duel['status'] == 'done' else 'Duelo anulado.', 'success')
         return redirect(url_for('admin_duels'))
 

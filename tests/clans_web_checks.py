@@ -174,6 +174,45 @@ class ClanWebTests(unittest.TestCase):
         self.assertIn('Nombre ofensivo', self.page(admin, '/admin/clans'))
         self.assertIn('/admin/clans', self.page(admin, '/admin'))  # admin menu link
 
+    def test_clan_challenge_through_the_pages(self):
+        alfa, alfa_assist, beta = self.player(), self.player(), self.player()
+        alfa_id = self.make_clan(alfa, 'Alfa Retos', 'ARE')
+        beta_id = self.make_clan(beta, 'Beta Retos', 'BRE')
+        self.join(alfa_assist, alfa_id, alfa)
+        self.post(alfa, f'/clans/members/{alfa_assist.account["id"]}', action='assist')
+        self.assertIn('Retar a este clan', self.page(alfa, f'/clans/{beta_id}'))
+        self.assertNotIn('Retar a este clan', self.page(alfa_assist, f'/clans/{beta_id}'))  # only the Guild Master
+        self.post(alfa_assist, f'/clans/{beta_id}/challenge', best_of='3')  # hand-made: refused
+        self.assertIsNone(self.clans.current_challenge(alfa_id))
+        self.post(alfa, f'/clans/{beta_id}/challenge', best_of='9')
+        self.assertIsNone(self.clans.current_challenge(alfa_id))
+        self.post(alfa, f'/clans/{beta_id}/challenge', best_of='5')
+        challenge = self.clans.current_challenge(alfa_id)
+        self.assertEqual((challenge['status'], challenge['best_of']), ('pending', 5))
+        page = self.page(beta, f'/clans/{beta_id}')
+        self.assertIn('retó a tu clan al mejor de 5 duelos.', page)
+        self.assertIn('Aceptar reto', page)
+        self.assertIn('Esperando la respuesta', self.page(alfa, f'/clans/{alfa_id}'))
+        self.post(alfa, f'/clans/challenges/{challenge["id"]}', action='accept')  # the challenger cannot accept
+        self.assertEqual(self.clans.current_challenge(alfa_id)['status'], 'pending')
+        self.post(beta, f'/clans/challenges/{challenge["id"]}', action='accept')
+        page = self.page(alfa, f'/clans/{alfa_id}')
+        self.assertIn('Al mejor de 5 contra', page)
+        self.assertIn('Gana el clan que llega primero a 3 victorias.', page)
+        self.post(alfa_assist, f'/clans/challenges/{challenge["id"]}', action='surrender')  # an Assist cannot
+        self.assertEqual(self.clans.current_challenge(alfa_id)['status'], 'active')
+        self.post(beta, f'/clans/challenges/{challenge["id"]}', action='surrender')
+        self.assertIsNone(self.clans.current_challenge(alfa_id))
+        history = self.page(alfa, f'/clans/{alfa_id}')
+        self.assertIn('Retos anteriores', history)
+        self.assertIn('Victoria', history)
+        self.assertIn('por rendición', history)
+        ranking = self.page(alfa, '/clans')
+        self.assertIn('Ranking de clanes', ranking)
+        self.assertLess(ranking.index('[ARE]'), ranking.index('[BRE]'))
+        self.post(beta, f'/clans/{alfa_id}/challenge', best_of='3')  # free to challenge again at once
+        self.assertEqual(self.clans.current_challenge(beta_id)['status'], 'pending')
+
     def test_pages_need_an_approved_session(self):
         anonymous = server.app.test_client()
         with contextlib.redirect_stdout(io.StringIO()):

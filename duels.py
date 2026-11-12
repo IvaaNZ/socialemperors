@@ -391,6 +391,7 @@ class DuelHub:
         self.sent_times = {}      # account_id -> [times of challenges sent]
         self.arena_until = {}     # account_id -> time until which arena commands are dropped
         self.unseen = {}          # account_id -> (time, result message) not yet confirmed by a page
+        self.result_listeners = []  # called with each duel row that ends 'done' (clan challenges count them)
         self._ids = itertools.count(1)
         store.void_unfinished(clock())
 
@@ -448,6 +449,11 @@ class DuelHub:
     def _send(self, account_id, message):
         for send in list(self.connections.get(account_id, {}).values()):
             self._send_one(send, message)
+
+    def send_to(self, account_id, message):
+        """Send a message to every open page of a player (other features use it for live notices)."""
+        with self.lock:
+            self._send(account_id, message)
 
     def _broadcast_presence(self):
         message = {'type': 'presence', 'online': self._online()}
@@ -629,8 +635,19 @@ class DuelHub:
             return None
         result = self.result_message(duel, battle['profiles'])
         self.deliver_result(result)
+        self.notify_result(duel)
         self._broadcast_presence()
         return result
+
+    def notify_result(self, duel):
+        """Tell the listeners about a duel that ended 'done' (finished, or validated by an admin)."""
+        if duel.get('status') != 'done':
+            return
+        for listener in list(self.result_listeners):
+            try:
+                listener(duel)
+            except Exception:  # a listener must never break the duel
+                pass
 
     def deliver_result(self, result):
         """Send a result to both players and keep it until a page of each confirms it ('seen')."""

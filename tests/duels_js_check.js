@@ -29,6 +29,7 @@ const elements = {
     "duel-notice-text": element("duel-notice-text"),
     "duel-notice-detail": element("duel-notice-detail"),
     "duel-online": element("duel-online"),
+    "clan-duels": { textContent: JSON.stringify({ tags: { "2": "BET" }, rivals: [2] }) },
 };
 if (mode === "game" || mode === "aside") {
     const container = element("game-player");
@@ -81,6 +82,11 @@ const side = (id, name, extra) => ({ id, name, power: 1000, troops: 3, level: 30
 (async () => {
     deliver({ type: "hello", you: 1, online: [{ id: 1, name: "Ana", busy: false }, { id: 2, name: "Beto", busy: false }] });
     deliver({ type: "presence", online: [{ id: 2, name: "Beto", busy: true }] });
+    const first = elements["duel-online"].children[0];
+    report.onlineName = first && first.children[0] ? first.children[0].textContent : null;
+    report.onlineRival = Boolean(first && first.children[0] && first.children[0].children.some((child) => child && child.className === "duels-rival"));
+    deliver({ type: "clan_challenge", id: 4, best_of: 5, minutes: 10, clan: { tag: "ALF", name: "Alfa" }, url: "/clans/2" });
+    deliver({ type: "clan_challenge_answer", id: 4, accepted: true, clan: { tag: "BET", name: "Beta" }, url: "/clans/1" });
     deliver({ type: "challenge_received", id: 7, other: { id: 2, name: "Beto" }, expires_in: 30 });
     deliver({ type: "challenge_sent", id: 8, other: { id: 2, name: "Beto" }, expires_in: 30 });
     deliver({ type: "challenge_closed", id: 8, reason: "declined", by: { id: 2, name: "Beto" } });

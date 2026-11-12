@@ -2,7 +2,8 @@
 
 Not collected by unittest discovery on its own: the server module must be
 imported with SE_DUELS=on, and the rest of the suite imports it with duels off.
-test_duels_live.py also sets SE_DUEL_MIN_SECONDS to half a second so the
+test_duels_live.py also turns on SE_CLANS (clan challenges count these duels) and
+sets SE_DUEL_MIN_SECONDS to half a second so the
 battles here do not last 20 seconds; the arena game is played by HTTP calls to
 the same tournament services the game uses.
 """
@@ -70,6 +71,12 @@ class Player:
         body = urllib.parse.urlencode(data).encode() if data is not None else None
         with contextlib.redirect_stdout(io.StringIO()):
             return self.opener.open(self.base + path, body).read().decode()
+
+    def form(self, page, data):
+        """Post a portal form (target in data['_to']) with the CSRF token of the page at `page`."""
+        token = re.search(r'name="csrf_token" value="([^"]+)"', self.text(page)).group(1)
+        target = data.pop('_to')
+        return self.text(target, {**data, 'csrf_token': token})
 
     def game_key(self):
         page = self.text('/play.html')
@@ -253,6 +260,46 @@ class LiveDuelTests(unittest.TestCase):
         finally:
             ws_weak.close()
             ws_strong.close()
+
+    def test_clan_challenge_counts_the_duels_between_the_two_clans(self):
+        clans = server.app.extensions['clans']
+        ana, beto, outsider = self.player(troops=6), self.player(troops=6), self.player(troops=6)
+        ana.form('/clans', {'_to': '/clans', 'name': f'Alfa {ana.account_id}', 'tag': f'A{ana.account_id}'})
+        beto.form('/clans', {'_to': '/clans', 'name': f'Beta {beto.account_id}', 'tag': f'B{beto.account_id}'})
+        alfa, beta = (clans.membership(p.account_id)['clan_id'] for p in (ana, beto))
+        ws_ana, ws_beto, ws_out = ana.socket(), beto.socket(), outsider.socket()
+        try:
+            for ws in (ws_ana, ws_beto, ws_out):
+                receive_until(ws, 'hello')
+            ana.form(f'/clans/{beta}', {'_to': f'/clans/{beta}/challenge', 'best_of': '3'})
+            notice = receive_until(ws_beto, 'clan_challenge')  # live notice for the challenged Guild Master
+            self.assertEqual((notice['best_of'], notice['clan']['tag'], notice['url']), (3, f'A{ana.account_id}', f'/clans/{beta}'))
+            beto.form(f'/clans/{beta}', {'_to': f'/clans/challenges/{notice["id"]}', 'action': 'accept'})
+            answer = receive_until(ws_ana, 'clan_challenge_answer')
+            self.assertTrue(answer['accepted'])
+            page = ana.text('/duels')
+            info = json.loads(re.search(r'<script id="clan-duels" type="application/json">(.*?)</script>', page).group(1))
+            self.assertEqual((info['rivals'], info['tags'][str(beto.account_id)]), ([beto.account_id], f'B{beto.account_id}'))
+
+            def duel(challenger, defender, ws_c, ws_d, win):
+                start_c, start_d = self.start_duel(challenger, defender, ws_c, ws_d)
+                challenger.play(start_c, 90 if win else 10)
+                defender.play(start_d, 10 if win else 90)
+                return receive_until(ws_c, 'duel_result')
+
+            duel(outsider, ana, ws_out, ws_ana, win=False)  # not in the challenge: does not count
+            self.assertEqual(clans.current_challenge(alfa)['challenger_wins'], 0)
+            self.assertEqual(duel(ana, beto, ws_ana, ws_beto, win=True)['winner'], 'challenger')
+            self.assertEqual(clans.current_challenge(alfa)['challenger_wins'], 1)
+            self.assertEqual(duel(beto, ana, ws_beto, ws_ana, win=False)['winner'], 'defender')  # Ana wins again
+            self.assertIsNone(clans.current_challenge(alfa))
+            ended = clans.challenge_history(alfa)[0]
+            self.assertEqual((ended['status'], ended['winner_clan'], ended['ending'], ended['challenger_wins'],
+                              ended['defender_wins']), ('done', alfa, 'majority', 2, 0))
+            self.assertIn('Retos anteriores', ana.text(f'/clans/{alfa}'))
+        finally:
+            for ws in (ws_ana, ws_beto, ws_out):
+                ws.close()
 
     def test_socket_requires_session_and_same_origin(self):
         ana = self.player()

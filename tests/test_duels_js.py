@@ -39,6 +39,12 @@ class DuelScriptTests(unittest.TestCase):
         self.assertEqual([text.split(']')[0] + ']' for text in results], ['[won]', '[review]', '[void]'])
         self.assertIn({'type': 'seen', 'id': 9}, report['sent'])
         self.assertIsNone(report['navigated'])
+        self.assertEqual(report['onlineName'], '[BET] Beto')  # clan tag next to the name
+        self.assertTrue(report['onlineRival'])  # marked as a rival of the active clan challenge
+        challenge = self.notice(report, 'clan_challenge')
+        self.assertEqual((challenge['hidden'], challenge['text'].split(']')[0] + ']'), (False, '[clan_challenge]'))
+        self.assertIn('[ALF] Alfa', challenge['text'])
+        self.assertIn('[clan_challenge_accepted]', self.notice(report, 'clan_challenge_answer')['text'])
 
     def test_a_second_game_tab_stands_aside(self):
         report = self.run_page('aside')

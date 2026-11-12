@@ -18,6 +18,16 @@ Join requests expire after REQUEST_SECONDS; a player keeps at most
 MAX_OPEN_REQUESTS open at once. Every change is logged in `clan_log`.
 Villages are never touched. Errors carry codes; the web side shows them in the
 viewer's language.
+
+Clan challenges (phase 2): a Guild Master challenges another clan to the best
+of 3, 5 or 7 duels; the other Guild Master has CHALLENGE_ANSWER_SECONDS to
+accept. Once accepted, every finished duel (status 'done', not a draw)
+between members of the two clans counts one win for the winner's clan; only
+the members of each clan when the challenge was accepted count (its
+roster). The first clan to the majority (2, 3 or 4 wins) wins. Either Guild
+Master may surrender (the other clan wins); a clan dissolved during a
+challenge loses it. A clan has one pending or active challenge at a time and
+may challenge again, the same clan or another, as soon as it ends.
 """
 
 from contextlib import contextmanager
@@ -36,6 +46,8 @@ NAME_LENGTH = (3, 24)
 TAG_LENGTH = (2, 5)
 DESCRIPTION_LENGTH = 200
 ROLES = ('master', 'assist', 'member')
+CHALLENGE_SIZES = (3, 5, 7)        # best of N duels
+CHALLENGE_ANSWER_SECONDS = 10 * 60  # time the challenged clan has to accept
 
 _NAME_PATTERN = re.compile(r"^[\w][\w .'\-]*$", re.UNICODE)
 _TAG_PATTERN = re.compile(r'^[A-Z0-9]+$')
@@ -125,6 +137,42 @@ class ClanStore:
                     created_at REAL NOT NULL
                 );
                 CREATE INDEX IF NOT EXISTS clan_log_clan ON clan_log (clan_id, created_at);
+                CREATE TABLE IF NOT EXISTS clan_challenges (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    challenger_clan INTEGER NOT NULL,
+                    challenger_name TEXT NOT NULL,
+                    challenger_tag TEXT NOT NULL,
+                    defender_clan INTEGER NOT NULL,
+                    defender_name TEXT NOT NULL,
+                    defender_tag TEXT NOT NULL,
+                    best_of INTEGER NOT NULL CHECK (best_of IN (3, 5, 7)),
+                    status TEXT NOT NULL CHECK (status IN ('pending', 'active', 'done', 'declined', 'expired', 'cancelled')),
+                    challenger_wins INTEGER NOT NULL DEFAULT 0,
+                    defender_wins INTEGER NOT NULL DEFAULT 0,
+                    winner_clan INTEGER,
+                    ending TEXT CHECK (ending IS NULL OR ending IN ('majority', 'surrender', 'dissolved')),
+                    created_by INTEGER NOT NULL,
+                    answered_by INTEGER,
+                    ended_by INTEGER,
+                    created_at REAL NOT NULL,
+                    accepted_at REAL,
+                    finished_at REAL
+                );
+                CREATE INDEX IF NOT EXISTS clan_challenges_status ON clan_challenges (status);
+                CREATE TABLE IF NOT EXISTS clan_challenge_rosters (
+                    challenge_id INTEGER NOT NULL,
+                    account_id INTEGER NOT NULL,
+                    clan_id INTEGER NOT NULL,
+                    PRIMARY KEY (challenge_id, account_id)
+                );
+                CREATE TABLE IF NOT EXISTS clan_challenge_duels (
+                    duel_id INTEGER PRIMARY KEY,
+                    challenge_id INTEGER NOT NULL,
+                    winner_id INTEGER NOT NULL,
+                    loser_id INTEGER NOT NULL,
+                    winner_clan INTEGER NOT NULL,
+                    counted_at REAL NOT NULL
+                );
                 """
             )
 
@@ -146,6 +194,9 @@ class ClanStore:
             connection.execute('BEGIN IMMEDIATE')
             now = self.clock()
             connection.execute('DELETE FROM clan_requests WHERE created_at <= ?', (now - REQUEST_SECONDS,))
+            connection.execute("""UPDATE clan_challenges SET status = 'expired', finished_at = created_at + ?
+                                  WHERE status = 'pending' AND created_at <= ?""",
+                               (CHALLENGE_ANSWER_SECONDS, now - CHALLENGE_ANSWER_SECONDS))
             yield connection, now
 
     # -- helpers --
@@ -330,6 +381,13 @@ class ClanStore:
             connection.execute("""INSERT INTO clan_departures (account_id, left_at) VALUES (?, ?)
                                   ON CONFLICT(account_id) DO UPDATE SET left_at = excluded.left_at""",
                                (row['account_id'], now - REJOIN_SECONDS))  # a dissolved clan imposes no wait
+        connection.execute("""UPDATE clan_challenges SET status = 'cancelled', finished_at = ?
+                              WHERE status = 'pending' AND (challenger_clan = ? OR defender_clan = ?)""",
+                           (now, clan['id'], clan['id']))
+        for row in connection.execute("""SELECT * FROM clan_challenges WHERE status = 'active'
+                                          AND (challenger_clan = ? OR defender_clan = ?)""", (clan['id'], clan['id'])).fetchall():
+            other = row['defender_clan'] if row['challenger_clan'] == clan['id'] else row['challenger_clan']
+            self._end_challenge(connection, row['id'], other, 'dissolved', actor_id, now)
         connection.execute('DELETE FROM clan_members WHERE clan_id = ?', (clan['id'],))
         connection.execute('DELETE FROM clan_requests WHERE clan_id = ?', (clan['id'],))
         connection.execute('DELETE FROM clans WHERE id = ?', (clan['id'],))
@@ -348,6 +406,179 @@ class ClanStore:
             raise ClanError('reason_required')
         with self._write() as (connection, now):
             self._dissolve(connection, self._clan(connection, clan_id), admin_id, admin_name, now, reason[:200])
+
+    # -- clan challenges --
+    @staticmethod
+    def _open_challenge(connection, clan_id):
+        row = connection.execute("""SELECT * FROM clan_challenges WHERE status IN ('pending', 'active')
+                                    AND (challenger_clan = ? OR defender_clan = ?)""", (clan_id, clan_id)).fetchone()
+        return dict(row) if row else None
+
+    def _master_of(self, connection, actor_id):
+        actor = self._member(connection, actor_id)
+        if not actor or actor['role'] != 'master':
+            raise ClanError('forbidden')
+        return actor
+
+    @staticmethod
+    def _end_challenge(connection, challenge_id, winner_clan, ending, actor_id, now):
+        connection.execute("""UPDATE clan_challenges SET status = 'done', winner_clan = ?, ending = ?, ended_by = ?,
+                                  finished_at = ? WHERE id = ?""", (winner_clan, ending, actor_id, now, challenge_id))
+
+    @staticmethod
+    def _challenge_row(connection, challenge_id):
+        row = connection.execute('SELECT * FROM clan_challenges WHERE id = ?', (challenge_id,)).fetchone()
+        return dict(row) if row else None
+
+    def challenge(self, actor_id, target_clan_id, best_of, actor_name=None):
+        """The Guild Master challenges another clan to the best of 3, 5 or 7 duels."""
+        try:
+            best_of = int(best_of)
+        except (TypeError, ValueError):
+            raise ClanError('bad_size') from None
+        if best_of not in CHALLENGE_SIZES:
+            raise ClanError('bad_size')
+        with self._write() as (connection, now):
+            actor = self._master_of(connection, actor_id)
+            if actor['clan_id'] == target_clan_id:
+                raise ClanError('own_clan')
+            own, target = self._clan(connection, actor['clan_id']), self._clan(connection, target_clan_id)
+            if self._open_challenge(connection, own['id']):
+                raise ClanError('challenge_busy')
+            if self._open_challenge(connection, target['id']):
+                raise ClanError('target_challenge_busy')
+            cursor = connection.execute(
+                """INSERT INTO clan_challenges (challenger_clan, challenger_name, challenger_tag, defender_clan,
+                       defender_name, defender_tag, best_of, status, created_by, created_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)""",
+                (own['id'], own['name'], own['tag'], target['id'], target['name'], target['tag'], best_of, actor_id, now))
+            self._log(connection, own, actor_id, actor_name, 'challenge', now, detail='[%s] %s' % (target['tag'], target['name']))
+            return self._challenge_row(connection, cursor.lastrowid)
+
+    def answer_challenge(self, actor_id, challenge_id, accept, actor_name=None):
+        with self._write() as (connection, now):
+            row = self._challenge_row(connection, challenge_id)
+            if not row or row['status'] != 'pending':
+                raise ClanError('gone')
+            actor = self._master_of(connection, actor_id)
+            if actor['clan_id'] != row['defender_clan']:
+                raise ClanError('forbidden')
+            clan = self._clan(connection, row['defender_clan'])
+            rival = '[%s] %s' % (row['challenger_tag'], row['challenger_name'])
+            if not accept:
+                connection.execute("""UPDATE clan_challenges SET status = 'declined', answered_by = ?, finished_at = ?
+                                      WHERE id = ?""", (actor_id, now, challenge_id))
+                self._log(connection, clan, actor_id, actor_name, 'decline', now, detail=rival)
+                return self._challenge_row(connection, challenge_id)
+            connection.execute("""UPDATE clan_challenges SET status = 'active', answered_by = ?, accepted_at = ?
+                                  WHERE id = ?""", (actor_id, now, challenge_id))
+            connection.execute("""INSERT INTO clan_challenge_rosters (challenge_id, account_id, clan_id)
+                                  SELECT ?, account_id, clan_id FROM clan_members WHERE clan_id IN (?, ?)""",
+                               (challenge_id, row['challenger_clan'], row['defender_clan']))
+            self._log(connection, clan, actor_id, actor_name, 'accept_challenge', now, detail=rival)
+            return self._challenge_row(connection, challenge_id)
+
+    def cancel_challenge(self, actor_id, challenge_id, actor_name=None):
+        with self._write() as (connection, now):
+            row = self._challenge_row(connection, challenge_id)
+            if not row or row['status'] != 'pending':
+                raise ClanError('gone')
+            actor = self._master_of(connection, actor_id)
+            if actor['clan_id'] != row['challenger_clan']:
+                raise ClanError('forbidden')
+            connection.execute("UPDATE clan_challenges SET status = 'cancelled', ended_by = ?, finished_at = ? WHERE id = ?",
+                               (actor_id, now, challenge_id))
+
+    def surrender(self, actor_id, challenge_id, actor_name=None):
+        """A Guild Master gives up an active challenge: the other clan wins it."""
+        with self._write() as (connection, now):
+            row = self._challenge_row(connection, challenge_id)
+            if not row or row['status'] != 'active':
+                raise ClanError('gone')
+            actor = self._master_of(connection, actor_id)
+            if actor['clan_id'] not in (row['challenger_clan'], row['defender_clan']):
+                raise ClanError('forbidden')
+            other = row['defender_clan'] if actor['clan_id'] == row['challenger_clan'] else row['challenger_clan']
+            self._end_challenge(connection, challenge_id, other, 'surrender', actor_id, now)
+            self._log(connection, self._clan(connection, actor['clan_id']), actor_id, actor_name, 'surrender', now)
+            return self._challenge_row(connection, challenge_id)
+
+    def record_duel(self, duel):
+        """Count a finished duel for the active challenge between its two players' clans, if any.
+
+        `duel` is a duels.sqlite3 row. Only status 'done' with a winner (not a draw)
+        counts, each duel once, and only between roster members of opposite clans.
+        Returns the challenge after counting, or None.
+        """
+        if duel.get('status') != 'done' or duel.get('winner') not in ('challenger', 'defender'):
+            return None
+        winner = duel['challenger_id'] if duel['winner'] == 'challenger' else duel['defender_id']
+        loser = duel['defender_id'] if duel['winner'] == 'challenger' else duel['challenger_id']
+        with self._write() as (connection, now):
+            if connection.execute('SELECT 1 FROM clan_challenge_duels WHERE duel_id = ?', (duel['id'],)).fetchone():
+                return None
+            row = connection.execute(
+                """SELECT c.*, w.clan_id AS winner_side FROM clan_challenges c
+                   JOIN clan_challenge_rosters w ON w.challenge_id = c.id AND w.account_id = ?
+                   JOIN clan_challenge_rosters l ON l.challenge_id = c.id AND l.account_id = ?
+                   WHERE c.status = 'active' AND w.clan_id != l.clan_id""", (winner, loser)).fetchone()
+            if not row:
+                return None
+            column = 'challenger_wins' if row['winner_side'] == row['challenger_clan'] else 'defender_wins'
+            connection.execute('UPDATE clan_challenges SET %s = %s + 1 WHERE id = ?' % (column, column), (row['id'],))
+            connection.execute("""INSERT INTO clan_challenge_duels (duel_id, challenge_id, winner_id, loser_id, winner_clan,
+                                      counted_at) VALUES (?, ?, ?, ?, ?, ?)""",
+                               (duel['id'], row['id'], winner, loser, row['winner_side'], now))
+            challenge = self._challenge_row(connection, row['id'])
+            if challenge[column] >= challenge['best_of'] // 2 + 1:
+                self._end_challenge(connection, row['id'], row['winner_side'], 'majority', None, now)
+                challenge = self._challenge_row(connection, row['id'])
+            return challenge
+
+    def current_challenge(self, clan_id):
+        """The clan's pending (not yet expired) or active challenge, with its duels and roster, or None."""
+        now = self.clock()
+        with self._connection() as connection:
+            row = connection.execute(
+                """SELECT * FROM clan_challenges WHERE (challenger_clan = ? OR defender_clan = ?)
+                   AND (status = 'active' OR (status = 'pending' AND created_at > ?))""",
+                (clan_id, clan_id, now - CHALLENGE_ANSWER_SECONDS)).fetchone()
+            if not row:
+                return None
+            challenge = dict(row)
+            challenge['expires_in'] = max(0, round(challenge['created_at'] + CHALLENGE_ANSWER_SECONDS - now))
+            challenge['duels'] = [dict(d) for d in connection.execute(
+                'SELECT * FROM clan_challenge_duels WHERE challenge_id = ? ORDER BY counted_at, duel_id', (challenge['id'],))]
+            challenge['roster'] = {r['account_id']: r['clan_id'] for r in connection.execute(
+                'SELECT * FROM clan_challenge_rosters WHERE challenge_id = ?', (challenge['id'],))}
+            return challenge
+
+    def challenge_history(self, clan_id, limit=10):
+        """Ended challenges, newest first (a pending one past its answer time shows as expired)."""
+        cutoff = self.clock() - CHALLENGE_ANSWER_SECONDS
+        with self._connection() as connection:
+            rows = [dict(row) for row in connection.execute(
+                """SELECT *, COALESCE(finished_at, created_at + ?) AS ended_at FROM clan_challenges
+                   WHERE (challenger_clan = ? OR defender_clan = ?)
+                   AND NOT (status = 'active' OR (status = 'pending' AND created_at > ?))
+                   ORDER BY ended_at DESC, id DESC LIMIT ?""",
+                (CHALLENGE_ANSWER_SECONDS, clan_id, clan_id, cutoff, limit))]
+        for row in rows:
+            if row['status'] == 'pending':
+                row['status'] = 'expired'
+        return rows
+
+    def ranking(self, limit=20):
+        """Existing clans by challenges won, then duel wins in challenges; with their record."""
+        with self._connection() as connection:
+            return [dict(row) for row in connection.execute(
+                """SELECT clans.id, clans.name, clans.tag,
+                       SUM(CASE WHEN c.winner_clan = clans.id THEN 1 ELSE 0 END) AS won,
+                       SUM(CASE WHEN c.winner_clan != clans.id THEN 1 ELSE 0 END) AS lost,
+                       SUM(CASE WHEN c.challenger_clan = clans.id THEN c.challenger_wins ELSE c.defender_wins END) AS duel_wins
+                   FROM clans JOIN clan_challenges c ON c.status = 'done'
+                        AND (c.challenger_clan = clans.id OR c.defender_clan = clans.id)
+                   GROUP BY clans.id ORDER BY won DESC, duel_wins DESC, lost ASC, clans.name_key LIMIT ?""", (limit,))]
 
     # -- reading --
     def clan(self, clan_id):
@@ -381,6 +612,12 @@ class ClanStore:
         if key:
             result = [clan for clan in result if key in clan['name_key'] or key.upper() in clan['tag']]
         return result
+
+    def member_tags(self):
+        """account id -> clan tag, for every clan member."""
+        with self._connection() as connection:
+            return {row['account_id']: row['tag'] for row in connection.execute(
+                'SELECT clan_members.account_id, clans.tag FROM clan_members JOIN clans ON clans.id = clan_members.clan_id')}
 
     def requests_for(self, clan_id):
         now = self.clock()

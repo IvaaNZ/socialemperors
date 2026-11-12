@@ -3,7 +3,7 @@
 {% block head %}<link rel="stylesheet" href="{{ url_for('css', path='clans.css') }}">{% endblock %}
 {% block main_class %}clans-main{% endblock %}
 {% set role_labels = {'master': _('Guild Master'), 'assist': _('Assist'), 'member': _('Membro')} %}
-{% set log_labels = {'create': _('criou o clã'), 'accept': _('aceitou'), 'reject': _('recusou o pedido de'), 'kick': _('removeu'), 'promote': _('nomeou Assist a'), 'demote': _('tirou o cargo de Assist de'), 'transfer': _('passou a liderança para'), 'edit': _('mudou a descrição'), 'leave': _('saiu do clã'), 'dissolve': _('dissolveu o clã')} %}
+{% set log_labels = {'create': _('criou o clã'), 'accept': _('aceitou'), 'reject': _('recusou o pedido de'), 'kick': _('removeu'), 'promote': _('nomeou Assist a'), 'demote': _('tirou o cargo de Assist de'), 'transfer': _('passou a liderança para'), 'edit': _('mudou a descrição'), 'leave': _('saiu do clã'), 'dissolve': _('dissolveu o clã'), 'challenge': _('desafiou'), 'accept_challenge': _('aceitou o desafio de'), 'decline': _('recusou o desafio de'), 'surrender': _('rendeu o clã no desafio')} %}
 {% block content %}
 <p class="clans-back"><a href="{{ url_for('clans_page') }}">← {{ _('Todos os clãs') }}</a></p>
 <div class="clans-heading">
@@ -25,6 +25,93 @@
         {% else %}<button class="duel-button duel-button-primary" name="action" value="join" type="submit">{{ _('Pedir para entrar') }}</button>{% endif %}
     </form>
     {% endif %}
+</section>
+{% endif %}
+
+{% set ending_labels = {'majority': _('por maioria'), 'surrender': _('por rendição'), 'dissolved': _('o clã rival foi dissolvido')} %}
+{% set status_labels = {'declined': _('Recusado'), 'expired': _('Venceu sem resposta'), 'cancelled': _('Cancelado')} %}
+{% if role and challenge %}
+<section class="clan-challenge" aria-labelledby="challenge-title">
+    <h2 id="challenge-title">{{ _('Desafio entre clãs') }}</h2>
+    {% if challenge.status == 'pending' %}
+        {% if challenge.incoming %}
+        <p><strong><span class="clan-tag">[{{ challenge.rival_tag }}]</span> {{ challenge.rival_name }}</strong> {{ _('desafiou o seu clã para o melhor de {count} duelos.', count=challenge.best_of) }}</p>
+        <p class="clans-note">{{ _('Restam {minutes} min para responder.', minutes=challenge.minutes_left) }}</p>
+        {% if role == 'master' %}
+        <form class="clans-actions" action="{{ url_for('clan_challenge_action', challenge_id=challenge.id) }}" method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="duel-button duel-button-primary" name="action" value="accept" type="submit">{{ _('Aceitar desafio') }}</button>
+            <button class="duel-button" name="action" value="decline" type="submit">{{ _('Recusar desafio') }}</button>
+        </form>
+        {% else %}<p class="clans-note">{{ _('Só o Guild Master pode responder.') }}</p>{% endif %}
+        {% else %}
+        <p>{{ _('Vocês desafiaram') }} <strong><span class="clan-tag">[{{ challenge.rival_tag }}]</span> {{ challenge.rival_name }}</strong> {{ _('para o melhor de {count} duelos. Esperando a resposta…', count=challenge.best_of) }}</p>
+        <p class="clans-note">{{ _('Restam {minutes} min para responder.', minutes=challenge.minutes_left) }}</p>
+        {% if role == 'master' %}
+        <form action="{{ url_for('clan_challenge_action', challenge_id=challenge.id) }}" method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="duel-button" name="action" value="cancel" type="submit">{{ _('Cancelar desafio') }}</button>
+        </form>
+        {% endif %}
+        {% endif %}
+    {% else %}
+    <p>{{ _('Melhor de {count} contra', count=challenge.best_of) }} <a class="clan-name" href="{{ url_for('clan_page', clan_id=challenge.rival_id) }}"><span class="clan-tag">[{{ challenge.rival_tag }}]</span> {{ challenge.rival_name }}</a></p>
+    <p class="clan-score" aria-label="{{ _('Placar: {ours} a {theirs}', ours=challenge.our_wins, theirs=challenge.their_wins) }}"><span>[{{ clan.tag }}] {{ challenge.our_wins }}</span> <span aria-hidden="true">–</span> <span>{{ challenge.their_wins }} [{{ challenge.rival_tag }}]</span></p>
+    <p class="clans-note">{{ _('Vence o clã que chegar primeiro a {needed} vitórias. Desafiem os membros do outro clã em Duelos: cada duelo terminado entre os dois clãs soma uma vitória (empates e duelos anulados não contam). Só contam os membros que estavam nos clãs quando o desafio foi aceito.', needed=challenge.needed) }}</p>
+    {% if challenge.duel_lines %}
+    <ul class="clans-log">
+        {% for line in challenge.duel_lines %}<li class="{{ 'clan-duel-won' if line.ours else 'clan-duel-lost' }}">{{ _('{winner} venceu {loser}', winner=line.winner, loser=line.loser) }}</li>{% endfor %}
+    </ul>
+    {% endif %}
+    {% if duels_enabled %}<p><a class="duel-button duel-button-primary clans-link-button" href="{{ url_for('duels_page') }}">{{ _('Ir para Duelos') }}</a></p>{% endif %}
+    {% if role == 'master' %}
+    <form class="clans-dissolve" action="{{ url_for('clan_challenge_action', challenge_id=challenge.id) }}" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="duel-button clans-danger" name="action" value="surrender" type="submit">{{ _('Render-se') }}</button>
+        <span class="clans-note">{{ _('O outro clã ganha o desafio e os dois ficam livres para desafiar de novo.') }}</span>
+    </form>
+    {% endif %}
+    {% endif %}
+</section>
+{% elif role == 'master' %}
+<section class="clan-challenge" aria-labelledby="challenge-title">
+    <h2 id="challenge-title">{{ _('Desafio entre clãs') }}</h2>
+    <p class="clans-note">{{ _('Para desafiar outro clã, abra a página dele em Todos os clãs.') }}</p>
+</section>
+{% endif %}
+
+{% if can_challenge %}
+<section class="clan-challenge" aria-labelledby="challenge-title">
+    <h2 id="challenge-title">{{ _('Desafiar este clã') }}</h2>
+    <form class="clans-actions" action="{{ url_for('clan_challenge', clan_id=clan.id) }}" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label>{{ _('Melhor de') }}
+            <select name="best_of">{% for size in clan_limits.sizes %}<option value="{{ size }}" {% if size == 5 %}selected{% endif %}>{{ _('{count} duelos', count=size) }}</option>{% endfor %}</select>
+        </label>
+        <button class="duel-button duel-button-primary" type="submit">{{ _('Desafiar') }}</button>
+    </form>
+    <p class="clans-note">{{ _('O Guild Master do outro clã tem {minutes} min para aceitar.', minutes=clan_limits.answer_minutes) }}</p>
+</section>
+{% elif own_challenge and not role %}
+<section class="clan-challenge" aria-labelledby="challenge-title">
+    <h2 id="challenge-title" class="sr-only">{{ _('Desafiar este clã') }}</h2>
+    <p class="clans-note">{{ _('O seu clã já tem um desafio pendente ou em andamento.') }}</p>
+</section>
+{% endif %}
+
+{% if history %}
+<section aria-labelledby="history-title">
+    <h2 id="history-title">{{ _('Desafios anteriores') }}</h2>
+    <ul class="clans-log">
+        {% for item in history %}
+        <li>
+            {% if item.outcome == 'won' %}<strong class="clan-duel-won">{{ _('Vitória') }}</strong>{% elif item.outcome == 'lost' %}<strong class="clan-duel-lost">{{ _('Derrota') }}</strong>{% else %}<strong>{{ status_labels.get(item.status, item.status) }}</strong>{% endif %}
+            · <span class="clan-tag">[{{ item.rival_tag }}]</span> {{ item.rival_name }}
+            · {{ _('melhor de {count}', count=item.best_of) }}{% if item.outcome %} · {{ item.our_wins }}–{{ item.their_wins }} {{ ending_labels.get(item.ending, '') }}{% endif %}
+            <span class="clans-meta">· {{ item.when }}</span>
+        </li>
+        {% endfor %}
+    </ul>
 </section>
 {% endif %}
 
@@ -85,7 +172,7 @@
     <h2 id="log-title">{{ _('Atividade recente') }}</h2>
     {% if log %}
     <ul class="clans-log">
-        {% for entry in log %}<li><strong>{{ entry.actor_name or '?' }}</strong> {{ log_labels.get(entry.action, entry.action) }}{% if entry.target_name %} <strong>{{ entry.target_name }}</strong>{% endif %} <span class="clans-meta">· {{ entry.created_label }}</span></li>{% endfor %}
+        {% for entry in log %}<li><strong>{{ entry.actor_name or '?' }}</strong> {{ log_labels.get(entry.action, entry.action) }}{% if entry.target_name %} <strong>{{ entry.target_name }}</strong>{% endif %}{% if entry.detail and entry.action in ('challenge', 'accept_challenge', 'decline') %} <strong>{{ entry.detail }}</strong>{% endif %} <span class="clans-meta">· {{ entry.created_label }}</span></li>{% endfor %}
     </ul>
     {% endif %}
 </section>

@@ -117,7 +117,7 @@ el servidor. Las unidades con habilidades especiales quedarían fuera en la
 primera versión.
 
 
-PUNTO 22. CLANES (en curso, rama clanes) .......................... 50 %
+PUNTO 22. CLANES (rama clanes) ................................... 100 %
 -----------------------------------------------------------------------
 Pedido: clanes de hasta 70 miembros, con Guild Master y Assist, y retos
 entre clanes. Se enciende con SE_CLANS=on.
@@ -128,8 +128,12 @@ permisos (el Assist acepta solicitudes y expulsa miembros comunes), pasar el
 mando, salir (1 hora de espera para entrar a otro), disolver, registro de
 actividad y sección Administración > Clanes. Detalle en DECISIONS.md.
 
-Falta (fase 2): retos entre clanes al mejor de 3, 5 o 7 duelos, con 10
-minutos para aceptar, rendición y ranking de clanes.
+Hecho (fase 2): retos entre clanes al mejor de 3, 5 o 7 duelos. El Guild
+Master reta y el otro tiene 10 minutos para aceptar; cada duelo terminado
+entre miembros de los dos clanes suma una victoria, y gana el que llega
+primero a la mayoría. Se puede rendir, y al terminar se puede retar de nuevo
+al mismo clan o a otro. Avisos en vivo al Guild Master, etiqueta del clan y
+marca "Clan rival" en Duelos, historial de retos y ranking de clanes.
 
 
 PUNTOS QUE SIGUEN

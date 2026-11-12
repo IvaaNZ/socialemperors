@@ -376,6 +376,33 @@ class BattleTests(HubTestCase):
         duel = self.store.get(start['id'])
         self.assertEqual((duel['status'], duel['review_reason']), ('void', 'restart'))
 
+    def test_listeners_hear_finished_duels_only_and_cannot_break_them(self):
+        heard = []
+        self.hub.result_listeners.append(lambda duel: (_ for _ in ()).throw(RuntimeError('broken listener')))
+        self.hub.result_listeners.append(heard.append)
+        self.accept(1, 2)
+        self.play(1, 80, MIN + 1)
+        self.play(2, 10, MIN + 1)
+        self.assertEqual([(d['status'], d['winner']) for d in heard], [('done', 'challenger')])
+        self.assertEqual(self.results(1)[0]['status'], 'done')  # the broken listener changed nothing
+        start, _ = self.accept(1, 2)
+        self.clock.now += DEADLINE
+        self.hub.sweep()  # void: nobody played
+        self.assertEqual(len(heard), 1)
+        start, _ = self.accept(5, 1)
+        self.play(5, 100, MIN + 1)
+        self.play(1, 0, MIN + 1)  # review: Eva is far weaker
+        self.assertEqual(len(heard), 1)
+        self.hub.notify_result(self.store.resolve(start['id'], 'validate', 'Admin', self.clock()))
+        self.assertEqual([d['id'] for d in heard][-1], start['id'])
+
+    def test_send_to_reaches_every_page_of_a_player(self):
+        extra = Page()
+        self.hub.connect(1, 'Ana', extra)
+        self.hub.send_to(1, {'type': 'clan_challenge', 'id': 3})
+        self.assertEqual((self.pages[1].last('clan_challenge')['id'], extra.last('clan_challenge')['id']), (3, 3))
+        self.assertIsNone(self.pages[2].last('clan_challenge'))
+
     def test_decide_rules(self):
         def ok(percent, seconds):
             return {'status': 'ok', 'percent': percent, 'seconds': seconds}

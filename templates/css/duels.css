@@ -21,6 +21,7 @@
 .duels-online li, .duels-history li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 16px; padding: 12px 0; border-bottom: 1px solid var(--line, #d8dfe9); }
 .duels-history li { flex-direction: column; align-items: flex-start; }
 .duels-busy { color: var(--muted, #5f6c7f); font-size: .85rem; }
+.duels-rival { display: inline-block; padding: 1px 8px; border-radius: 999px; background: #fde2e0; color: #8c1d18; font-size: .78rem; font-weight: 700; }
 .duel-won strong { color: #1f7a3a; }
 .duel-lost strong { color: #b3261e; }
 .duels-table { width: 100%; border-collapse: collapse; }

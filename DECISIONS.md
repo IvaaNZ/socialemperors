@@ -93,3 +93,19 @@ Reglas (aprobadas):
 Configuración: los límites están al principio de `clans.py` (`MAX_MEMBERS`, `MAX_ASSISTS`, `MAX_OPEN_REQUESTS`, `REQUEST_SECONDS`, `REJOIN_SECONDS`).
 
 Probado en el navegador con un servidor espejo (puerto 5051, copia de los datos en una carpeta temporal, para no dejar clanes de prueba en la base real): crear clan, solicitud de Tuki2, aceptación, nombrar Assist, vista del Assist y sección de administración.
+
+## Clanes, fase 2 (retos entre clanes)
+
+Cambios de comportamiento (solo con `SE_CLANS=on`; los retos cuentan duelos, así que para jugarlos hace falta también `SE_DUELS=on`):
+- **Retos al mejor de N:** el Guild Master reta a otro clan desde la página de ese clan y elige 3, 5 o 7 duelos. El Guild Master retado tiene **10 minutos** para aceptar o rechazar; si no responde, el reto vence. Quien retó puede cancelarlo mientras está pendiente.
+- **Cómo se suman las victorias:** aceptado el reto, cada duelo que termina con resultado (estado `done`, no empate) entre miembros de los dos clanes suma 1 victoria al clan del ganador. No suman los empates, los anulados ni los que están en revisión; si un administrador valida uno en revisión mientras el reto sigue abierto, suma. Cada duelo cuenta una sola vez. Solo cuentan los miembros que estaban en cada clan **al aceptarse** el reto (quien entra después no cuenta; quien sale después sigue contando para su clan en ese reto).
+- **Fin del reto:** gana el clan que llega primero a la mayoría (2 de 3, 3 de 5, 4 de 7). Cualquiera de los dos Guild Master puede **rendirse** (gana el otro). Un clan disuelto durante un reto lo pierde; si estaba pendiente, se cancela. Apenas termina, los dos clanes pueden retar de nuevo, al mismo clan o a otro. Cada clan tiene un solo reto pendiente o en curso a la vez.
+- **Conexión con Duelos:** el centro de duelos avisa a los "oyentes" de cada duelo terminado (`DuelHub.result_listeners`, también al validar un administrador); con los dos interruptores encendidos, `server.py` conecta Clanes como oyente. Un error de un oyente nunca afecta al duelo.
+- **Avisos en vivo** (por la conexión de los duelos): al Guild Master retado le llega "¡[ETQ] Clan retó a tu clan!" con botón "Ver reto"; al que retó, la respuesta (aceptado o rechazado).
+- **En Duelos:** la etiqueta del clan aparece junto a cada nombre y, durante un reto, los miembros del clan rival aparecen marcados "Clan rival" (se actualiza al recargar la página).
+- **Página del clan:** el reto en curso con el marcador, los duelos que sumaron y el botón de rendirse; los retos anteriores con su resultado. **Clanes:** ranking de clanes por retos ganados, luego duelos ganados en retos.
+- **Base:** tablas nuevas en `instance/clans.sqlite3` (`clan_challenges`, `clan_challenge_rosters`, `clan_challenge_duels`); los retos guardan el nombre y la etiqueta de los clanes, así el historial se ve aunque un clan se disuelva.
+
+Configuración: `CHALLENGE_SIZES` y `CHALLENGE_ANSWER_SECONDS` al principio de `clans.py`.
+
+Probado: reglas con reloj simulado; las páginas y los permisos (un Assist no puede retar, aceptar ni rendirse, ni armando el pedido a mano); de punta a punta con duelos reales (reto, aviso en vivo, aceptación, un duelo con alguien de fuera que no suma, dos duelos que suman y el reto termina 2–0); y en el navegador con el servidor espejo: reto, aviso "¡[NAN] Los Ñandúes retó a tu clan!", aceptación, aviso de respuesta y la marca "Clan rival" en Duelos.

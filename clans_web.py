@@ -10,8 +10,8 @@ ClanStore inside the transaction, so a hand-made request cannot skip it.
 from flask import abort, flash, g, redirect, render_template, request, session, url_for
 
 from auth import validate_csrf
-from clans import (DESCRIPTION_LENGTH, MAX_ASSISTS, MAX_MEMBERS, MAX_OPEN_REQUESTS, NAME_LENGTH, REJOIN_SECONDS,
-                   REQUEST_SECONDS, TAG_LENGTH, ClanError, ClanStore)
+from clans import (CHALLENGE_ANSWER_SECONDS, CHALLENGE_SIZES, DESCRIPTION_LENGTH, MAX_ASSISTS, MAX_MEMBERS,
+                   MAX_OPEN_REQUESTS, NAME_LENGTH, REJOIN_SECONDS, REQUEST_SECONDS, TAG_LENGTH, ClanError, ClanStore)
 from duels import utc_label
 
 # Error codes -> Portuguese source text (translated when the flash message is shown).
@@ -35,6 +35,10 @@ ERRORS = {
     'no_clan': 'Este clã não existe mais.',
     'tutorial': 'Conclua o tutorial para criar um clã.',
     'confirm': 'Marque a confirmação para dissolver o clã.',
+    'bad_size': 'Escolha melhor de 3, 5 ou 7 duelos.',
+    'own_clan': 'Você não pode desafiar o seu próprio clã.',
+    'challenge_busy': 'O seu clã já tem um desafio pendente ou em andamento.',
+    'target_challenge_busy': 'Esse clã já tem um desafio pendente ou em andamento.',
 }
 
 
@@ -72,6 +76,38 @@ def install_clans(app, accounts, village_lock, all_saves_userid, village_session
     def names():
         return {row['id']: row['name'] for row in accounts().list_accounts()}
 
+    def notify(account_id, message):
+        """A live notice through the duel connection (only when duels are on too)."""
+        hub = app.extensions.get('duels')
+        if hub is not None and account_id:
+            hub.send_to(account_id, message)
+
+    def master_id(clan_id):
+        clan = store.clan(clan_id)
+        return next((m['account_id'] for m in clan['members'] if m['role'] == 'master'), None) if clan else None
+
+    def challenge_view(challenge, clan_id, everyone):
+        """A challenge as seen from one of its two clans."""
+        if not challenge:
+            return None
+        ours_first = challenge['challenger_clan'] == clan_id
+        view = dict(challenge)
+        view.update(
+            incoming=challenge['defender_clan'] == clan_id,
+            rival_id=challenge['defender_clan'] if ours_first else challenge['challenger_clan'],
+            rival_tag=challenge['defender_tag'] if ours_first else challenge['challenger_tag'],
+            rival_name=challenge['defender_name'] if ours_first else challenge['challenger_name'],
+            our_wins=challenge['challenger_wins'] if ours_first else challenge['defender_wins'],
+            their_wins=challenge['defender_wins'] if ours_first else challenge['challenger_wins'],
+            needed=challenge['best_of'] // 2 + 1,
+            outcome=('won' if challenge.get('winner_clan') == clan_id else 'lost') if challenge.get('winner_clan') else None,
+            minutes_left=-(-challenge.get('expires_in', 0) // 60),
+            when=utc_label(challenge.get('finished_at') or challenge.get('ended_at') or challenge['created_at']),
+        )
+        view['duel_lines'] = [{'winner': everyone.get(d['winner_id'], '?'), 'loser': everyone.get(d['loser_id'], '?'),
+                               'ours': d['winner_clan'] == clan_id} for d in challenge.get('duels', [])]
+        return view
+
     def act(action, success, back):
         """Run one clan action; flash its result and go back."""
         validate_csrf()
@@ -87,9 +123,20 @@ def install_clans(app, accounts, village_lock, all_saves_userid, village_session
 
     @app.context_processor
     def clan_context():
-        return {'clan_limits': {'members': MAX_MEMBERS, 'assists': MAX_ASSISTS, 'requests': MAX_OPEN_REQUESTS,
-                                'name': NAME_LENGTH, 'tag': TAG_LENGTH, 'description': DESCRIPTION_LENGTH,
-                                'request_days': REQUEST_SECONDS // 86400, 'rejoin_minutes': REJOIN_SECONDS // 60}}
+        context = {'clan_limits': {'members': MAX_MEMBERS, 'assists': MAX_ASSISTS, 'requests': MAX_OPEN_REQUESTS,
+                                   'name': NAME_LENGTH, 'tag': TAG_LENGTH, 'description': DESCRIPTION_LENGTH,
+                                   'request_days': REQUEST_SECONDS // 86400, 'rejoin_minutes': REJOIN_SECONDS // 60,
+                                   'sizes': CHALLENGE_SIZES, 'answer_minutes': CHALLENGE_ANSWER_SECONDS // 60}}
+        account = current_player()
+        if account and app.extensions.get('duels') is not None:
+            # For the duel pages: clan tags next to the names, and the rivals of an active challenge.
+            membership = store.membership(account['id'])
+            challenge = store.current_challenge(membership['clan_id']) if membership else None
+            rivals = []
+            if challenge and challenge['status'] == 'active':
+                rivals = [player for player, clan in challenge['roster'].items() if clan != membership['clan_id']]
+            context['clan_duels'] = {'tags': {str(k): v for k, v in store.member_tags().items()}, 'rivals': rivals}
+        return context
 
     @app.get('/clans', endpoint='clans_page')
     def clans_page():
@@ -97,6 +144,7 @@ def install_clans(app, accounts, village_lock, all_saves_userid, village_session
         search = request.args.get('q', '')[:40]
         membership = store.membership(account['id'])
         return render_template('clans.html', clans=store.clans(search), search=search, membership=membership,
+                               ranking=store.ranking(),
                                my_requests=store.requests_of(account['id']),
                                requested={r['clan_id'] for r in store.requests_of(account['id'])},
                                rejoin_minutes=-(-store.rejoin_wait(account['id']) // 60),
@@ -138,7 +186,14 @@ def install_clans(app, accounts, village_lock, all_saves_userid, village_session
                 requests_list.append({**item, 'name': everyone.get(item['account_id'], '?'),
                                       'created_label': utc_label(item['created_at'])})
         membership = store.membership(account['id'])
+        current = challenge_view(store.current_challenge(clan_id), clan_id, everyone)
+        history = [challenge_view(item, clan_id, everyone) for item in store.challenge_history(clan_id)]
+        can_challenge = (not role and membership and membership['role'] == 'master' and not current
+                         and not store.current_challenge(membership['clan_id']))
         return render_template('clan.html', clan=clan, role=role, me=account['id'], requests=requests_list,
+                               challenge=current, history=history, can_challenge=can_challenge,
+                               own_challenge=challenge_view(store.current_challenge(membership['clan_id']),
+                                                            membership['clan_id'], everyone) if membership and not role else None,
                                membership=membership,
                                requested=any(r['clan_id'] == clan_id for r in store.requests_of(account['id'])),
                                assist_count=sum(m['role'] == 'assist' for m in clan['members']),
@@ -212,6 +267,51 @@ def install_clans(app, accounts, village_lock, all_saves_userid, village_session
             return redirect(url_for('clan_page', clan_id=membership['clan_id']) if membership else url_for('clans_page'))
         flash('O clã foi dissolvido.', 'success')
         return redirect(url_for('clans_page'))
+
+    @app.post('/clans/<int:clan_id>/challenge', endpoint='clan_challenge')
+    def clan_challenge(clan_id):
+        account = player_or_redirect()
+        validate_csrf()
+        try:
+            challenge = store.challenge(account['id'], clan_id, request.form.get('best_of'), actor_name=account['name'])
+        except ClanError as error:
+            flash(ERRORS.get(error.code, ERRORS['forbidden']), 'error')
+            return redirect(url_for('clan_page', clan_id=clan_id))
+        notify(master_id(clan_id), {
+            'type': 'clan_challenge', 'id': challenge['id'], 'best_of': challenge['best_of'],
+            'clan': {'tag': challenge['challenger_tag'], 'name': challenge['challenger_name']},
+            'minutes': CHALLENGE_ANSWER_SECONDS // 60, 'url': url_for('clan_page', clan_id=clan_id)})
+        flash('Desafio enviado. O outro clã tem 10 minutos para responder.', 'success')
+        return redirect(url_for('clan_page', clan_id=challenge['challenger_clan']))
+
+    @app.post('/clans/challenges/<int:challenge_id>', endpoint='clan_challenge_action')
+    def clan_challenge_action(challenge_id):
+        account = player_or_redirect()
+        membership = store.membership(account['id'])
+        back = url_for('clan_page', clan_id=membership['clan_id']) if membership else url_for('clans_page')
+        action = request.form.get('action')
+        validate_csrf()
+        try:
+            if action in ('accept', 'decline'):
+                challenge = store.answer_challenge(account['id'], challenge_id, action == 'accept', actor_name=account['name'])
+                notify(master_id(challenge['challenger_clan']), {
+                    'type': 'clan_challenge_answer', 'id': challenge_id, 'accepted': action == 'accept',
+                    'clan': {'tag': challenge['defender_tag'], 'name': challenge['defender_name']},
+                    'url': url_for('clan_page', clan_id=challenge['challenger_clan'])})
+                message = 'Desafio aceito. Desafiem os membros do outro clã em Duelos.' if action == 'accept' else 'Desafio recusado.'
+            elif action == 'cancel':
+                store.cancel_challenge(account['id'], challenge_id, actor_name=account['name'])
+                message = 'Desafio cancelado.'
+            elif action == 'surrender':
+                store.surrender(account['id'], challenge_id, actor_name=account['name'])
+                message = 'Seu clã se rendeu. O outro clã ganhou o desafio.'
+            else:
+                abort(400, description='Ação inválida.')
+        except ClanError as error:
+            flash(ERRORS.get(error.code, ERRORS['forbidden']), 'error')
+            return redirect(back)
+        flash(message, 'success')
+        return redirect(back)
 
     def require_admin():
         account = g.get('account')
