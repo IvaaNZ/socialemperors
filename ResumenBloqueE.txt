@@ -91,9 +91,20 @@ guardado en duels.sqlite3 y con ranking Elo (desde nivel 25 de la aldea
 principal). Se enciende con SE_DUELS=on. Detalle en DUELOS_PLAN.md y
 DECISIONS.md.
 
-En curso (opción B): ver la batalla. Al aceptar el reto, cada jugador entra
-a la arena y pelea contra el ejército del otro manejado por la IA del juego,
-como en los torneos originales y en Supervivencia.
+Hecho (fase 2, opción B): ver la batalla. Al aceptar el reto, cada jugador
+entra a la arena de torneo del juego y comanda sus 20 mejores tropas contra
+el ejército del otro, manejado por la IA del juego (como en Supervivencia).
+Las tropas son copias: las aldeas no cambian.
+  - Gana quien destruye el mayor porcentaje del ejército rival; si empatan,
+    el más rápido (el servidor mide el tiempo con su propio reloj).
+  - Controles: batalla mínima de 20 s, porcentaje de 0 a 100, un solo
+    informe por jugador; 10 minutos de plazo (quien no informa pierde; si
+    ninguno informa, el duelo se anula).
+  - Un resultado muy improbable (el ganador tenía menos de un tercio de la
+    fuerza del perdedor) no cuenta para el ranking y va a Administración >
+    Duelos, donde un administrador lo valida o lo anula.
+  - Quien termina primero ve "Esperando al rival…" con el tiempo que queda.
+  - Los tres valores se cambian con variables de entorno (DECISIONS.md).
 
 PENDIENTE (opción A): duelo en vivo de verdad. Los dos jugadores manejan su
 ejército al mismo tiempo en la arena y ven la misma batalla, sin desfase. El

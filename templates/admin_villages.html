@@ -9,7 +9,7 @@
 </div>
 <nav class="management-nav" aria-label="{{ _('Administração') }}">
     <a href="{{ url_for('admin_accounts') }}">{{ _('Contas') }}</a>
-    <a href="{{ url_for('admin_villages') }}" aria-current="page">{{ _('Vilas') }}</a>
+    <a href="{{ url_for('admin_villages') }}" aria-current="page">{{ _('Vilas') }}</a>{% if duels_enabled %}<a href="{{ url_for('admin_duels') }}">{{ _('Duelos') }}</a>{% endif %}
 </nav>
 {% if villages %}
 {% if overview.villages %}

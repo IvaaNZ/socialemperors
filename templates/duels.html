@@ -4,7 +4,7 @@
 {% block content %}
 <div class="duels-heading">
     <h1>{{ _('Duelos') }}</h1>
-    <p>{{ _('Desafie um jogador conectado. Se ele aceitar, vence o exército mais forte; ninguém perde tropas nem recursos.') }}</p>
+    <p>{{ _('Desafie um jogador conectado. Se ele aceitar, os dois entram na arena: cada um comanda o próprio exército contra o exército do outro, guiado pela IA do jogo. Ninguém perde tropas nem recursos.') }}</p>
 </div>
 <section class="duels-me" aria-labelledby="duels-me-title">
     <h2 id="duels-me-title" class="sr-only">{{ _('Seu exército') }}</h2>
@@ -38,9 +38,10 @@
     <ul class="duels-history">
         {% for duel in history %}
         <li class="duel-{{ duel.outcome }}">
-            <strong>{% if duel.outcome == 'won' %}{{ _('Vitória contra {name}!', name=duel.other) }}{% elif duel.outcome == 'lost' %}{{ _('Derrota contra {name}.', name=duel.other) }}{% else %}{{ _('Empate contra {name}.', name=duel.other) }}{% endif %}</strong>
+            <strong>{% if duel.outcome == 'won' %}{{ _('Vitória contra {name}!', name=duel.other) }}{% elif duel.outcome == 'lost' %}{{ _('Derrota contra {name}.', name=duel.other) }}{% elif duel.outcome == 'void' %}{{ _('Duelo contra {name} anulado.', name=duel.other) }}{% elif duel.outcome == 'review' %}{{ _('Duelo contra {name} em revisão.', name=duel.other) }}{% else %}{{ _('Empate contra {name}.', name=duel.other) }}{% endif %}</strong>
+            {% if duel.my_percent is not none and duel.their_percent is not none %}<span>{{ _('Exército rival destruído: você {mine}% · {name} {theirs}%', mine=duel.my_percent | game_number, name=duel.other, theirs=duel.their_percent | game_number) }}</span>{% endif %}
             <span>{{ _('Sua força: {mine} · Força de {name}: {theirs}', mine=duel.mine | game_number, name=duel.other, theirs=duel.theirs | game_number) }}</span>
-            <span class="duels-meta">{{ duel.created_label }} · {% if duel.ranked %}{{ _('Ranqueado') }}{% else %}{{ _('Amistoso') }}{% endif %}</span>
+            <span class="duels-meta">{{ duel.created_label }} · {% if duel.ranked %}{{ _('Ranqueado') }}{% elif not duel.eligible %}{{ _('Amistoso') }}{% else %}{{ _('Não altera o ranking.') }}{% endif %}</span>
         </li>
         {% endfor %}
     </ul>
@@ -50,7 +51,10 @@
     <h2 id="duels-rules-title">{{ _('Regras dos duelos') }}</h2>
     <ul>
         <li>{{ _('O desafio vence em {seconds} segundos se não houver resposta.', seconds=challenge_seconds) }}</li>
-        <li>{{ _('Conta a força das suas {limit} tropas mais fortes, com a mesma fórmula dos saques.', limit=army_limit) }}</li>
+        <li>{{ _('Na arena lutam suas {limit} tropas mais fortes (o máximo do modo torneio); cópias delas: suas tropas não morrem de verdade.', limit=army_limit) }}</li>
+        <li>{{ _('Vence quem destruir a maior porcentagem do exército rival; em caso de empate, quem terminar mais rápido.') }}</li>
+        <li>{{ _('Cada um tem {minutes} minutos para terminar a batalha. Quem não termina perde; se nenhum terminar, o duelo é anulado. Batalhas de menos de {seconds} segundos não valem.', minutes=deadline_minutes | game_number, seconds=min_seconds) }}</li>
+        <li>{{ _('Um resultado muito improvável para a força dos exércitos fica em revisão e só conta para o ranking se um administrador o validar.') }}</li>
         <li>{{ _('Só conta para o ranking se as duas vilas principais tiverem nível {level} ou mais.', level=ranked_level) }}</li>
     </ul>
 </section>

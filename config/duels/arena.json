@@ -1,0 +1,97 @@
+{
+ "privateState": {
+  "gifts": [],
+  "neighborAssists": [],
+  "completedMissions": [],
+  "rewardedMissions": [],
+  "timestampLastBonus": 0,
+  "attacksSent": [],
+  "attacksReceived": [],
+  "spyings": [],
+  "tsAttacksReset": 0,
+  "tsSpyingsReset": 0,
+  "collections": [],
+  "strategy": 7,
+  "attacksPack": 0,
+  "spyingsPack": 0,
+  "deadHeroes": [],
+  "rewardedReferrer": false,
+  "numFriends": 0,
+  "version": 1,
+  "unlockedEarlyBuildings": [],
+  "maps": [
+   {
+    "r": "h",
+    "s": 1,
+    "n": "Arena"
+   }
+  ],
+  "attacksWon": 0,
+  "attacksLost": 0,
+  "honor": 0,
+  "energy": 30,
+  "energyLastTime": 0,
+  "unlockedSkins": [
+   true
+  ],
+  "unlockedQuestIndex": 0,
+  "questsRank": [],
+  "receivedAssists": [],
+  "wondersFriendsClicked": [],
+  "amountLastTrade": 0
+ },
+ "neighbors": [],
+ "playerInfo": {
+  "pid": "100000040",
+  "name": "Arena",
+  "pic": "",
+  "cash": "0",
+  "completed_tutorial": "15",
+  "default_map": "0",
+  "map_names": [
+   "Arena",
+   "Arena",
+   "Arena",
+   "Arena",
+   "Arena"
+  ],
+  "map_sizes": [
+   1,
+   0,
+   0,
+   0,
+   0
+  ],
+  "sp_ref_uid": null,
+  "sp_ref_cat_install": "",
+  "last_logged_in": "1306344535"
+ },
+ "map": {
+  "id": "0",
+  "expansions": [
+   13
+  ],
+  "race": "h",
+  "world_id": 7,
+  "coins": "0",
+  "xp": 0,
+  "level": "1",
+  "stone": "0",
+  "wood": "0",
+  "food": "0",
+  "timestampLastTrade": 0,
+  "numTradesDone": 0,
+  "resourcesTraded": [],
+  "timestampLastTreasure": 0,
+  "idCurrentTreasure": 0,
+  "resourceAlliesMarket": "n",
+  "questTimes": [],
+  "store": [],
+  "skin": 0,
+  "receivedAssists": [],
+  "expirableUnitsTime": [],
+  "unlockedEarlyBuildings": [],
+  "items": []
+ },
+ "timestamp": 1349322593
+}

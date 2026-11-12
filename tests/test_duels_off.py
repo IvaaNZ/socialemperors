@@ -26,7 +26,8 @@ class DuelsOffTests(unittest.TestCase):
         self.assertFalse(server.DUELS_ENABLED)
         self.assertNotIn('duels', server.app.extensions)
         rules = {rule.rule for rule in server.app.url_map.iter_rules()}
-        self.assertFalse({rule for rule in rules if 'duel' in rule})
+        self.assertFalse({rule for rule in rules if 'duel' in rule or 'tournaments/' in rule})
+        self.assertNotIn('duel_command_filter', server.app.extensions)  # game commands untouched
         self.assertNotIn('duels_page', server.app.view_functions)
         source = Path(server.__file__).read_text(encoding='utf-8')
         self.assertIn('threaded=DUELS_ENABLED', source)  # one request at a time while off
@@ -51,11 +52,12 @@ class DuelsOffTests(unittest.TestCase):
             token = session['_csrf_token']
         with contextlib.redirect_stdout(io.StringIO()):
             client.post('/login', data={'email': 'admin@example.com', 'password': 'secret-password', 'csrf_token': token})
-            for path in ('/play.html', '/treasury', '/rivals', '/admin'):
+            for path in ('/play.html', '/treasury', '/rivals', '/admin', '/admin/villages'):
                 with self.subTest(path=path):
                     page = client.get(path).get_data(as_text=True)
                     self.assertNotIn('duel', page.lower())
             self.assertEqual(client.get('/duels').status_code, 404)
+            self.assertEqual(client.get('/admin/duels').status_code, 404)
             self.assertEqual(client.get('/css/duels.css').status_code, 200)  # a static file, linked from nowhere
 
     def test_switch_values(self):

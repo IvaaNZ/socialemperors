@@ -82,3 +82,7 @@
 @media (max-width: 680px) {
     .stats-columns { grid-template-columns: 1fr; }
 }
+
+/* Administração > Duelos (SE_DUELS=on) */
+.duel-resolved { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; }
+.duel-resolved li { overflow-wrap: anywhere; }

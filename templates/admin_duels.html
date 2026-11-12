@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% block title %}{{ _('Duelos em revisão') }} · Social Empires{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('css', path='management.css') }}">{% endblock %}
+{% block main_class %}management-main{% endblock %}
+{% macro report(duel, side) -%}
+{%- set kind = duel[side ~ '_report'] -%}
+{%- if kind == 'ok' -%}{{ _('{percent}% do exército rival em {seconds} s', percent=duel[side ~ '_percent'] | game_decimal, seconds=duel[side ~ '_seconds'] | game_decimal) }}
+{%- elif kind == 'too_fast' -%}{{ _('Batalha curta demais') }}
+{%- elif kind == 'invalid' -%}{{ _('Resultado inválido') }}
+{%- elif kind == 'not_started' -%}{{ _('Não começou a batalha') }}
+{%- else -%}{{ _('Não informou a tempo') }}{%- endif -%}
+{%- endmacro %}
+{% macro winner_label(duel) -%}
+{%- if duel.winner == 'draw' -%}{{ _('Empate') }}{%- elif duel.winner -%}{{ duel[duel.winner ~ '_name'] }}{%- else -%}–{%- endif -%}
+{%- endmacro %}
+{% block content %}
+<div class="management-heading">
+    <div><h1>{{ _('Duelos em revisão') }}</h1><p>{{ _('Resultados muito improváveis para a força dos exércitos (o vencedor tinha menos de {ratio}% da força do perdedor). Não contam para o ranking até serem validados.', ratio=ratio_percent) }}</p></div>
+</div>
+<nav class="management-nav" aria-label="{{ _('Administração') }}">
+    <a href="{{ url_for('admin_accounts') }}">{{ _('Contas') }}</a>
+    <a href="{{ url_for('admin_villages') }}">{{ _('Vilas') }}</a>
+    <a href="{{ url_for('admin_duels') }}" aria-current="page">{{ _('Duelos') }}</a>
+</nav>
+<section class="management-section" aria-labelledby="pending-title">
+    <h2 id="pending-title">{{ _('Aguardando revisão') }}</h2>
+    {% if pending %}
+    <table class="management-table">
+        <thead><tr><th scope="col">{{ _('Duelo') }}</th><th scope="col">{{ _('Desafiante') }}</th><th scope="col">{{ _('Desafiado') }}</th><th scope="col">{{ _('Vencedor') }}</th><th scope="col"><span class="sr-only">{{ _('Ação') }}</span></th></tr></thead>
+        <tbody>
+            {% for duel in pending %}
+            <tr>
+                <td data-label="{{ _('Duelo') }}"><strong>#{{ duel.id }}</strong><span class="player-detail">{{ duel.created_label }}</span><span class="player-detail">{% if duel.ranked %}{{ _('Ranqueado') }}{% else %}{{ _('Amistoso') }}{% endif %}</span></td>
+                {% for side in ('challenger', 'defender') %}
+                <td data-label="{{ _('Desafiante') if side == 'challenger' else _('Desafiado') }}">
+                    <strong>{{ duel[side ~ '_name'] }}</strong>
+                    <span class="player-detail">{{ _('Força {power}', power=duel[side ~ '_power'] | game_number) }}</span>
+                    <span class="player-detail">{{ report(duel, side) }}</span>
+                </td>
+                {% endfor %}
+                <td data-label="{{ _('Vencedor') }}"><strong>{{ winner_label(duel) }}</strong></td>
+                <td data-label="{{ _('Ação') }}">
+                    <form action="{{ url_for('admin_resolve_duel', duel_id=duel.id) }}" method="post" class="actions-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="button button-primary button-small" name="action" value="validate" type="submit" aria-label="{{ _('Validar o duelo {id}', id=duel.id) }}">{{ _('Validar') }}</button>
+                        <button class="button button-secondary button-small" name="action" value="void" type="submit" aria-label="{{ _('Anular o duelo {id}', id=duel.id) }}">{{ _('Anular') }}</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}<p>{{ _('Nenhum duelo aguardando revisão.') }}</p>{% endif %}
+</section>
+<section class="management-section" aria-labelledby="resolved-title">
+    <h2 id="resolved-title">{{ _('Resolvidos recentemente') }}</h2>
+    {% if resolved %}
+    <ul class="duel-resolved">
+        {% for duel in resolved %}
+        <li><strong>#{{ duel.id }} · {{ duel.challenger_name }} × {{ duel.defender_name }}</strong> · {{ _('Vencedor') }}: {{ winner_label(duel) }} · {% if duel.status == 'done' %}{{ _('Validado') }}{% else %}{{ _('Anulado') }}{% endif %} · {{ _('por {name}', name=duel.resolved_by) }} · {{ duel.resolved_label }}</li>
+        {% endfor %}
+    </ul>
+    {% else %}<p>{{ _('Nenhum duelo resolvido ainda.') }}</p>{% endif %}
+</section>
+{% endblock %}

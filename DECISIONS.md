@@ -25,3 +25,43 @@ Decisiones:
 - **Ranked:** Elo, inicio 1000, K = 32 (ganar contra alguien con más puntos da más). Solo si **las dos** aldeas principales tienen nivel 25 o más; si no, el duelo queda guardado como **amistoso** sin cambiar puntos.
 - Los dos jugadores reciben **el mismo mensaje de resultado** en el mismo momento; los mensajes llevan códigos y números, y cada página los muestra en su idioma.
 - Duelo aceptado de alguien que se quedó sin tropas en el medio: se cancela.
+
+## Fase 2 (batalla en la arena, opción B)
+
+Cambios de comportamiento (solo con `SE_DUELS=on`; apagado, nada cambia: ni la película del juego, ni las rutas, ni los comandos):
+- **Aceptar un reto ya no resuelve por fuerza:** los dos jugadores entran a la arena de torneo del juego. Cada uno comanda su ejército contra el ejército del otro, manejado por la IA del juego (`TournamentIA`). Desde el portal, la página lleva sola al juego.
+- **Película del juego:** `swf_duel_bridge.py` agrega `Base.__startDuel` (abre la arena con los datos del duelo), `Base.__registerDuel` (registra la orden `startDuel` para la página, con su propio try/catch) y hace que el puntaje del torneo sea el **porcentaje del ejército rival destruido**. No cambia ninguna instrucción original; solo agrega código al principio de `Base.init`, `TournamentIA.end` y `TournamentManager.end`. Un try/catch puesto directamente en `Base.init` fallaba en el verificador de Ruffle (VerifyError #1026), por eso va en un método aparte.
+- **`allowScriptAccess`:** la página del juego habilita la comunicación página↔juego (ExternalInterface) solo cuando existe la configuración de duelos (`SE_DUELS=on` y jugador conectado). Apagado sigue en `false`.
+- **Servicios nuevos:** `tournaments/start_tournament_match.php` y `tournaments/finish_tournament_match.php`, con la respuesta firmada `HMAC-SHA256(SERVER_KEY, payload);payload` que espera el `ServiceManager` del juego. `finish` responde siempre OK para que el juego vuelva a la aldea; el resultado real lo dice el aviso de la página.
+- **Arena:** el mapa `100000040` (el que la config del juego asigna a los torneos y que nunca se publicó) se sirve desde `config/duels/arena.json` (o `SE_DUEL_ARENA_FILE`), generado por `tools/make_arena.py`: una isla de aventura vacía. El juego ubica los ejércitos solo, en las baldosas (10, 59) y (90, 59), enfrentados.
+- **Las muertes en la arena no llegan a la aldea:** cuando muere una unidad, el juego llama a los comandos `kill`/`sell` (motivo `KILL`) con la posición y el mapa del jugador (`IsoFightingElement.kill`). Pero `CommandManager.addCommand` solo encola comandos en el modo NORMAL (o ayudas en modo vecino), así que **el juego nunca los manda desde la arena**: comprobado en el código y en el navegador (durante la batalla no llegó ningún `command.php`). Como segunda protección, mientras un jugador está en la batalla (desde "Iniciar batalla" hasta su informe o el plazo) el servidor descarta solo los comandos de muerte de unidades de esa aldea y los anota en la consola (`[duel] arena command dropped`). Los demás comandos pasan, y al volver a la aldea todo cuenta normalmente. Una primera versión descartaba todos los comandos hasta 20 s después del informe; en la prueba con dos navegadores eso descartó comandos legítimos de la aldea al volver, por eso se acotó.
+- **Ejército de duelo:** las **20** tropas de combate más fuertes (antes 30): el modo torneo del juego ubica como máximo 20 por lado. Se excluyen las unidades de `TOURNAMENT_UNITS_NOT_ALLOWED` de la config del juego. La fuerza (para el control de improbabilidad) es la de esas mismas 20.
+- **Base:** la tabla `duels` gana columnas (estado, informes, porcentajes, tiempos, revisión). Los duelos de la fase 1 se migran solos como duelos terminados (`status = 'done'`). Las batallas que un reinicio del servidor deja a medias quedan anuladas (`review_reason = 'restart'`).
+
+Reglas (aprobadas):
+- Gana el **mayor porcentaje** de ejército rival destruido; si empatan (a dos decimales), el **más rápido** (a la décima de segundo, medido con el reloj del servidor desde "Iniciar batalla"); si también empatan, empate.
+- Un informe **no vale** si: la batalla duró menos que el mínimo, el porcentaje no es un número de 0 a 100, el jugador nunca pulsó "Iniciar batalla", o ya había informado. Un informe que no vale cuenta como no informado.
+- **Plazo:** cuenta desde que se acepta el reto. Si uno solo informa a tiempo, gana; si ninguno, el duelo se **anula**.
+- **Improbable:** si el ganador tenía menos de un tercio de la fuerza del perdedor, el duelo no cuenta para el ranking y queda **en revisión**. En **Administración > Duelos** un administrador lo **valida** (aplica el Elo) o lo **anula**; queda guardado quién y cuándo, y los dos jugadores reciben la decisión al momento.
+- **"Esperando al rival…":** quien termina primero ve el aviso con el tiempo que le queda al rival (cuenta regresiva). Si recarga la página, el aviso vuelve; si recarga durante la batalla, vuelve a entrar a la arena.
+
+### Configuración (un solo lugar: el principio de `duels.py`)
+
+| Variable de entorno | Por defecto | Qué hace |
+| --- | --- | --- |
+| `SE_DUEL_MIN_SECONDS` | `20` | Duración mínima de una batalla para que el informe valga |
+| `SE_DUEL_DEADLINE_SECONDS` | `600` (10 min) | Plazo para informar, desde que se acepta el reto |
+| `SE_DUEL_POWER_RATIO` | `0.3333` (un tercio) | Si la fuerza del ganador es menor que esta fracción de la del perdedor, el duelo va a revisión |
+| `SE_DUEL_ARENA_FILE` | `config/duels/arena.json` | Mapa de la arena |
+
+Valores vacíos, no numéricos, cero, negativos o infinitos se ignoran y se usa el valor por defecto.
+
+### Ajustes después de la prueba con dos navegadores
+
+- **Resultados que no se perdieron:** una pestaña en segundo plano puede quedar congelada y perder la conexión justo cuando llega el resultado. El servidor guarda el último resultado de cada jugador (hasta 1 hora) y lo vuelve a mandar cuando una página se reconecta, hasta que una página confirma que lo mostró (mensaje `seen`). La decisión de un administrador llega por el mismo camino. Un reinicio del servidor borra esos pendientes; el resultado igual queda en el historial.
+- **Cuentas regresivas exactas:** se calculan contra la hora de fin, no contando "tics" (Chrome da muy pocos tics a las pestañas en segundo plano y la cuenta se atrasaba minutos).
+- **Una sola pestaña de juego abre la arena:** si el jugador tiene varias páginas abiertas, el portal no se va al juego cuando ya hay una página del juego abierta (pregunta por `BroadcastChannel`) y muestra "La batalla se abre en tu pestaña del juego" con un botón "Ir al juego"; entre varias pestañas del juego, solo una abre la arena (bloqueo `navigator.locks` por duelo).
+- **Detalle conocido (del juego, no del duelo):** si la aldea tiene un aviso de campaña pendiente (por ejemplo "Capítulo 1: ¡Princesa secuestrada!"), el juego puede mostrarlo encima de la arena; se cierra con OK y la batalla sigue normal.
+- **Recordatorio para probar en una sola computadora:** el navegador frena el juego de la pestaña que no está al frente; para jugar las dos batallas a la vez conviene usar dos ventanas (o dos navegadores) visibles.
+
+Probado en el navegador (Tuki y Tuki2): reto y aceptación desde el juego y desde el portal; batalla real con victoria por 100 %; "Esperando al rival…"; huida antes de 20 s (no vale); plazo vencido (gana quien informó); los dos demasiado rápidos (anulado); resultado improbable a revisión, validado desde Administración > Duelos y avisado a los dos jugadores; ranking y aldeas sin cambios por la arena.

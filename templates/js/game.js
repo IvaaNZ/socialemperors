@@ -304,7 +304,8 @@
                 publicPath: runtimePath,
                 autoplay: "on",
                 backgroundColor: "#669C2C",
-                allowScriptAccess: false,
+                // Only with duels on: the duel page opens the tournament arena (Base.__startDuel).
+                allowScriptAccess: Boolean(document.getElementById("duel-config")),
                 allowFullscreen: true,
                 splashScreen: false,
                 quality: "16x16",

@@ -1,6 +1,7 @@
 "use strict";
 // Live duels (SE_DUELS=on): one WebSocket per page; texts come from the server
 // in the viewer's language. Messages from the server carry codes and numbers.
+// An accepted duel opens the tournament arena in the game page.
 (() => {
     const configElement = document.getElementById("duel-config");
     if (!configElement) return;
@@ -16,6 +17,42 @@
     let retryDelay = 1000;
     let countdown = null;
     let pending = null;
+    let launchTimer = null;
+    let launchedDuel = null;
+    const gameContainer = document.getElementById("game-player");
+    // Pages of this player in this browser talk to each other: a portal page does
+    // not leave for the game when a game page is already open.
+    const pages = typeof BroadcastChannel === "function" ? new BroadcastChannel("se-duels") : null;
+    if (pages && gameContainer) {
+        pages.addEventListener("message", (event) => { if (event.data === "game?") pages.postMessage("game!"); });
+    }
+
+    function gamePageOpen() {
+        if (!pages) return Promise.resolve(false);
+        return new Promise((resolve) => {
+            const timer = setTimeout(() => { pages.removeEventListener("message", answer); resolve(false); }, 700);
+            function answer(event) {
+                if (event.data !== "game!") return;
+                clearTimeout(timer);
+                pages.removeEventListener("message", answer);
+                resolve(true);
+            }
+            pages.addEventListener("message", answer);
+            pages.postMessage("game?");
+        });
+    }
+
+    // Only one game page of this browser opens the arena for a duel (the lock is
+    // released when that page closes or reloads).
+    function claimLaunch(duelId) {
+        if (!navigator.locks) return Promise.resolve(true);
+        return new Promise((resolve) => {
+            navigator.locks.request("se-duel-" + duelId, { ifAvailable: true }, (lock) => {
+                resolve(Boolean(lock));
+                return lock ? new Promise(() => {}) : undefined;
+            }).catch(() => resolve(true));
+        });
+    }
 
     const fill = (text, values) => text.replace(/\{(\w+)\}/g, (match, key) => (key in values ? values[key] : match));
     // Same grouping as the portal's game_number filter: 6.925 (es, pt-BR) and 6,925 (en), always.
@@ -53,11 +90,82 @@
         showNotice(text, detail, [button(texts.close, hideNotice)]);
     }
 
+    // Counts down to a fixed end time: a background tab gets few timer ticks, so
+    // never count ticks.
+    const secondsUntil = (endAt) => Math.max(0, Math.ceil((endAt - Date.now()) / 1000));
+
     function startCountdown(seconds, base) {
-        let left = seconds;
-        const render = () => { noticeDetail.textContent = fill(texts.seconds, { seconds: left }) + (base ? " · " + base : ""); };
+        const endAt = Date.now() + seconds * 1000;
+        const render = () => { noticeDetail.textContent = fill(texts.seconds, { seconds: secondsUntil(endAt) }) + (base ? " · " + base : ""); };
         render();
-        countdown = setInterval(() => { left = Math.max(0, left - 1); render(); }, 1000);
+        countdown = setInterval(render, 1000);
+    }
+
+    const clock = (seconds) => {
+        const total = Math.max(0, Math.round(Number(seconds) || 0));
+        return Math.floor(total / 60) + ":" + String(total % 60).padStart(2, "0");
+    };
+
+    function stopLaunch() {
+        clearTimeout(launchTimer);
+        launchTimer = null;
+    }
+
+    // The game page opens the arena through the movie's callback (swf_duel_bridge.py);
+    // it answers false until the home village is loaded, so keep trying until the deadline.
+    function launchBattle(message) {
+        stopLaunch();
+        const deadline = Date.now() + message.seconds_left * 1000;
+        const started = Date.now();
+        const attempt = () => {
+            const player = gameContainer && gameContainer.firstElementChild;
+            let opened = false;
+            try {
+                if (player && typeof player.startDuel === "function") {
+                    opened = player.startDuel(message.id, message.tournament_type, message.other.id, message.other.name,
+                        message.army, message.enemy_army, message.you.name) === true;
+                }
+            } catch (error) { /* the movie is still loading */ }
+            if (opened) {
+                launchedDuel = message.id;
+                launchTimer = setTimeout(hideNotice, 6000);
+                return;
+            }
+            if (Date.now() - started > 15000) noticeDetail.textContent = texts.game_not_ready;
+            if (Date.now() < deadline) launchTimer = setTimeout(attempt, 1000);
+        };
+        attempt();
+    }
+
+    async function onDuelStart(message) {
+        pending = null;
+        const title = fill(texts.starting, { name: message.other.name });
+        if (!gameContainer) {
+            if (await gamePageOpen()) {
+                const go = button(texts.go_to_game, () => { window.location.href = config.playUrl; }, true);
+                showNotice(title, texts.game_in_other_tab, [go, button(texts.close, hideNotice)]);
+                return;
+            }
+            showNotice(title, texts.going_to_game, [button(texts.close, hideNotice)]);
+            setTimeout(() => { window.location.href = config.playUrl; }, 1500);
+            return;
+        }
+        if (launchedDuel === message.id) return;
+        if (!(await claimLaunch(message.id))) {
+            showNotice(title, texts.game_in_other_tab, [button(texts.close, hideNotice)]);
+            return;
+        }
+        showNotice(title, fill(texts.arena_help, { name: message.other.name }), [button(texts.close, hideNotice)]);
+        launchBattle(message);
+    }
+
+    function onDuelWaiting(message) {
+        stopLaunch();
+        showNotice(fill(texts.waiting, { name: message.other.name }), "", [button(texts.close, hideNotice)]);
+        const endAt = Date.now() + message.seconds_left * 1000;
+        const render = () => { noticeDetail.textContent = fill(texts.time_left, { time: clock(secondsUntil(endAt)) }); };
+        render();
+        countdown = setInterval(render, 1000);
     }
 
     function renderOnline(online) {
@@ -87,16 +195,28 @@
         }));
     }
 
+    function reportLine(player) {
+        const values = { name: player.name, percent: number(player.percent), time: clock(player.seconds), seconds: config.minSeconds };
+        const key = player.report === "ok" ? "line" : "line_" + (player.report || "missing");
+        return fill(texts[key] || texts.line_invalid, values);
+    }
+
     function showResult(result) {
-        const mine = result.challenger.id === me ? result.challenger : result.defender;
-        const theirs = result.challenger.id === me ? result.defender : result.challenger;
+        stopLaunch();
         const mySide = result.challenger.id === me ? "challenger" : "defender";
-        const title = result.winner === "draw" ? texts.draw : result.winner === mySide ? texts.won : texts.lost;
-        let detail = fill(texts.powers, { mine: number(mine.power), name: theirs.name, theirs: number(theirs.power) });
-        detail += " · " + (result.ranked
-            ? fill(texts.ranked, { before: number(mine.rating_before), after: number(mine.rating_after) })
-            : fill(texts.friendly, { level: config.rankedLevel }));
-        showMessage(fill(title, { name: theirs.name }), detail);
+        const mine = result[mySide];
+        const theirs = result[mySide === "challenger" ? "defender" : "challenger"];
+        let title;
+        if (result.status === "void" || result.status === "review") title = texts[result.status];
+        else title = result.winner === "draw" ? texts.draw : result.winner === mySide ? texts.won : texts.lost;
+        const lines = [reportLine(mine), reportLine(theirs)];
+        if (result.rated) lines.push(fill(texts.ranked, { before: number(mine.rating_before), after: number(mine.rating_after) }));
+        else if (result.status === "review") lines.push(texts.review_detail);
+        else if (result.status === "void") lines.push(result.review_reason === "restart" ? texts.void_restart : texts.void_detail);
+        else if (!result.ranked) lines.push(fill(texts.friendly, { level: config.rankedLevel }));
+        else lines.push(texts.not_rated);
+        showMessage(fill(title, { name: theirs.name }), lines.join(" · "));
+        send({ type: "seen", id: result.id });  // the server stops sending it again
     }
 
     function onMessage(message) {
@@ -130,6 +250,12 @@
             showMessage(fill(text, { name }));
             break;
         }
+        case "duel_start":
+            onDuelStart(message);
+            break;
+        case "duel_waiting":
+            onDuelWaiting(message);
+            break;
         case "duel_result":
             showResult(message);
             break;

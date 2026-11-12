@@ -726,6 +726,9 @@ def localized_game_movie(language=None):
     patched = patch_tutorial(patch_private_economy(localize_swf(original, language=language)))
     # Bytecode strings change last: the audited patches above pin the ABC checksum.
     translated = add_range_overlay(localize_abc_strings(patched, language))
+    if DUELS_ENABLED:  # lets the duel page open the tournament arena
+        from swf_duel_bridge import add_duel_bridge
+        translated = add_duel_bridge(translated)
     return translated, hashlib.sha256(translated).hexdigest()
 
 ## GAME DYNAMIC
@@ -826,6 +829,9 @@ def command_response():
     if not all(isinstance(item, dict) and isinstance(item.get('cmd'), str) and isinstance(item.get('args'), list) for item in data['commands']):
         abort(400, description='Pacote de comandos inválido.')
 
+    duel_filter = app.extensions.get('duel_command_filter')  # SE_DUELS=on: arena commands never reach the village
+    if duel_filter is not None:
+        data['commands'] = duel_filter(USERID, data['commands'])
     with village_lock:
         recover_raids()
         validate_game_key(USERID)
@@ -889,7 +895,8 @@ DUELS_ENABLED = os.environ.get('SE_DUELS', 'off').strip().lower() in ('on', '1',
 app.jinja_env.globals['duels_enabled'] = DUELS_ENABLED
 if DUELS_ENABLED:
     from duels_web import install_duels
-    install_duels(app, accounts, village_lock, all_saves_userid, village_session, data_dir, game_number)
+    install_duels(app, accounts, village_lock, all_saves_userid, village_session, data_dir, game_number,
+                  validate_game_key)
 
 print (" [+] Running server...")
 
