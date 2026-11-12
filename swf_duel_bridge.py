@@ -10,7 +10,10 @@ destroyed". This edit adds, without changing any original instruction:
   * Base.__startDuel(duelId, typeId, enemyId, enemyName, army, enemyArmy,
     playerName):
     when the home village is loaded (Base.mapaInicializado, gameMode NORMAL),
-    fills TournamentManager's data (with players[0].user_name, shown in the
+    turns off the pending start-up popups (Base.deferredPopupQuestInfo and
+    Base.showNews: PopupManager.checkForNextStartPopup would open them over the
+    arena when the tournament loading window closes), fills TournamentManager's
+    data (with players[0].user_name, shown in the
     battle header), enemy and both armies the way the
     tournament results window does (TournamentResultTabMatches.startMatch)
     and calls TournamentManager.loadTournament(); returns true, or false when
@@ -51,7 +54,7 @@ BRANCH_OPS = {'jump', 'iftrue', 'iffalse', 'ifeq', 'ifne', 'iflt', 'ifle', 'ifgt
 NAMES = {
     'TournamentManager': 'managers', 'setTournamentData': '', 'enemyData': '', 'playerArmy': '', 'enemyArmy': '',
     'loadTournament': '', 'ExternalInterface': 'flash.external', 'available': '', 'addCallback': '',
-    'length': '', 'gameMode': '',
+    'length': '', 'gameMode': '', 'deferredPopupQuestInfo': '', 'showNews': '',
 }
 
 
@@ -175,6 +178,9 @@ def add_duel_bridge_to_abc(abc):
         ('getlocal0',), ('pushscope',),
         ('getlocal0',), ('getproperty', map_ready), ('iffalse', 'not_ready'),
         ('getlocal0',), ('getproperty', n['gameMode']), ('pushbyte', GAME_MODE_NORMAL), ('ifne', 'not_ready'),
+        # The start-up popup chain (news, map quest info) must not open over the arena.
+        ('getlocal0',), ('pushfalse',), ('setproperty', n['deferredPopupQuestInfo']),
+        ('getlocal0',), ('pushfalse',), ('setproperty', n['showNews']),
         ('getlex', n['TournamentManager']),
         ('pushstring', s['tournament']),
         ('pushstring', s['tournament_id']), ('getlocal1',), ('pushstring', s['tournament_type_id']), ('getlocal2',),

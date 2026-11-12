@@ -104,6 +104,8 @@ Las tropas son copias: las aldeas no cambian.
     fuerza del perdedor) no cuenta para el ranking y va a Administración >
     Duelos, donde un administrador lo valida o lo anula.
   - Quien termina primero ve "Esperando al rival…" con el tiempo que queda.
+  - Al aceptar, los dos jugadores van a la arena (desde el juego o desde el
+    portal), y el ejército rival, manejado por la IA, avanza y ataca solo.
   - Los tres valores se cambian con variables de entorno (DECISIONS.md).
 
 PENDIENTE (opción A): duelo en vivo de verdad. Los dos jugadores manejan su

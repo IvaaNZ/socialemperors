@@ -435,6 +435,22 @@ class MigrationTests(unittest.TestCase):
         self.assertEqual(store.count(), 2)
 
 
+class ArenaConfigTests(unittest.TestCase):
+    def test_the_arena_tournament_is_served_in_weekly_mode_without_touching_the_config(self):
+        from duels_web import with_duel_tournament
+        from get_game_config import get_game_config
+        config = get_game_config('es')
+        before = json.dumps(config['tournament_type'], sort_keys=True)
+        served = with_duel_tournament(config)
+        arena = served['tournament_type'][str(duels.ARENA_TOURNAMENT_TYPE)]
+        self.assertEqual((arena['weekly_tournaments'], arena['map_id']), (1, ARENA_MAP_ID))
+        self.assertEqual(config['tournament_type']['1']['weekly_tournaments'], 0)  # the real config stays as it was
+        self.assertEqual(json.dumps(config['tournament_type'], sort_keys=True), before)
+        self.assertIs(served['items'], config['items'])  # a light copy: only the tournament types change
+        self.assertEqual(served['tournament_type']['2'], config['tournament_type']['2'])
+        self.assertEqual(with_duel_tournament({'other': 1}), {'other': 1})
+
+
 class DuelTextTests(unittest.TestCase):
     def test_every_duel_text_is_translated(self):
         import re

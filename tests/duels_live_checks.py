@@ -169,6 +169,10 @@ class LiveDuelTests(unittest.TestCase):
             arena = json.loads(ana.text(GAME + 'get_player_info.php?' + urllib.parse.urlencode(
                 {'USERID': ana.village_id, 'user_key': key, 'user': duels.ARENA_MAP_ID, 'language': 'es', 'client_id': 't'})))
             self.assertEqual((arena['playerInfo']['pid'], arena['map']['items']), (str(duels.ARENA_MAP_ID), []))
+            # ... with the tournament type in weekly mode, so the rival AI advances and attacks.
+            config = json.loads(ana.text(GAME + 'get_game_config.php?' + urllib.parse.urlencode(
+                {'USERID': ana.village_id, 'user_key': key, 'language': 'es'})))
+            self.assertEqual(config['tournament_type'][str(duels.ARENA_TOURNAMENT_TYPE)]['weekly_tournaments'], 1)
 
             # Units killed in the arena would mean "kill"/"sell KILL" for the player's town
             # (the game never queues them outside its NORMAL mode); a forged one is dropped.

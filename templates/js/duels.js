@@ -18,41 +18,35 @@
     let countdown = null;
     let pending = null;
     let launchTimer = null;
+    let pendingStart = null;  // a battle this page should take the player to
     let launchedDuel = null;
     const gameContainer = document.getElementById("game-player");
-    // Pages of this player in this browser talk to each other: a portal page does
-    // not leave for the game when a game page is already open.
+    // Pages of this player in this browser talk to each other (BroadcastChannel):
+    // the page the player is looking at takes them to the arena, and the other
+    // pages stand aside so only one opens it.
     const pages = typeof BroadcastChannel === "function" ? new BroadcastChannel("se-duels") : null;
-    if (pages && gameContainer) {
-        pages.addEventListener("message", (event) => { if (event.data === "game?") pages.postMessage("game!"); });
-    }
-
-    function gamePageOpen() {
-        if (!pages) return Promise.resolve(false);
-        return new Promise((resolve) => {
-            const timer = setTimeout(() => { pages.removeEventListener("message", answer); resolve(false); }, 700);
-            function answer(event) {
-                if (event.data !== "game!") return;
-                clearTimeout(timer);
-                pages.removeEventListener("message", answer);
-                resolve(true);
+    const standingAside = new Set();
+    if (pages) {
+        pages.addEventListener("message", (event) => {
+            const data = event.data || {};
+            if (data.type === "launched" && !gameContainer && pendingStart && pendingStart.id === data.id) {
+                pendingStart = null;  // another tab of this browser already opened the arena
+                showNotice(texts.going_to_game, texts.game_in_other_tab, [button(texts.close, hideNotice)]);
             }
-            pages.addEventListener("message", answer);
-            pages.postMessage("game?");
+            if (data.type === "launched" && gameContainer && launchedDuel !== data.id) {
+                standingAside.add(data.id);  // another game tab of this browser opened the arena
+                pendingStart = null;
+            }
+            if (data.type === "taking-over" && gameContainer) {
+                standingAside.add(data.id);
+                if (launchedDuel !== data.id) {
+                    stopLaunch();
+                    showNotice(texts.going_to_game, texts.game_in_other_tab, [button(texts.close, hideNotice)]);
+                }
+            }
         });
     }
-
-    // Only one game page of this browser opens the arena for a duel (the lock is
-    // released when that page closes or reloads).
-    function claimLaunch(duelId) {
-        if (!navigator.locks) return Promise.resolve(true);
-        return new Promise((resolve) => {
-            navigator.locks.request("se-duel-" + duelId, { ifAvailable: true }, (lock) => {
-                resolve(Boolean(lock));
-                return lock ? new Promise(() => {}) : undefined;
-            }).catch(() => resolve(true));
-        });
-    }
+    const visible = () => document.visibilityState === "visible";
 
     const fill = (text, values) => text.replace(/\{(\w+)\}/g, (match, key) => (key in values ? values[key] : match));
     // Same grouping as the portal's game_number filter: 6.925 (es, pt-BR) and 6,925 (en), always.
@@ -118,6 +112,10 @@
         const deadline = Date.now() + message.seconds_left * 1000;
         const started = Date.now();
         const attempt = () => {
+            if (standingAside.has(message.id)) {
+                showNotice(fill(texts.starting, { name: message.other.name }), texts.game_in_other_tab, [button(texts.close, hideNotice)]);
+                return;
+            }
             const player = gameContainer && gameContainer.firstElementChild;
             let opened = false;
             try {
@@ -127,7 +125,8 @@
                 }
             } catch (error) { /* the movie is still loading */ }
             if (opened) {
-                launchedDuel = message.id;
+                pendingStart = null;
+                if (pages) pages.postMessage({ type: "launched", id: message.id });
                 launchTimer = setTimeout(hideNotice, 6000);
                 return;
             }
@@ -137,30 +136,51 @@
         attempt();
     }
 
-    async function onDuelStart(message) {
-        pending = null;
-        const title = fill(texts.starting, { name: message.other.name });
-        if (!gameContainer) {
-            if (await gamePageOpen()) {
-                const go = button(texts.go_to_game, () => { window.location.href = config.playUrl; }, true);
-                showNotice(title, texts.game_in_other_tab, [go, button(texts.close, hideNotice)]);
-                return;
-            }
-            showNotice(title, texts.going_to_game, [button(texts.close, hideNotice)]);
-            setTimeout(() => { window.location.href = config.playUrl; }, 1500);
-            return;
-        }
+    function goToGame(message) {
+        if (pages) pages.postMessage({ type: "taking-over", id: message.id });
+        showNotice(fill(texts.starting, { name: message.other.name }), texts.going_to_game, [button(texts.close, hideNotice)]);
+        setTimeout(() => { window.location.href = config.playUrl; }, 1200);
+    }
+
+    function openArena(message) {
         if (launchedDuel === message.id) return;
-        if (!(await claimLaunch(message.id))) {
-            showNotice(title, texts.game_in_other_tab, [button(texts.close, hideNotice)]);
+        if (standingAside.has(message.id)) {
+            showNotice(fill(texts.starting, { name: message.other.name }), texts.game_in_other_tab, [button(texts.close, hideNotice)]);
             return;
         }
-        showNotice(title, fill(texts.arena_help, { name: message.other.name }), [button(texts.close, hideNotice)]);
+        launchedDuel = message.id;  // a second call (visibility change, reconnection) does nothing
+        showNotice(fill(texts.starting, { name: message.other.name }), fill(texts.arena_help, { name: message.other.name }),
+            [button(texts.close, hideNotice)]);
         launchBattle(message);
     }
 
+    // The page the player is looking at takes them to the arena: a portal page
+    // goes to the game, a game page opens the arena. With no page in sight, the
+    // game page opens it after a moment (unless a portal page took over).
+    function onDuelStart(message) {
+        pending = null;
+        pendingStart = message;
+        if (!gameContainer) {
+            if (visible()) goToGame(message);
+            return;
+        }
+        if (visible()) {
+            openArena(message);
+            return;
+        }
+        setTimeout(() => { if (pendingStart === message) openArena(message); }, 1500);
+    }
+
+    document.addEventListener("visibilitychange", () => {
+        const message = pendingStart;
+        if (!message || !visible() || launchedDuel === message.id) return;
+        if (gameContainer) openArena(message);
+        else goToGame(message);
+    });
+
     function onDuelWaiting(message) {
         stopLaunch();
+        pendingStart = null;
         showNotice(fill(texts.waiting, { name: message.other.name }), "", [button(texts.close, hideNotice)]);
         const endAt = Date.now() + message.seconds_left * 1000;
         const render = () => { noticeDetail.textContent = fill(texts.time_left, { time: clock(secondsUntil(endAt)) }); };
@@ -203,6 +223,7 @@
 
     function showResult(result) {
         stopLaunch();
+        pendingStart = null;
         const mySide = result.challenger.id === me ? "challenger" : "defender";
         const mine = result[mySide];
         const theirs = result[mySide === "challenger" ? "defender" : "challenger"];

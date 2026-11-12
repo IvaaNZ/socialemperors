@@ -36,7 +36,7 @@ from flask import Response, abort, flash, g, redirect, render_template, request,
 from flask_sock import ConnectionClosed, Sock
 
 from auth import validate_csrf
-from duels import (ARENA_MAP_ID, ARMY_LIMIT, BATTLE_DEADLINE_SECONDS, BATTLE_MIN_SECONDS, CHALLENGE_SECONDS,
+from duels import (ARENA_MAP_ID, ARENA_TOURNAMENT_TYPE, ARMY_LIMIT, BATTLE_DEADLINE_SECONDS, BATTLE_MIN_SECONDS, CHALLENGE_SECONDS,
                    RANKED_MIN_LEVEL, SIDES, SUSPICIOUS_POWER_RATIO, DuelError, DuelHub, DuelStore, army_profile,
                    start_sweeper, utc_label)
 from portal_i18n import translate as _
@@ -86,7 +86,6 @@ def duel_texts():
         'starting': _('Duelo aceito contra {name}! Entrando na arena…'),
         'going_to_game': _('Abrindo o jogo para a batalha…'),
         'game_in_other_tab': _('A batalha abre na sua aba do jogo.'),
-        'go_to_game': _('Ir para o jogo'),
         'arena_help': _('Comande suas tropas contra o exército de {name}. Vence quem destruir a maior porcentagem do exército rival; em caso de empate, quem terminar mais rápido.'),
         'waiting': _('Esperando {name} terminar a batalha…'),
         'time_left': _('Tempo restante: {time}'),
@@ -128,6 +127,23 @@ def service_params():
     except (TypeError, ValueError):
         return {}
     return params if isinstance(params, dict) else {}
+
+
+def with_duel_tournament(config):
+    """The game config with the arena's tournament type in the original weekly mode.
+
+    TournamentIA only leaves its waiting state (advance, then attack) in weekly
+    tournaments; with weekly_tournaments 0 the rival army forms up, steps
+    forward and then waits forever. The served copy turns it on; the config
+    itself is not changed.
+    """
+    types = config.get('tournament_type') if isinstance(config, dict) else None
+    key = str(ARENA_TOURNAMENT_TYPE)
+    if not isinstance(types, dict) or not isinstance(types.get(key), dict):
+        return config
+    served = dict(config)
+    served['tournament_type'] = {**types, key: {**types[key], 'weekly_tournaments': 1, 'map_id': ARENA_MAP_ID}}
+    return served
 
 
 def load_arena(path=None):
@@ -207,6 +223,20 @@ def install_duels(app, accounts, village_lock, all_saves_userid, village_session
         return kept
 
     app.extensions['duel_command_filter'] = filter_commands
+
+    original_config_view = app.view_functions['get_game_config_response']
+    served_configs = {}
+
+    def duel_game_config():
+        config = original_config_view()
+        if not isinstance(config, dict):
+            return config
+        cached = served_configs.get(id(config))
+        if cached is None or cached[0] is not config:
+            cached = served_configs[id(config)] = (config, with_duel_tournament(config))
+        return cached[1]
+
+    app.view_functions['get_game_config_response'] = duel_game_config
 
     @app.route(GAME_PATH + 'tournaments/start_tournament_match.php', methods=['GET', 'POST'])
     def duel_start_match():

@@ -60,6 +60,11 @@ class DuelsOffTests(unittest.TestCase):
             self.assertEqual(client.get('/admin/duels').status_code, 404)
             self.assertEqual(client.get('/css/duels.css').status_code, 200)  # a static file, linked from nowhere
 
+    def test_game_config_keeps_the_original_tournaments(self):
+        self.assertEqual(server.app.view_functions['get_game_config_response'].__name__, 'get_game_config_response')
+        from get_game_config import get_game_config
+        self.assertEqual(get_game_config('es')['tournament_type']['1']['weekly_tournaments'], 0)
+
     def test_switch_values(self):
         for value, expected in (('on', True), ('ON ', True), ('1', True), ('true', True), ('off', False), ('', False), ('no', False)):
             with self.subTest(value=value):

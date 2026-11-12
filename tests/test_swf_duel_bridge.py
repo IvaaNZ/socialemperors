@@ -54,8 +54,8 @@ class DuelBridgeTests(unittest.TestCase):
     def test_start_duel_fills_the_tournament_data_and_loads_the_arena(self):
         code = ops(self.abc, self.abc.method_of('Base', '__startDuel'))
         names = [operands for name, operands in code if name in ('setproperty', 'callpropvoid', 'getproperty')]
-        self.assertEqual(names, ['mapaInicializado', 'gameMode', 'setTournamentData 1', 'enemyData', 'playerArmy',
-                                 'enemyArmy', 'loadTournament 0'])
+        self.assertEqual(names, ['mapaInicializado', 'gameMode', 'deferredPopupQuestInfo', 'showNews', 'setTournamentData 1',
+                                 'enemyData', 'playerArmy', 'enemyArmy', 'loadTournament 0'])
         self.assertEqual(self.abc.methods[self.abc.method_of('Base', '__startDuel')]['param_types'], [0] * 7)
 
     def test_callback_registration_is_guarded_and_original_code_follows(self):
