@@ -37,8 +37,8 @@ may challenge again, the same clan or another, as soon as it ends.
 
 Chat (in-game window): each clan has a channel, and an alliance has one shared
 by its two clans. Messages of up to CHAT_LENGTH characters, one every
-CHAT_INTERVAL_SECONDS per player, the last CHAT_KEEP kept per channel. The
-author, or the Guild Master or an Assist of the author's clan, may delete one.
+CHAT_INTERVAL_SECONDS per player, the last CHAT_KEEP kept per channel.
+Nobody deletes messages (the owner's decision); the oldest drop off by themselves.
 
 Alliance: a Guild Master proposes it to another clan and that clan's Guild
 Master accepts or declines (the proposer may cancel it while pending). A clan
@@ -821,32 +821,7 @@ class ClanStore:
             rows = connection.execute("""SELECT m.*, c.tag FROM clan_messages m LEFT JOIN clans c ON c.id = m.clan_id
                                          WHERE m.channel = ? AND m.id > ? ORDER BY m.id DESC LIMIT ?""",
                                       (key, int(after or 0), limit)).fetchall()
-            role = actor['role']
-            result = []
-            for row in reversed(rows):
-                item = dict(row)
-                item['can_delete'] = (item['account_id'] == actor_id
-                                      or (role in ('master', 'assist') and item['clan_id'] == actor['clan_id']))
-                result.append(item)
-            return result
-
-    def delete_message(self, actor_id, message_id):
-        with self._write() as (connection, now):
-            row = connection.execute('SELECT * FROM clan_messages WHERE id = ?', (message_id,)).fetchone()
-            if not row:
-                raise ClanError('gone')
-            actor = self._member(connection, actor_id)
-            if not actor:
-                raise ClanError('forbidden')
-            visible = row['channel'] == 'clan:%d' % actor['clan_id']
-            if row['channel'].startswith('alliance:'):
-                alliance = self._alliance_of(connection, actor['clan_id'])
-                visible = bool(alliance and row['channel'] == 'alliance:%d' % alliance['id'])
-            allowed = visible and (row['account_id'] == actor_id
-                                   or (actor['role'] in ('master', 'assist') and row['clan_id'] == actor['clan_id']))
-            if not allowed:
-                raise ClanError('forbidden')
-            connection.execute('DELETE FROM clan_messages WHERE id = ?', (message_id,))
+            return [dict(row) for row in reversed(rows)]
 
     # -- reading --
     def clan(self, clan_id):

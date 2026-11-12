@@ -82,7 +82,6 @@
 .clanx-msg { margin: 0 0 6px; overflow-wrap: anywhere; }
 .clanx-msg-head { display: block; font-size: 12px; }
 .clanx-msg.is-mine .clanx-msg-head strong { color: #1f5fa8; }
-.clanx-msg-delete { font-size: 11px; font-weight: 400; }
 .clanx-chat-form { margin-top: 8px; }
 .clanx-chip-ally { border-color: #2e7d32; background: #dcefd0; color: #1d5a1f; }
 @media (max-width: 560px) { .clanx-grid { grid-template-columns: 1fr; } .clanx-window { font-size: 13px; } }

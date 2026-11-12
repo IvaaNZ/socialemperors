@@ -311,13 +311,13 @@ class ClanWebTests(unittest.TestCase):
         result, _ = self.action(ana_member, 'post_message', channel='clan', text='otra')
         self.assertEqual((result['ok'], result['message']), (False, 'Espera un momento antes de enviar otro mensaje.'))
         chat = self.api(ana, '/clans/api/chat?channel=clan')['messages']
-        self.assertEqual([(m['text'], m['tag'], m['can_delete'], m['mine']) for m in chat], [('<b>hola</b> clan', 'ACH', True, False)])
+        self.assertEqual([(m['text'], m['tag'], m['mine']) for m in chat], [('<b>hola</b> clan', 'ACH', False)])
+        self.assertNotIn('can_delete', chat[0])
         self.assertEqual(self.api(beto, '/clans/api/chat?channel=clan')['messages'], [])  # Beta sees only its own channel
         self.assertFalse(self.api(outsider, '/clans/api/chat?channel=clan')['ok'])
         self.assertEqual(self.api(ana, f'/clans/api/chat?channel=clan&after={chat[0]["id"]}')['messages'], [])
-        self.assertFalse(self.action(beto, 'delete_message', message_id=str(chat[0]['id']))[0]['ok'])
-        self.assertTrue(self.action(ana, 'delete_message', message_id=str(chat[0]['id']))[0]['ok'])
-        self.assertEqual(self.api(ana, '/clans/api/chat?channel=clan')['messages'], [])
+        self.assertEqual(self.action(ana, 'delete_message', message_id=str(chat[0]['id']))[1], 400)  # deleting does not exist
+        self.assertEqual(len(self.api(ana, '/clans/api/chat?channel=clan')['messages']), 1)
         # Alliance: proposed from Beta's card, accepted by Beta's Guild Master.
         self.assertTrue(self.api(ana, f'/clans/api/clans/{beta}')['can_ally_this'])
         self.assertFalse(self.api(ana_member, f'/clans/api/clans/{beta}')['can_ally_this'])

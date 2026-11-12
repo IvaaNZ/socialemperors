@@ -74,17 +74,10 @@ class ChatTests(SocialTestCase):
         self.assertEqual(self.store.messages(2, 'clan', after=last), [])
         self.assertEqual(messages[-1]['tag'], 'ALF')
 
-    def test_who_may_delete(self):
-        own = self.say(3, 'mío')
-        other = self.say(1, 'del líder')
-        flags = {m['text']: m['can_delete'] for m in self.store.messages(3, 'clan')}
-        self.assertEqual(flags, {'mío': True, 'del líder': False})
-        self.assertEqual(self.code(self.store.delete_message, 3, other), 'forbidden')  # a member, someone else's
-        self.assertEqual(self.code(self.store.delete_message, 10, own), 'forbidden')  # another clan
-        self.store.delete_message(2, own)  # an Assist of the clan
-        self.store.delete_message(1, other)  # the author
-        self.assertEqual(self.store.messages(1, 'clan'), [])
-        self.assertEqual(self.code(self.store.delete_message, 1, other), 'gone')
+    def test_nobody_deletes_messages(self):
+        self.say(3, 'para siempre')
+        self.assertFalse(hasattr(self.store, 'delete_message'))
+        self.assertNotIn('can_delete', self.store.messages(1, 'clan')[0])
 
 
 class AllianceTests(SocialTestCase):
@@ -128,12 +121,10 @@ class AllianceTests(SocialTestCase):
         alliance = self.store.alliance(self.a)
         self.store.answer_alliance(10, alliance['id'], True)
         self.say(3, 'hola aliados', 'alliance')
-        reply = self.say(11, 'hola Alfa', 'alliance')
+        self.say(11, 'hola Alfa', 'alliance')
         self.assertEqual([(m['text'], m['tag']) for m in self.store.messages(10, 'alliance')],
                          [('hola aliados', 'ALF'), ('hola Alfa', 'BET')])
         self.assertEqual(self.code(self.store.messages, 20, 'alliance'), 'no_alliance')
-        self.assertEqual(self.code(self.store.delete_message, 2, reply), 'forbidden')  # an Assist of Alfa, a Beta message
-        self.store.delete_message(10, reply)  # Beta's Guild Master
         self.store.end_alliance(1, alliance['id'])
         self.assertEqual(self.code(self.store.messages, 3, 'alliance'), 'no_alliance')
 

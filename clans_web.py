@@ -102,7 +102,7 @@ def overlay_texts():
         'no_clans': _('Nenhum clã encontrado.'), 'error': _('Não foi possível concluir. Tente de novo.'),
         'portal_page': _('Abrir no portal'),
         'tab_chat': _('Chat'), 'chat_clan': _('Clã'), 'chat_alliance': _('Aliança'),
-        'chat_placeholder': _('Escreva uma mensagem…'), 'send': _('Enviar'), 'delete': _('Apagar'),
+        'chat_placeholder': _('Escreva uma mensagem…'), 'send': _('Enviar'),
         'no_messages': _('Ainda não há mensagens.'),
         'alliance': _('Aliança'), 'no_alliance': _('Sem aliança.'), 'ally': _('Aliado: {name}'),
         'alliance_hint': _('Para propor uma aliança, busque outro clã e abra a ficha dele.'),
@@ -540,8 +540,8 @@ def install_clans(app, accounts, village_lock, all_saves_userid, village_session
         except ClanError as error:
             return jsonify({'ok': False, 'message': _(ERRORS.get(error.code, ERRORS['forbidden'])), 'messages': []})
         return jsonify({'ok': True, 'messages': [{'id': m['id'], 'author': m['author_name'], 'tag': m['tag'] or '',
-                                                   'text': m['text'], 'at': m['created_at'], 'mine': m['account_id'] == account['id'],
-                                                   'can_delete': m['can_delete']} for m in rows]})
+                                                   'text': m['text'], 'at': m['created_at'],
+                                                   'mine': m['account_id'] == account['id']} for m in rows]})
 
     @app.post('/clans/api/action', endpoint='clan_api_action')
     def clan_api_action():
@@ -609,7 +609,6 @@ def install_clans(app, accounts, village_lock, all_saves_userid, village_session
         actions = {
             'create': create,
             'post_message': lambda: (store.post_message(me, form.get('channel', 'clan'), form.get('text', ''), name), '')[1],
-            'delete_message': lambda: (store.delete_message(me, number('message_id')), '')[1],
             'propose_alliance': propose_alliance,
             'accept_alliance': lambda: (store.answer_alliance(me, number('alliance_id'), True, actor_name=name), 'Aliança aceita.')[1],
             'decline_alliance': lambda: (store.answer_alliance(me, number('alliance_id'), False, actor_name=name), 'Aliança recusada.')[1],
@@ -640,7 +639,7 @@ def install_clans(app, accounts, village_lock, all_saves_userid, village_session
             message = actions[action]()
         except ClanError as error:
             return jsonify({'ok': False, 'message': _(ERRORS.get(error.code, ERRORS['forbidden'])), 'state': api_state(account)})
-        if action in ('post_message', 'delete_message'):
+        if action == 'post_message':
             return jsonify({'ok': True, 'message': ''})  # the chat refreshes itself
         return jsonify({'ok': True, 'message': _(message), 'state': api_state(account)})
 

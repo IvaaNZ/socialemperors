@@ -127,8 +127,7 @@
             else {
                 html += messages.map((m) => '<p class="clanx-msg' + (m.mine ? " is-mine" : "") + '"><span class="clanx-msg-head"><strong>' +
                     (m.tag ? "[" + esc(m.tag) + "] " : "") + esc(m.author) + "</strong> <small>" + esc(View.time(m.at)) + "</small>" +
-                    (m.can_delete ? ' <button type="button" class="clanx-linklike clanx-msg-delete" data-action="delete_message" data-id="' + esc(m.id) +
-                        '" aria-label="' + esc(T.delete) + '">' + esc(T.delete) + "</button>" : "") + "</span>" + esc(m.text) + "</p>").join("");
+                    "</span>" + esc(m.text) + "</p>").join("");
             }
             html += "</div>";
             return html + '<form class="clanx-search clanx-chat-form" data-form="chat"><input name="text" maxlength="300" autocomplete="off" placeholder="' +
@@ -364,7 +363,53 @@
         messageBox.hidden = !text;
     }
 
+    // The window redraws itself (periodic refresh, fresh data on every tab change):
+    // whatever the player is typing in a form must survive the redraw.
+    function snapshotForms() {
+        const values = {};
+        let focus = null;
+        body.querySelectorAll("[data-form]").forEach((form) => {
+            for (const field of form.elements) {
+                if (!field.name) continue;
+                const key = form.dataset.form + ":" + field.name;
+                if (field.type === "radio" || field.type === "checkbox") {
+                    if (field.checked) values[key] = field.value;
+                } else {
+                    values[key] = field.value;
+                }
+                if (field === document.activeElement) {
+                    focus = { key, start: field.selectionStart, end: field.selectionEnd };
+                }
+            }
+        });
+        return { values, focus };
+    }
+
+    function restoreForms(snapshot) {
+        body.querySelectorAll("[data-form]").forEach((form) => {
+            for (const field of form.elements) {
+                const key = form.dataset.form + ":" + field.name;
+                if (!field.name || !(key in snapshot.values)) continue;
+                if (field.type === "radio" || field.type === "checkbox") field.checked = field.value === snapshot.values[key];
+                else field.value = snapshot.values[key];
+                if (snapshot.focus && snapshot.focus.key === key) {
+                    field.focus();
+                    try { field.setSelectionRange(snapshot.focus.start, snapshot.focus.end); } catch (error) { /* not a text field */ }
+                }
+            }
+        });
+    }
+
+    let keepForms = true;  // false right after an action succeeded: its form starts empty again
+
     function render() {
+        const snapshot = keepForms ? snapshotForms() : { values: {}, focus: null };
+        keepForms = true;
+        draw();
+        restoreForms(snapshot);
+    }
+
+    function draw() {
         if (!state) {
             body.innerHTML = '<p class="clanx-muted">' + esc(T.loading) + "</p>";
             return;
@@ -377,13 +422,7 @@
         else if (tab === "clan") body.innerHTML = View.clan(T, state, lang, editing);
         else if (tab === "members") body.innerHTML = View.members(T, state);
         else if (tab === "chat") {
-            const typed = body.querySelector('[data-form="chat"] input');
-            const draft = typed ? typed.value : "";
-            const hadFocus = typed && document.activeElement === typed;
             body.innerHTML = View.chat(T, state, channel, messages);
-            const input = body.querySelector('[data-form="chat"] input');
-            input.value = draft;
-            if (hadFocus) input.focus();
             const list = body.querySelector(".clanx-chat");
             list.scrollTop = list.scrollHeight;
         }
@@ -471,10 +510,10 @@
         try {
             const response = await fetch(config.action, { method: "POST", body: data, credentials: "same-origin", headers: { Accept: "application/json" } });
             const result = await response.json();
-            if (action === "post_message" || action === "delete_message") {
+            if (action === "post_message") {
                 if (!result.ok) showMessage(result.message, false);
                 else showMessage("", true);
-                await loadChat(action === "delete_message");
+                await loadChat(false);
                 return result.ok;
             }
             showMessage(result.message, result.ok);
@@ -483,6 +522,7 @@
                 if (state.clan) state.clan.max = state.limits.members;
             }
             if (result.ok) {
+                keepForms = false;
                 editing = false;
                 if (card) card = state.clan && state.clan.id === card.id ? null : await getJson(config.clan + encodeURIComponent(card.id)).catch(() => null);
                 if (action === "create" || action === "join") { card = null; tab = "clan"; }
@@ -506,7 +546,7 @@
         showMessage("", true);
         load();
         clearInterval(refreshTimer);
-        refreshTimer = setInterval(() => { if (!panel.hidden && !editing && !card) load(); }, 20000);
+        refreshTimer = setInterval(() => { if (!panel.hidden && !editing && !card && tab !== "create") load(); }, 20000);
         panel.querySelector(".clanx-close").focus();
     }
 
@@ -545,7 +585,7 @@
         if (!target) return;
         const { action, id, name } = target.dataset;
         const simple = { accept_request: "request_id", reject_request: "request_id", make_assist: "target_id", remove_assist: "target_id",
-            delete_message: "message_id", propose_alliance: "clan_id", accept_alliance: "alliance_id", decline_alliance: "alliance_id",
+            propose_alliance: "clan_id", accept_alliance: "alliance_id", decline_alliance: "alliance_id",
             cancel_alliance: "alliance_id",
             accept_challenge: "challenge_id", decline_challenge: "challenge_id", cancel_challenge: "challenge_id", cancel_request: "clan_id", join: "clan_id" };
         if (action === "close") close();

@@ -99,7 +99,7 @@ class ClanOverlayViewTests(unittest.TestCase):
         self.assertIn('data-channel="alliance"', out['chatClan'])  # an active alliance adds the shared channel
         self.assertNotIn('data-channel="alliance"', out['chatEmpty'])
         self.assertIn('data-form="chat"', out['chatClan'])
-        self.assertEqual(out['chatClan'].count('data-action="delete_message"'), 1)  # only where allowed
+        self.assertNotIn('delete_message', out['chatClan'])  # nobody deletes chat messages
         self.assertIn('[no_messages]', out['chatEmpty'])
         self.assertIn('[loading]', out['chatLoading'])
         self.assertIn('is-mine', out['chatClan'])

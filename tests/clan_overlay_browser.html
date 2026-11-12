@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<!-- Runs the real in-game clan window (templates/js/clan_overlay.js) in a browser with a
+     fake server, types into its forms and forces the redraws that used to wipe them.
+     Opened headless by tests/test_clan_overlay_browser.py; the verdict is written to #result. -->
+<html lang="es">
+<head><meta charset="utf-8"><title>clan overlay check</title></head>
+<body>
+<div class="game-stage" style="position:relative;width:800px;height:600px"></div>
+<pre id="result">pending</pre>
+<script id="clan-overlay-config" type="application/json">
+{"state": "/state", "search": "/search", "clan": "/clan/", "action": "/action", "chat": "/chat", "portal": "/clans", "duels": "", "csrf": "t",
+ "texts": {"button": "Clan", "title": "Clan", "close": "x", "loading": "...", "tab_clan": "Mi clan", "tab_members": "Miembros", "tab_chat": "Chat",
+  "tab_challenges": "Retos", "tab_ranking": "Clasificación", "tab_find": "Buscar", "tab_create": "Crear", "no_clan": "sin clan", "search": "Buscar",
+  "search_placeholder": "buscar", "no_clans": "ninguno", "create": "Crear", "emblem": "Emblema", "name": "Nombre", "tag": "Etiqueta", "motto": "Lema",
+  "edit": "Editar", "save": "Guardar", "cancel": "Cancelar", "announcement": "Anuncio", "recruit_mode": "Ingreso", "by_request": "Con solicitud",
+  "open": "Abierto", "min_level": "Nivel", "language": "Idioma", "language_all": "Todos", "language_es": "Español", "language_pt-BR": "Portugués",
+  "language_en": "Inglés", "power": "Poder {power}", "members_count": "{count} de {max}", "leader": "Líder: {name}", "your_rank": "Rango: {role}",
+  "master": "Guild Master", "assist": "Assist", "member": "Miembro", "no_announcement": "sin anuncio", "challenge_title": "Reto", "no_challenge": "sin reto",
+  "alliance": "Alianza", "no_alliance": "sin alianza", "alliance_hint": "busca", "recruitment": "Reclutamiento", "level_min": "Nivel {level}+",
+  "dissolve": "Disolver", "leave": "Salir", "chat_clan": "Clan", "chat_alliance": "Alianza", "chat_placeholder": "mensaje", "send": "Enviar",
+  "no_messages": "sin mensajes", "error": "error"}}
+</script>
+<script>
+"use strict";
+// Fake server: no clan at first; after "create", a clan whose Guild Master is the viewer.
+const limits = { members: 70, assists: 3, name: [3, 24], tag: [2, 5], description: 200, announcement: 500, emblems: 12,
+    languages: ["all", "es", "pt-BR", "en"], sizes: [3, 5, 7], answer_minutes: 10 };
+let inClan = false;
+const clan = { id: 1, name: "Prueba", tag: "PRU", description: "lema", emblem: 2, open: false, min_level: 1, language: "all", members: 1,
+    announcement: "", power: 10, leader: "Ana", role: "master", assists: 0, members_list: [{ id: 1, name: "Ana", role: "master" }],
+    requests: [], challenge: null, history: [], alliance: null };
+let stateCalls = 0;
+function state() {
+    stateCalls += 1;
+    return { me: { id: 1, name: "Ana", level: 30, rejoin_minutes: 0, can_create: true, requests: [] }, limits, ranking: [],
+        clan: inClan ? JSON.parse(JSON.stringify(clan)) : null, can_challenge: inClan };
+}
+const posted = [];
+window.fetch = async (url, options) => {
+    const reply = (data) => ({ ok: true, status: 200, json: async () => data });
+    if (url === "/state") return reply(state());
+    if (url.startsWith("/search")) return reply({ clans: [] });
+    if (url.startsWith("/chat")) return reply({ ok: true, messages: [{ id: 1, author: "Beto", tag: "PRU", text: "hola", at: 1700000000, mine: false }] });
+    if (url === "/action") {
+        const fields = Object.fromEntries(options.body.entries());
+        posted.push(fields);
+        if (fields.action === "create") { inClan = true; return reply({ ok: true, message: "Clan creado.", state: state() }); }
+        return reply({ ok: false, message: "no", state: state() });
+    }
+    return { ok: false, status: 404, json: async () => ({}) };
+};
+</script>
+<script src="../templates/js/clan_overlay.js"></script>
+<script>
+"use strict";
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const $ = (selector) => document.querySelector(selector);
+const report = {};
+function type(field, text) {
+    field.focus();
+    field.value = text;
+    field.dispatchEvent(new Event("input", { bubbles: true }));
+}
+(async () => {
+    try {
+        $(".clanx-shield").click();
+        await wait(300);
+        document.querySelector('[data-tab="create"]').click();
+        await wait(300);
+        const form = () => $('[data-form="create"]');
+        type(form().name, "Los Ñandúes");
+        form().querySelector('input[name="emblem"][value="7"]').checked = true;
+        type(form().tag, "NA");
+        const callsBefore = stateCalls;
+        // Redraws that used to wipe the form: clicking the tab again (fresh data) twice.
+        document.querySelector('[data-tab="create"]').click();
+        await wait(300);
+        document.querySelector('[data-tab="create"]').click();
+        await wait(300);
+        report.stateReloaded = stateCalls > callsBefore;
+        report.name = form().name.value;
+        report.tag = form().tag.value;
+        report.emblem = form().querySelector('input[name="emblem"]:checked').value;
+        report.focusKept = document.activeElement === form().tag;
+        // Create: afterwards the clan page shows and nothing comes back into a new form.
+        form().requestSubmit();
+        await wait(300);
+        report.created = posted.length === 1 && posted[0].name === "Los Ñandúes" && posted[0].tag === "NA" && posted[0].emblem === "7";
+        report.onClanTab = Boolean(document.querySelector('[data-tab="clan"].is-active'));
+        // Editing: no periodic refresh runs while the settings form is open (checked in the code), so it stays.
+        document.querySelector('[data-action="edit"]').click();
+        await wait(200);
+        report.editOpen = Boolean($('[data-form="settings"]'));
+        $('[data-action="cancel_edit"]').click();
+        await wait(100);
+        // Chat: the draft survives the 3-second redraws, and there is no delete control at all.
+        document.querySelector('[data-tab="chat"]').click();
+        await wait(500);
+        type($('[data-form="chat"] input'), "borrador");
+        await wait(3500);  // the chat polls and redraws every 3 seconds
+        report.chatDraftKept = $('[data-form="chat"] input').value === "borrador";
+        report.chatHasMessage = $(".clanx-chat").textContent.includes("hola");
+        report.noDelete = !document.querySelector('[data-action="delete_message"]') && !/Borrar|Apagar|delete/i.test($(".clanx-chat").innerHTML);
+    } catch (error) {
+        report.error = String(error && error.stack || error);
+    }
+    $("#result").textContent = JSON.stringify(report);
+})();
+</script>
+</body>
+</html>
