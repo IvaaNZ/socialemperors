@@ -20,7 +20,7 @@
 <nav class="management-nav" aria-label="{{ _('Administração') }}">
     <a href="{{ url_for('admin_accounts') }}">{{ _('Contas') }}</a>
     <a href="{{ url_for('admin_villages') }}">{{ _('Vilas') }}</a>
-    <a href="{{ url_for('admin_duels') }}" aria-current="page">{{ _('Duelos') }}</a>
+    <a href="{{ url_for('admin_duels') }}" aria-current="page">{{ _('Duelos') }}</a>{% if clans_enabled %}<a href="{{ url_for('admin_clans') }}">{{ _('Clãs') }}</a>{% endif %}
 </nav>
 <section class="management-section" aria-labelledby="pending-title">
     <h2 id="pending-title">{{ _('Aguardando revisão') }}</h2>

@@ -117,9 +117,23 @@ el servidor. Las unidades con habilidades especiales quedarían fuera en la
 primera versión.
 
 
+PUNTO 22. CLANES (en curso, rama clanes) .......................... 50 %
+-----------------------------------------------------------------------
+Pedido: clanes de hasta 70 miembros, con Guild Master y Assist, y retos
+entre clanes. Se enciende con SE_CLANS=on.
+
+Hecho (fase 1): crear clanes (nombre, etiqueta y descripción), entrar por
+solicitud que aprueban el Guild Master o un Assist, hasta 3 Assist, roles y
+permisos (el Assist acepta solicitudes y expulsa miembros comunes), pasar el
+mando, salir (1 hora de espera para entrar a otro), disolver, registro de
+actividad y sección Administración > Clanes. Detalle en DECISIONS.md.
+
+Falta (fase 2): retos entre clanes al mejor de 3, 5 o 7 duelos, con 10
+minutos para aceptar, rendición y ranking de clanes.
+
+
 PUNTOS QUE SIGUEN
 -----------------
-  22. Clanes ............................................................ 0 %
   23. Casino ............................................................ 0 %
   24. Clima y ciclo día/noche ........................................... 0 %
   25. Editor de mundo ................................................... 0 %

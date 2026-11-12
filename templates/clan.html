@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% block title %}[{{ clan.tag }}] {{ clan.name }} · Social Empires{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('css', path='clans.css') }}">{% endblock %}
+{% block main_class %}clans-main{% endblock %}
+{% set role_labels = {'master': _('Guild Master'), 'assist': _('Assist'), 'member': _('Membro')} %}
+{% set log_labels = {'create': _('criou o clã'), 'accept': _('aceitou'), 'reject': _('recusou o pedido de'), 'kick': _('removeu'), 'promote': _('nomeou Assist a'), 'demote': _('tirou o cargo de Assist de'), 'transfer': _('passou a liderança para'), 'edit': _('mudou a descrição'), 'leave': _('saiu do clã'), 'dissolve': _('dissolveu o clã')} %}
+{% block content %}
+<p class="clans-back"><a href="{{ url_for('clans_page') }}">← {{ _('Todos os clãs') }}</a></p>
+<div class="clans-heading">
+    <h1><span class="clan-tag">[{{ clan.tag }}]</span> {{ clan.name }}</h1>
+    {% if clan.description %}<p>{{ clan.description }}</p>{% endif %}
+    <p class="clans-meta">{{ _('{count} de {max} membros', count=clan.members | length, max=clan_limits.members) }} · {{ _('Assist: {count} de {max}', count=assist_count, max=clan_limits.assists) }}</p>
+</div>
+
+{% if not role %}
+<section aria-labelledby="join-title">
+    <h2 id="join-title" class="sr-only">{{ _('Entrar no clã') }}</h2>
+    {% if membership %}<p class="clans-note">{{ _('Você já está em um clã.') }}</p>
+    {% elif rejoin_minutes %}<p class="clans-note">{{ _('Você saiu de um clã há pouco. Poderá entrar em outro ou criar um em {minutes} min.', minutes=rejoin_minutes) }}</p>
+    {% else %}
+    <form action="{{ url_for('clan_request', clan_id=clan.id) }}" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        {% if requested %}<button class="duel-button" name="action" value="cancel" type="submit">{{ _('Cancelar pedido') }}</button> <span class="clans-meta">{{ _('Pedido enviado') }}</span>
+        {% elif clan.members | length >= clan_limits.members %}<p class="clans-note">{{ _('O clã está completo (70 membros).') }}</p>
+        {% else %}<button class="duel-button duel-button-primary" name="action" value="join" type="submit">{{ _('Pedir para entrar') }}</button>{% endif %}
+    </form>
+    {% endif %}
+</section>
+{% endif %}
+
+{% if role in ('master', 'assist') %}
+<section aria-labelledby="requests-title">
+    <h2 id="requests-title">{{ _('Pedidos para entrar') }}</h2>
+    {% if requests %}
+    <ul class="clans-list">
+        {% for item in requests %}
+        <li>
+            <span><strong>{{ item.name }}</strong> <span class="clans-meta">{{ item.created_label }}</span></span>
+            <form class="clans-actions" action="{{ url_for('clan_answer', request_id=item.id) }}" method="post">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="duel-button duel-button-primary" name="action" value="accept" type="submit" aria-label="{{ _('Aceitar {name}', name=item.name) }}">{{ _('Aceitar') }}</button>
+                <button class="duel-button" name="action" value="reject" type="submit" aria-label="{{ _('Recusar {name}', name=item.name) }}">{{ _('Recusar') }}</button>
+            </form>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}<p class="clans-note">{{ _('Nenhum pedido pendente.') }}</p>{% endif %}
+</section>
+{% endif %}
+
+<section aria-labelledby="members-title">
+    <h2 id="members-title">{{ _('Membros') }}</h2>
+    <ul class="clans-list">
+        {% for member in clan.members %}
+        <li>
+            <span><strong>{{ member.name }}</strong>{% if member.account_id == me %} <span class="clans-meta">({{ _('você') }})</span>{% endif %} <span class="clan-role clan-role-{{ member.role }}">{{ role_labels[member.role] }}</span></span>
+            {% set can_kick = member.account_id != me and (role == 'master' or (role == 'assist' and member.role == 'member')) %}
+            {% if can_kick or (role == 'master' and member.account_id != me) %}
+            <form class="clans-actions" action="{{ url_for('clan_member_action', target_id=member.account_id) }}" method="post">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                {% if role == 'master' and member.role == 'member' and assist_count < clan_limits.assists %}<button class="duel-button" name="action" value="assist" type="submit">{{ _('Nomear Assist') }}</button>{% endif %}
+                {% if role == 'master' and member.role == 'assist' %}<button class="duel-button" name="action" value="member" type="submit">{{ _('Tirar Assist') }}</button>{% endif %}
+                {% if role == 'master' %}<button class="duel-button" name="action" value="transfer" type="submit">{{ _('Passar liderança') }}</button>{% endif %}
+                {% if can_kick %}<button class="duel-button clans-danger" name="action" value="kick" type="submit" aria-label="{{ _('Remover {name} do clã', name=member.name) }}">{{ _('Remover') }}</button>{% endif %}
+            </form>
+            {% endif %}
+        </li>
+        {% endfor %}
+    </ul>
+</section>
+
+{% if role == 'master' %}
+<section aria-labelledby="edit-title">
+    <h2 id="edit-title">{{ _('Descrição do clã') }}</h2>
+    <form class="clans-form" action="{{ url_for('clan_edit') }}" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label class="clans-wide"><span class="sr-only">{{ _('Descrição') }}</span><textarea name="description" maxlength="{{ clan_limits.description }}" rows="2">{{ clan.description }}</textarea></label>
+        <button class="duel-button" type="submit">{{ _('Salvar descrição') }}</button>
+    </form>
+</section>
+{% endif %}
+
+{% if role %}
+<section aria-labelledby="log-title">
+    <h2 id="log-title">{{ _('Atividade recente') }}</h2>
+    {% if log %}
+    <ul class="clans-log">
+        {% for entry in log %}<li><strong>{{ entry.actor_name or '?' }}</strong> {{ log_labels.get(entry.action, entry.action) }}{% if entry.target_name %} <strong>{{ entry.target_name }}</strong>{% endif %} <span class="clans-meta">· {{ entry.created_label }}</span></li>{% endfor %}
+    </ul>
+    {% endif %}
+</section>
+<section class="clans-leave" aria-labelledby="leave-title">
+    <h2 id="leave-title">{{ _('Sair do clã') }}</h2>
+    {% if role == 'master' and clan.members | length > 1 %}
+    <p class="clans-note">{{ _('Para sair, passe a liderança a outro membro. Ao sair, você espera {minutes} min para entrar em outro clã.', minutes=clan_limits.rejoin_minutes) }}</p>
+    {% else %}
+    <form action="{{ url_for('clan_leave') }}" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <p class="clans-note">{% if role == 'master' %}{{ _('Você é o único membro: ao sair, o clã é dissolvido.') }}{% else %}{{ _('Ao sair, você espera {minutes} min para entrar em outro clã.', minutes=clan_limits.rejoin_minutes) }}{% endif %}</p>
+        <button class="duel-button clans-danger" type="submit">{{ _('Sair do clã') }}</button>
+    </form>
+    {% endif %}
+    {% if role == 'master' %}
+    <form class="clans-dissolve" action="{{ url_for('clan_dissolve') }}" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label><input type="checkbox" name="confirm" value="yes" required> {{ _('Quero dissolver o clã: todos os membros saem e não dá para desfazer.') }}</label>
+        <button class="duel-button clans-danger" type="submit">{{ _('Dissolver clã') }}</button>
+    </form>
+    {% endif %}
+</section>
+{% endif %}
+{% endblock %}

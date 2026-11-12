@@ -1,0 +1,35 @@
+/* Clans (SE_CLANS=on). Shares the button look of the duels (duel-button). */
+.duel-button { min-height: 36px; padding: 6px 14px; border: 1px solid #c9d3e2; border-radius: 6px; background: #fff; color: #22304a; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.duel-button-primary { border-color: #3b5998; background: #3b5998; color: #fff; }
+.duel-button:focus-visible { outline: 2px solid #3b5998; outline-offset: 2px; }
+.clans-danger { border-color: #b3261e; color: #b3261e; }
+
+.clans-main { max-width: 900px; margin: 40px auto; padding: 0 28px; }
+.clans-main section { margin-top: 32px; }
+.clans-main h2 { margin-bottom: 12px; }
+.clans-heading h1 { overflow-wrap: anywhere; }
+.clans-heading p, .clans-note, .clans-meta { color: var(--muted, #5f6c7f); }
+.clans-meta { font-size: .88rem; }
+.clans-back { margin: 0 0 8px; }
+.clan-tag { color: #3b5998; font-weight: 700; }
+.clan-name { font-weight: 700; overflow-wrap: anywhere; }
+.clan-role { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 999px; background: #eef1f6; font-size: .8rem; font-weight: 700; }
+.clan-role-master { background: #fff1c2; color: #6b4e00; }
+.clan-role-assist { background: #dfe9fb; color: #23407a; }
+.clans-list, .clans-log { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--line, #d8dfe9); }
+.clans-list li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding: 12px 0; border-bottom: 1px solid var(--line, #d8dfe9); }
+.clans-log li { padding: 8px 0; border-bottom: 1px solid var(--line, #d8dfe9); overflow-wrap: anywhere; }
+.clans-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.clans-form { display: grid; grid-template-columns: 1fr 140px; gap: 12px; align-items: end; }
+.clans-form label { display: grid; gap: 4px; font-weight: 700; font-size: .9rem; }
+.clans-form input, .clans-form textarea, .clans-search input { min-height: 38px; padding: 6px 10px; border: 1px solid #c9d3e2; border-radius: 6px; font: inherit; }
+.clans-wide { grid-column: 1 / -1; }
+.clans-tag-input { text-transform: uppercase; }
+.clans-form button { justify-self: start; }
+.clans-search { display: flex; gap: 8px; margin-bottom: 12px; }
+.clans-search input { flex: 1; min-width: 0; }
+.clans-dissolve { display: grid; gap: 8px; margin-top: 16px; justify-items: start; }
+@media (max-width: 600px) {
+    .clans-main { padding: 0 16px; }
+    .clans-form { grid-template-columns: 1fr; }
+}

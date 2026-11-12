@@ -893,6 +893,11 @@ def create_admin(name, email, password, village_id):
 # them is imported or registered and the server keeps one request at a time.
 DUELS_ENABLED = os.environ.get('SE_DUELS', 'off').strip().lower() in ('on', '1', 'true', 'yes')
 app.jinja_env.globals['duels_enabled'] = DUELS_ENABLED
+CLANS_ENABLED = os.environ.get('SE_CLANS', 'off').strip().lower() in ('on', '1', 'true', 'yes')
+app.jinja_env.globals['clans_enabled'] = CLANS_ENABLED
+if CLANS_ENABLED:
+    from clans_web import install_clans
+    install_clans(app, accounts, village_lock, all_saves_userid, village_session, data_dir)
 if DUELS_ENABLED:
     from duels_web import install_duels
     install_duels(app, accounts, village_lock, all_saves_userid, village_session, data_dir, game_number,

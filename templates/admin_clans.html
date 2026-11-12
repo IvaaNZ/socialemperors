@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}{{ _('Clãs') }} · Social Empires{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('css', path='management.css') }}">{% endblock %}
+{% block main_class %}management-main{% endblock %}
+{% set log_labels = {'create': _('criou o clã'), 'accept': _('aceitou'), 'reject': _('recusou o pedido de'), 'kick': _('removeu'), 'promote': _('nomeou Assist a'), 'demote': _('tirou o cargo de Assist de'), 'transfer': _('passou a liderança para'), 'edit': _('mudou a descrição'), 'leave': _('saiu do clã'), 'dissolve': _('dissolveu o clã')} %}
+{% block content %}
+<div class="management-heading">
+    <div><h1>{{ _('Clãs') }}</h1><p>{{ _('Veja os clãs do servidor e dissolva um se for preciso (por exemplo, por um nome ofensivo).') }}</p></div>
+</div>
+<nav class="management-nav" aria-label="{{ _('Administração') }}">
+    <a href="{{ url_for('admin_accounts') }}">{{ _('Contas') }}</a>
+    <a href="{{ url_for('admin_villages') }}">{{ _('Vilas') }}</a>{% if duels_enabled %}<a href="{{ url_for('admin_duels') }}">{{ _('Duelos') }}</a>{% endif %}<a href="{{ url_for('admin_clans') }}" aria-current="page">{{ _('Clãs') }}</a>
+</nav>
+<section class="management-section" aria-labelledby="clans-title">
+    <h2 id="clans-title">{{ _('Clãs do servidor') }}</h2>
+    {% if clans %}
+    <table class="management-table">
+        <thead><tr><th scope="col">{{ _('Clã') }}</th><th scope="col">{{ _('Guild Master') }}</th><th scope="col">{{ _('Membros') }}</th><th scope="col"><span class="sr-only">{{ _('Ação') }}</span></th></tr></thead>
+        <tbody>
+            {% for clan in clans %}
+            <tr>
+                <td data-label="{{ _('Clã') }}"><strong>[{{ clan.tag }}] {{ clan.name }}</strong><span class="player-detail">{{ clan.created_label }}</span>{% if clan.description %}<span class="player-detail">{{ clan.description }}</span>{% endif %}</td>
+                <td data-label="{{ _('Guild Master') }}">{{ clan.master_name }}</td>
+                <td data-label="{{ _('Membros') }}">{{ clan.member_count }} / {{ clan_limits.members }}</td>
+                <td data-label="{{ _('Ação') }}">
+                    <form action="{{ url_for('admin_dissolve_clan', clan_id=clan.id) }}" method="post" class="actions-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <label class="sr-only" for="reason-{{ clan.id }}">{{ _('Motivo') }}</label>
+                        <input id="reason-{{ clan.id }}" name="reason" required maxlength="200" placeholder="{{ _('Motivo') }}">
+                        <button class="button button-secondary button-small" type="submit" aria-label="{{ _('Dissolver o clã {name}', name=clan.name) }}">{{ _('Dissolver') }}</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}<p>{{ _('Ainda não há clãs.') }}</p>{% endif %}
+</section>
+<section class="management-section" aria-labelledby="log-title">
+    <h2 id="log-title">{{ _('Atividade recente') }}</h2>
+    {% if log %}
+    <ul class="duel-resolved">
+        {% for entry in log %}<li>[{{ entry.clan_name }}] <strong>{{ entry.actor_name or '?' }}</strong> {{ log_labels.get(entry.action, entry.action) }}{% if entry.target_name %} <strong>{{ entry.target_name }}</strong>{% endif %}{% if entry.detail %} · {{ entry.detail }}{% endif %} · {{ entry.created_label }}</li>{% endfor %}
+    </ul>
+    {% else %}<p>{{ _('Nenhuma atividade ainda.') }}</p>{% endif %}
+</section>
+{% endblock %}

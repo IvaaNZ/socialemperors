@@ -69,3 +69,27 @@ Valores vacíos, no numéricos, cero, negativos o infinitos se ignoran y se usa 
 - **Recordatorio para probar en una sola computadora:** el navegador frena el juego de la pestaña que no está al frente; para jugar las dos batallas a la vez conviene usar dos ventanas (o dos navegadores) visibles.
 
 Probado en el navegador (Tuki y Tuki2): reto y aceptación desde el juego y desde el portal; batalla real con victoria por 100 %; "Esperando al rival…"; huida antes de 20 s (no vale); plazo vencido (gana quien informó); los dos demasiado rápidos (anulado); resultado improbable a revisión, validado desde Administración > Duelos y avisado a los dos jugadores; ranking y aldeas sin cambios por la arena.
+
+## Clanes, fase 1 (rama `clanes`)
+
+Cambios de comportamiento (solo con `SE_CLANS=on`; apagado no se registra ninguna ruta, no aparece ningún enlace y las páginas quedan iguales):
+- **Páginas nuevas:** `/clans` (lista, búsqueda, crear, tus solicitudes) y `/clans/<id>` (miembros, solicitudes, acciones según el rol, actividad); enlace "Clanes" en el menú del portal y del juego. **Administración > Clanes:** lista de clanes y disolver con motivo obligatorio; actividad reciente.
+- **Base nueva:** `instance/clans.sqlite3` (clanes, miembros, solicitudes, salidas y registro de actividad). Las aldeas no se tocan.
+- Funciona con o sin duelos (`SE_DUELS`); las guerras de clanes (fase 2) los necesitan.
+
+Reglas (aprobadas):
+- Un jugador está en un solo clan. Crear un clan exige el tutorial terminado.
+- Nombre de 3 a 24 caracteres (letras, números, espacios, punto, guion, apóstrofo), único sin distinguir mayúsculas ni tildes ("Los Ñandúes" = "los nandues"); etiqueta de 2 a 5 letras sin tildes o números, única, en mayúsculas; descripción de hasta 200 caracteres.
+- Hasta **70 miembros** con 1 Guild Master y hasta **3 Assist**.
+- **Ingreso por solicitud**, que aprueban el Guild Master o un Assist. Hasta 3 solicitudes abiertas por jugador; vencen a los 7 días. Al aceptar a alguien se borran sus otras solicitudes; si ya entró a otro clan, la solicitud desaparece.
+- **Permisos** (se controlan en la base, dentro de cada operación, no solo en la página):
+  - Guild Master: todo; nombra y quita Assist, expulsa a cualquiera, edita la descripción, pasa el mando (y queda como miembro), disuelve el clan.
+  - Assist: acepta o rechaza solicitudes y expulsa solo a miembros comunes.
+  - Miembro: sale del clan.
+- El Guild Master sale solo después de pasar el mando; si está solo, salir disuelve el clan.
+- Quien sale o es expulsado espera **1 hora** para entrar a otro clan o crear uno. Disolver un clan no impone espera.
+- Toda acción queda en el registro (quién, qué, a quién, cuándo); la disolución por un administrador guarda el motivo.
+
+Configuración: los límites están al principio de `clans.py` (`MAX_MEMBERS`, `MAX_ASSISTS`, `MAX_OPEN_REQUESTS`, `REQUEST_SECONDS`, `REJOIN_SECONDS`).
+
+Probado en el navegador con un servidor espejo (puerto 5051, copia de los datos en una carpeta temporal, para no dejar clanes de prueba en la base real): crear clan, solicitud de Tuki2, aceptación, nombrar Assist, vista del Assist y sección de administración.

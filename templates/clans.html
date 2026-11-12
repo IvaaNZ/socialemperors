@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block title %}{{ _('Clãs') }} · Social Empires{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('css', path='clans.css') }}">{% endblock %}
+{% block main_class %}clans-main{% endblock %}
+{% block content %}
+<div class="clans-heading">
+    <h1>{{ _('Clãs') }}</h1>
+    <p>{{ _('Junte-se a um clã ou crie o seu. Cada clã tem um Guild Master, até {assists} Assist e até {members} membros.', assists=clan_limits.assists, members=clan_limits.members) }}</p>
+</div>
+{% if membership %}
+<section class="clans-mine" aria-labelledby="mine-title">
+    <h2 id="mine-title">{{ _('Seu clã') }}</h2>
+    <p><a class="clan-name" href="{{ url_for('clan_page', clan_id=membership.clan.id) }}"><span class="clan-tag">[{{ membership.clan.tag }}]</span> {{ membership.clan.name }}</a></p>
+</section>
+{% else %}
+<section aria-labelledby="create-title">
+    <h2 id="create-title">{{ _('Criar um clã') }}</h2>
+    {% if rejoin_minutes %}<p class="clans-note">{{ _('Você saiu de um clã há pouco. Poderá entrar em outro ou criar um em {minutes} min.', minutes=rejoin_minutes) }}</p>
+    {% elif not can_create %}<p class="clans-note">{{ _('Conclua o tutorial para criar um clã.') }}</p>
+    {% else %}
+    <form class="clans-form" action="{{ url_for('clans_create') }}" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label>{{ _('Nome') }} <input name="name" required minlength="{{ clan_limits.name[0] }}" maxlength="{{ clan_limits.name[1] }}" autocomplete="off"></label>
+        <label>{{ _('Etiqueta') }} <input name="tag" required minlength="{{ clan_limits.tag[0] }}" maxlength="{{ clan_limits.tag[1] }}" pattern="[A-Za-z0-9]+" autocomplete="off" class="clans-tag-input"></label>
+        <label class="clans-wide">{{ _('Descrição (opcional)') }} <textarea name="description" maxlength="{{ clan_limits.description }}" rows="2"></textarea></label>
+        <button class="duel-button duel-button-primary" type="submit">{{ _('Criar clã') }}</button>
+    </form>
+    {% endif %}
+</section>
+{% if my_requests %}
+<section aria-labelledby="requests-title">
+    <h2 id="requests-title">{{ _('Seus pedidos') }}</h2>
+    <ul class="clans-list">
+        {% for item in my_requests %}
+        <li>
+            <a class="clan-name" href="{{ url_for('clan_page', clan_id=item.clan_id) }}"><span class="clan-tag">[{{ item.tag }}]</span> {{ item.name }}</a>
+            <form action="{{ url_for('clan_request', clan_id=item.clan_id) }}" method="post">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="duel-button" name="action" value="cancel" type="submit">{{ _('Cancelar pedido') }}</button>
+            </form>
+        </li>
+        {% endfor %}
+    </ul>
+    <p class="clans-note">{{ _('Os pedidos vencem em {days} dias. Você pode ter até {count} abertos.', days=clan_limits.request_days, count=clan_limits.requests) }}</p>
+</section>
+{% endif %}
+{% endif %}
+<section aria-labelledby="list-title">
+    <h2 id="list-title">{{ _('Todos os clãs') }}</h2>
+    <form class="clans-search" action="{{ url_for('clans_page') }}" method="get" role="search">
+        <label class="sr-only" for="clan-search">{{ _('Buscar clã') }}</label>
+        <input id="clan-search" name="q" value="{{ search }}" placeholder="{{ _('Buscar por nome ou etiqueta') }}" maxlength="40">
+        <button class="duel-button" type="submit">{{ _('Buscar') }}</button>
+    </form>
+    {% if clans %}
+    <ul class="clans-list">
+        {% for clan in clans %}
+        <li>
+            <a class="clan-name" href="{{ url_for('clan_page', clan_id=clan.id) }}"><span class="clan-tag">[{{ clan.tag }}]</span> {{ clan.name }}</a>
+            <span class="clans-meta">{{ _('{count} de {max} membros', count=clan.member_count, max=clan_limits.members) }}{% if clan.id in requested %} · {{ _('Pedido enviado') }}{% endif %}</span>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}<p class="clans-note">{% if search %}{{ _('Nenhum clã encontrado.') }}{% else %}{{ _('Ainda não há clãs. Crie o primeiro!') }}{% endif %}</p>{% endif %}
+</section>
+{% endblock %}
