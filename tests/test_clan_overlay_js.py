@@ -93,6 +93,26 @@ class ClanOverlayViewTests(unittest.TestCase):
         self.assertIn('data-form="challenge"', self.out['cardForMaster'])
         self.assertNotIn('data-action="join"', self.out['cardForMaster'])  # already in a clan
 
+    def test_chat_and_alliance_views(self):
+        out = self.out
+        self.assertIn('data-tab="chat"', out['master']['tabs'])
+        self.assertIn('data-channel="alliance"', out['chatClan'])  # an active alliance adds the shared channel
+        self.assertNotIn('data-channel="alliance"', out['chatEmpty'])
+        self.assertIn('data-form="chat"', out['chatClan'])
+        self.assertEqual(out['chatClan'].count('data-action="delete_message"'), 1)  # only where allowed
+        self.assertIn('[no_messages]', out['chatEmpty'])
+        self.assertIn('[loading]', out['chatLoading'])
+        self.assertIn('is-mine', out['chatClan'])
+        self.assertRegex(out['chatClan'], r'<small>\d\d:\d\d</small>')
+        self.assertIn('data-action="end_alliance"', out['alliedClan'])
+        self.assertIn('[ally]', out['alliedClan'])
+        self.assertIn('data-action="accept_alliance"', out['allianceIncoming'])
+        self.assertIn('data-action="cancel_alliance"', out['allianceOutgoing'])
+        self.assertNotIn('data-action="end_alliance"', out['allianceMemberView'])
+        self.assertIn('data-action="propose_alliance"', out['cardAlly'])
+        self.assertIn('[allied_label]', out['cardAllied'])
+        self.assertNotIn('data-form="challenge"', out['cardAllied'])  # allies do not challenge each other
+
     def test_twelve_distinct_emblems(self):
         self.assertEqual(len(set(self.out['emblems'])), 12)
         for svg in self.out['emblems']:

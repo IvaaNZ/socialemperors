@@ -299,6 +299,52 @@ class ClanWebTests(unittest.TestCase):
             self.assertEqual(anonymous.get('/clans/api/state').status_code, 403)
             self.assertIn(anonymous.post('/clans/api/action', data={'action': 'create'}).status_code, (400, 403))
 
+    def test_chat_and_alliance_through_the_window_api(self):
+        import time as _time
+        ana, ana_member, beto, outsider = self.player(), self.player(), self.player(), self.player()
+        alfa = self.action(ana, 'create', name='Alfa Chat', tag='ACH')[0]['state']['clan']['id']
+        self.action(ana, 'settings', emblem='1', description='', announcement='', recruit_open='1', min_level='1', language='all')
+        self.assertTrue(self.action(ana_member, 'join', clan_id=str(alfa))[0]['ok'])
+        beta = self.action(beto, 'create', name='Beta Chat', tag='BCH')[0]['state']['clan']['id']
+        # Clan channel.
+        self.assertTrue(self.action(ana_member, 'post_message', channel='clan', text='<b>hola</b> clan')[0]['ok'])
+        result, _ = self.action(ana_member, 'post_message', channel='clan', text='otra')
+        self.assertEqual((result['ok'], result['message']), (False, 'Espera un momento antes de enviar otro mensaje.'))
+        chat = self.api(ana, '/clans/api/chat?channel=clan')['messages']
+        self.assertEqual([(m['text'], m['tag'], m['can_delete'], m['mine']) for m in chat], [('<b>hola</b> clan', 'ACH', True, False)])
+        self.assertEqual(self.api(beto, '/clans/api/chat?channel=clan')['messages'], [])  # Beta sees only its own channel
+        self.assertFalse(self.api(outsider, '/clans/api/chat?channel=clan')['ok'])
+        self.assertEqual(self.api(ana, f'/clans/api/chat?channel=clan&after={chat[0]["id"]}')['messages'], [])
+        self.assertFalse(self.action(beto, 'delete_message', message_id=str(chat[0]['id']))[0]['ok'])
+        self.assertTrue(self.action(ana, 'delete_message', message_id=str(chat[0]['id']))[0]['ok'])
+        self.assertEqual(self.api(ana, '/clans/api/chat?channel=clan')['messages'], [])
+        # Alliance: proposed from Beta's card, accepted by Beta's Guild Master.
+        self.assertTrue(self.api(ana, f'/clans/api/clans/{beta}')['can_ally_this'])
+        self.assertFalse(self.api(ana_member, f'/clans/api/clans/{beta}')['can_ally_this'])
+        self.assertFalse(self.action(ana_member, 'propose_alliance', clan_id=str(beta))[0]['ok'])
+        result, _ = self.action(ana, 'propose_alliance', clan_id=str(beta))
+        self.assertEqual((result['ok'], result['state']['clan']['alliance']['status']), (True, 'pending'))
+        incoming = self.api(beto, '/clans/api/state')['clan']['alliance']
+        self.assertEqual((incoming['incoming'], incoming['ally_tag']), (True, 'ACH'))
+        self.assertTrue(self.action(beto, 'accept_alliance', alliance_id=str(incoming['id']))[0]['ok'])
+        card = self.api(ana, f'/clans/api/clans/{beta}')
+        self.assertEqual((card['allied_with_me'], card['can_challenge_this'], card['can_ally_this']), (True, False, False))
+        result, _ = self.action(ana, 'challenge', clan_id=str(beta), best_of='3')
+        self.assertEqual((result['ok'], result['message']), (False, 'Son aliados: los aliados no se retan.'))
+        self.assertIn('Aliado: [BCH] Beta Chat', self.page(ana, f'/clans/{alfa}'))
+        # Shared channel.
+        _time.sleep(2.1)
+        self.assertTrue(self.action(ana_member, 'post_message', channel='alliance', text='hola aliados')[0]['ok'])
+        self.assertTrue(self.action(beto, 'post_message', channel='alliance', text='hola Alfa')[0]['ok'])
+        shared = self.api(beto, '/clans/api/chat?channel=alliance')['messages']
+        self.assertEqual([(m['text'], m['tag']) for m in shared], [('hola aliados', 'ACH'), ('hola Alfa', 'BCH')])
+        self.assertFalse(self.api(outsider, '/clans/api/chat?channel=alliance')['ok'])
+        result, _ = self.action(beto, 'end_alliance', alliance_id=str(incoming['id']))
+        self.assertTrue(result['ok'])
+        self.assertIsNone(result['state']['clan']['alliance'])
+        self.assertFalse(self.api(ana, '/clans/api/chat?channel=alliance')['ok'])
+        self.assertTrue(self.action(ana, 'challenge', clan_id=str(beta), best_of='3')[0]['ok'])  # no longer allies
+
     def test_pages_need_an_approved_session(self):
         anonymous = server.app.test_client()
         with contextlib.redirect_stdout(io.StringIO()):

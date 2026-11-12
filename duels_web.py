@@ -106,6 +106,8 @@ def duel_texts():
         'clan_challenge_open': _('Ver desafio'),
         'clan_challenge_accepted': _('{name} aceitou o desafio do seu clã!'),
         'clan_challenge_declined': _('{name} recusou o desafio do seu clã.'),
+        'clan_alliance': _('{name} propõe uma aliança ao seu clã!'),
+        'clan_alliance_open': _('Ver aliança'),
     }
 
 

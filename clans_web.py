@@ -45,6 +45,12 @@ ERRORS = {
     'bad_settings': 'Confira o emblema, o nível mínimo e o idioma.',
     'level_too_low': 'Sua vila principal não tem o nível mínimo deste clã.',
     'not_open': 'Este clã aceita membros só por pedido.',
+    'allied': 'Vocês são aliados: aliados não se desafiam.',
+    'alliance_busy': 'O seu clã já tem uma aliança ou um pedido de aliança.',
+    'target_alliance_busy': 'Esse clã já tem uma aliança ou um pedido de aliança.',
+    'no_alliance': 'O seu clã não tem uma aliança ativa.',
+    'bad_message': 'Escreva uma mensagem de até 300 caracteres.',
+    'chat_too_fast': 'Espere um instante antes de enviar outra mensagem.',
 }
 
 
@@ -95,6 +101,18 @@ def overlay_texts():
         'challenges_won': _('Desafios ganhos'), 'challenges_lost': _('Desafios perdidos'), 'duels_won': _('Duelos ganhos'),
         'no_clans': _('Nenhum clã encontrado.'), 'error': _('Não foi possível concluir. Tente de novo.'),
         'portal_page': _('Abrir no portal'),
+        'tab_chat': _('Chat'), 'chat_clan': _('Clã'), 'chat_alliance': _('Aliança'),
+        'chat_placeholder': _('Escreva uma mensagem…'), 'send': _('Enviar'), 'delete': _('Apagar'),
+        'no_messages': _('Ainda não há mensagens.'),
+        'alliance': _('Aliança'), 'no_alliance': _('Sem aliança.'), 'ally': _('Aliado: {name}'),
+        'alliance_hint': _('Para propor uma aliança, busque outro clã e abra a ficha dele.'),
+        'propose_alliance': _('Propor aliança'),
+        'alliance_pending_out': _('Vocês propuseram uma aliança a {name}. Esperando a resposta…'),
+        'alliance_pending_in': _('{name} propõe uma aliança ao seu clã.'),
+        'accept_alliance': _('Aceitar aliança'), 'decline_alliance': _('Recusar aliança'),
+        'cancel_alliance': _('Cancelar proposta'), 'end_alliance': _('Romper aliança'),
+        'end_alliance_confirm': _('Romper a aliança? O chat compartilhado deixa de existir.'),
+        'allied_label': _('Aliado'),
     }
 
 
@@ -188,6 +206,7 @@ def install_clans(app, accounts, village_lock, all_saves_userid, village_session
             context['clan_overlay'] = {'state': url_for('clan_api_state'), 'search': url_for('clan_api_search'),
                                        'clan': url_for('clan_api_clan', clan_id=0).rsplit('/', 1)[0] + '/',
                                        'action': url_for('clan_api_action'), 'portal': url_for('clans_page'),
+                                       'chat': url_for('clan_api_chat'),
                                        'duels': url_for('duels_page') if app.extensions.get('duels') is not None else '',
                                        'texts': overlay_texts()}
         if account and app.extensions.get('duels') is not None:
@@ -252,7 +271,9 @@ def install_clans(app, accounts, village_lock, all_saves_userid, village_session
         history = [challenge_view(item, clan_id, everyone) for item in store.challenge_history(clan_id)]
         can_challenge = (not role and membership and membership['role'] == 'master' and not current
                          and not store.current_challenge(membership['clan_id']))
+        ally = alliance_view(store.alliance(clan_id), clan_id, bool(role))
         return render_template('clan.html', clan=clan, role=role, me=account['id'], requests=requests_list,
+                               ally=ally if ally and ally['status'] == 'active' else None,
                                challenge=current, history=history, can_challenge=can_challenge,
                                own_challenge=challenge_view(store.current_challenge(membership['clan_id']),
                                                             membership['clan_id'], everyone) if membership and not role else None,
@@ -430,9 +451,21 @@ def install_clans(app, accounts, village_lock, all_saves_userid, village_session
         if current and not mine:
             current = None  # a clan's ongoing challenge is shown to its own members
         detail['challenge'] = public_challenge(current)
+        detail['alliance'] = alliance_view(store.alliance(clan_id), clan_id, bool(mine))
         detail['history'] = [public_challenge(item) for item in
                              (challenge_view(row, clan_id, everyone) for row in store.challenge_history(clan_id))] if mine else []
         return detail
+
+    def alliance_view(alliance, clan_id, member):
+        """The clan's alliance as seen from it: active ones for everyone, pending ones for its members."""
+        if not alliance or (alliance['status'] == 'pending' and not member):
+            return None
+        ours_first = alliance['proposer_clan'] == clan_id
+        return {'id': alliance['id'], 'status': alliance['status'],
+                'incoming': alliance['status'] == 'pending' and alliance['partner_clan'] == clan_id,
+                'ally_id': alliance['partner_clan'] if ours_first else alliance['proposer_clan'],
+                'ally_tag': alliance['partner_tag'] if ours_first else alliance['proposer_tag'],
+                'ally_name': alliance['partner_name'] if ours_first else alliance['proposer_name']}
 
     def public_challenge(view):
         if not view:
@@ -487,7 +520,28 @@ def install_clans(app, accounts, village_lock, all_saves_userid, village_session
         detail['can_challenge_this'] = bool(
             membership and membership['role'] == 'master' and membership['clan_id'] != clan_id
             and not store.current_challenge(membership['clan_id']) and not store.current_challenge(clan_id))
+        mine = store.alliance(membership['clan_id']) if membership else None
+        theirs = store.alliance(clan_id)
+        detail['allied_with_me'] = bool(mine and mine['status'] == 'active' and theirs and mine['id'] == theirs['id'])
+        detail['can_challenge_this'] = detail['can_challenge_this'] and not detail['allied_with_me']  # allies do not challenge
+        detail['can_ally_this'] = bool(membership and membership['role'] == 'master' and membership['clan_id'] != clan_id
+                                       and not mine and not theirs)
         return jsonify(detail)
+
+    @app.get('/clans/api/chat', endpoint='clan_api_chat')
+    def clan_api_chat():
+        account = api_player()
+        try:
+            after = int(request.args.get('after', 0) or 0)
+        except ValueError:
+            after = 0
+        try:
+            rows = store.messages(account['id'], request.args.get('channel', 'clan'), after=after)
+        except ClanError as error:
+            return jsonify({'ok': False, 'message': _(ERRORS.get(error.code, ERRORS['forbidden'])), 'messages': []})
+        return jsonify({'ok': True, 'messages': [{'id': m['id'], 'author': m['author_name'], 'tag': m['tag'] or '',
+                                                   'text': m['text'], 'at': m['created_at'], 'mine': m['account_id'] == account['id'],
+                                                   'can_delete': m['can_delete']} for m in rows]})
 
     @app.post('/clans/api/action', endpoint='clan_api_action')
     def clan_api_action():
@@ -544,8 +598,22 @@ def install_clans(app, accounts, village_lock, all_saves_userid, village_session
             store.dissolve(me, actor_name=name)
             return 'O clã foi dissolvido.'
 
+        def propose_alliance():
+            target = number('clan_id')
+            alliance = store.propose_alliance(me, target, actor_name=name)
+            notify(master_id(target), {'type': 'clan_alliance', 'id': alliance['id'],
+                                       'clan': {'tag': alliance['proposer_tag'], 'name': alliance['proposer_name']},
+                                       'url': url_for('clan_page', clan_id=target)})
+            return 'Proposta de aliança enviada.'
+
         actions = {
             'create': create,
+            'post_message': lambda: (store.post_message(me, form.get('channel', 'clan'), form.get('text', ''), name), '')[1],
+            'delete_message': lambda: (store.delete_message(me, number('message_id')), '')[1],
+            'propose_alliance': propose_alliance,
+            'accept_alliance': lambda: (store.answer_alliance(me, number('alliance_id'), True, actor_name=name), 'Aliança aceita.')[1],
+            'decline_alliance': lambda: (store.answer_alliance(me, number('alliance_id'), False, actor_name=name), 'Aliança recusada.')[1],
+            'end_alliance': lambda: (store.end_alliance(me, number('alliance_id'), actor_name=name), 'A aliança terminou.')[1],
             'join': join,
             'cancel_request': lambda: (store.cancel_request(me, number('clan_id')), 'Pedido cancelado.')[1],
             'accept_request': lambda: (store.answer_request(me, number('request_id'), True, actor_name=name), 'Membro aceito.')[1],
@@ -572,6 +640,8 @@ def install_clans(app, accounts, village_lock, all_saves_userid, village_session
             message = actions[action]()
         except ClanError as error:
             return jsonify({'ok': False, 'message': _(ERRORS.get(error.code, ERRORS['forbidden'])), 'state': api_state(account)})
+        if action in ('post_message', 'delete_message'):
+            return jsonify({'ok': True, 'message': ''})  # the chat refreshes itself
         return jsonify({'ok': True, 'message': _(message), 'state': api_state(account)})
 
     def require_admin():

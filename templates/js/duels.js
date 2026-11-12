@@ -300,6 +300,14 @@
                 ]);
             break;
         }
+        case "clan_alliance": {
+            const clanName = "[" + message.clan.tag + "] " + message.clan.name;
+            showNotice(fill(texts.clan_alliance, { name: clanName }), "", [
+                button(texts.clan_alliance_open, () => { window.location.href = message.url; }, true),
+                button(texts.close, hideNotice),
+            ]);
+            break;
+        }
         case "clan_challenge_answer": {
             const clanName = "[" + message.clan.tag + "] " + message.clan.name;
             showNotice(fill(message.accepted ? texts.clan_challenge_accepted : texts.clan_challenge_declined, { name: clanName }), "", [

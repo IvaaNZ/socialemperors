@@ -55,7 +55,7 @@
 
         tabs(T, state, active) {
             const tabs = state.clan
-                ? [["clan", T.tab_clan], ["members", T.tab_members], ["challenges", T.tab_challenges], ["ranking", T.tab_ranking], ["find", T.tab_find]]
+                ? [["clan", T.tab_clan], ["members", T.tab_members], ["chat", T.tab_chat], ["challenges", T.tab_challenges], ["ranking", T.tab_ranking], ["find", T.tab_find]]
                 : [["find", T.tab_find], ["create", T.tab_create], ["ranking", T.tab_ranking]];
             return '<div class="clanx-tabs" role="tablist">' + tabs.map(([key, label]) =>
                 '<button type="button" role="tab" class="clanx-tab' + (key === active ? " is-active" : "") + '" aria-selected="' +
@@ -87,6 +87,7 @@
                 (clan.announcement ? '<p class="clanx-announcement">' + esc(clan.announcement).replace(/\n/g, "<br>") + "</p>"
                     : '<p class="clanx-muted">' + esc(T.no_announcement) + "</p>") + "</section>" +
                 '<section class="clanx-card"><h3>' + esc(T.challenge_title) + "</h3>" + View.challengeSummary(T, clan) + "</section></div>" +
+                '<section class="clanx-card"><h3>' + esc(T.alliance) + "</h3>" + View.alliance(T, clan) + "</section>" +
                 '<p class="clanx-recruit"><strong>' + esc(T.recruitment) + ":</strong> " + View.recruitmentChips(T, clan) + "</p>" +
                 '<div class="clanx-actions">';
             if (clan.role === "master") {
@@ -95,6 +96,49 @@
             }
             if (clan.role !== "master" || clan.members === 1) html += button(T.leave, "leave", {}, "link");
             return html + "</div>";
+        },
+
+        alliance(T, clan) {
+            const a = clan.alliance;
+            if (!a) return '<p class="clanx-muted">' + esc(T.no_alliance) + "</p>" + (clan.role === "master" ? '<p class="clanx-muted">' + esc(T.alliance_hint) + "</p>" : "");
+            const ally = "[" + a.ally_tag + "] " + a.ally_name;
+            let html;
+            if (a.status === "active") html = '<p><strong>' + esc(fill(T.ally, { name: ally })) + "</strong></p>";
+            else html = "<p>" + esc(fill(a.incoming ? T.alliance_pending_in : T.alliance_pending_out, { name: ally })) + "</p>";
+            if (clan.role === "master") {
+                html += '<div class="clanx-actions">';
+                if (a.status === "active") html += button(T.end_alliance, "end_alliance", { id: a.id }, "red");
+                else if (a.incoming) html += button(T.accept_alliance, "accept_alliance", { id: a.id }, "green") + button(T.decline_alliance, "decline_alliance", { id: a.id }, "brown");
+                else html += button(T.cancel_alliance, "cancel_alliance", { id: a.id }, "brown");
+                html += "</div>";
+            }
+            return html;
+        },
+
+        chat(T, state, channel, messages) {
+            const alliance = state.clan && state.clan.alliance && state.clan.alliance.status === "active" ? state.clan.alliance : null;
+            let html = '<div class="clanx-channels">' +
+                '<button type="button" class="clanx-tab' + (channel === "clan" ? " is-active" : "") + '" data-channel="clan">' + esc(T.chat_clan) + "</button>" +
+                (alliance ? '<button type="button" class="clanx-tab' + (channel === "alliance" ? " is-active" : "") + '" data-channel="alliance">' +
+                    esc(T.chat_alliance) + " [" + esc(alliance.ally_tag) + "]</button>" : "") + "</div>";
+            html += '<div class="clanx-chat" aria-live="polite">';
+            if (!messages) html += '<p class="clanx-muted">' + esc(T.loading) + "</p>";
+            else if (!messages.length) html += '<p class="clanx-muted">' + esc(T.no_messages) + "</p>";
+            else {
+                html += messages.map((m) => '<p class="clanx-msg' + (m.mine ? " is-mine" : "") + '"><span class="clanx-msg-head"><strong>' +
+                    (m.tag ? "[" + esc(m.tag) + "] " : "") + esc(m.author) + "</strong> <small>" + esc(View.time(m.at)) + "</small>" +
+                    (m.can_delete ? ' <button type="button" class="clanx-linklike clanx-msg-delete" data-action="delete_message" data-id="' + esc(m.id) +
+                        '" aria-label="' + esc(T.delete) + '">' + esc(T.delete) + "</button>" : "") + "</span>" + esc(m.text) + "</p>").join("");
+            }
+            html += "</div>";
+            return html + '<form class="clanx-search clanx-chat-form" data-form="chat"><input name="text" maxlength="300" autocomplete="off" placeholder="' +
+                esc(T.chat_placeholder) + '" aria-label="' + esc(T.chat_placeholder) + '"><button type="submit" class="clanx-btn clanx-btn-green">' +
+                esc(T.send) + "</button></form>";
+        },
+
+        time(epoch) {
+            const date = new Date((Number(epoch) || 0) * 1000);
+            return String(date.getHours()).padStart(2, "0") + ":" + String(date.getMinutes()).padStart(2, "0");
         },
 
         challengeSummary(T, clan) {
@@ -253,7 +297,12 @@
                 }
                 html += "</div>";
             }
-            if (detail.can_challenge_this) {
+            if (detail.allied_with_me) html += '<p><span class="clanx-chip clanx-chip-ally">' + esc(T.allied_label) + "</span></p>";
+            else if (detail.alliance && detail.alliance.status === "active") {
+                html += '<p class="clanx-muted">' + esc(fill(T.ally, { name: "[" + detail.alliance.ally_tag + "] " + detail.alliance.ally_name })) + "</p>";
+            }
+            if (detail.can_ally_this) html += '<div class="clanx-actions">' + button(T.propose_alliance, "propose_alliance", { id: detail.id }, "brown") + "</div>";
+            if (detail.can_challenge_this && !detail.allied_with_me) {
                 html += '<section class="clanx-card"><h3>' + esc(T.challenge_clan) + '</h3><form class="clanx-row" data-form="challenge" data-id="' + esc(detail.id) +
                     '"><label>' + esc(T.best_of) + ' <select name="best_of">' + state.limits.sizes.map((n) => '<option value="' + n + '"' + (n === 5 ? " selected" : "") +
                     ">" + esc(fill(T.duels_count, { count: n })) + "</option>").join("") + '</select></label><button type="submit" class="clanx-btn clanx-btn-green">' +
@@ -284,6 +333,10 @@
     let card = null;
     let pendingConfirm = null;
     let refreshTimer = null;
+    let channel = "clan";
+    let messages = null;
+    let chatTimer = null;
+    let lastMessageId = 0;
 
     const shield = document.createElement("button");
     shield.type = "button";
@@ -323,6 +376,17 @@
         if (card) body.innerHTML = View.clanCard(T, state, card, lang);
         else if (tab === "clan") body.innerHTML = View.clan(T, state, lang, editing);
         else if (tab === "members") body.innerHTML = View.members(T, state);
+        else if (tab === "chat") {
+            const typed = body.querySelector('[data-form="chat"] input');
+            const draft = typed ? typed.value : "";
+            const hadFocus = typed && document.activeElement === typed;
+            body.innerHTML = View.chat(T, state, channel, messages);
+            const input = body.querySelector('[data-form="chat"] input');
+            input.value = draft;
+            if (hadFocus) input.focus();
+            const list = body.querySelector(".clanx-chat");
+            list.scrollTop = list.scrollHeight;
+        }
         else if (tab === "challenges") body.innerHTML = View.challenges(T, state, config.duels);
         else if (tab === "ranking") body.innerHTML = View.ranking(T, state);
         else if (tab === "find") body.innerHTML = View.find(T, state, results, query);
@@ -371,6 +435,34 @@
         render();
     }
 
+    async function loadChat(reset) {
+        if (reset) { messages = null; lastMessageId = 0; render(); }
+        try {
+            const result = await getJson(config.chat + "?channel=" + encodeURIComponent(channel) + "&after=" + lastMessageId);
+            if (!result.ok) {
+                if (channel !== "clan") { channel = "clan"; return loadChat(true); }
+                messages = [];
+            } else {
+                messages = (reset || !messages) ? result.messages : messages.concat(result.messages).slice(-200);
+            }
+            if (messages.length) lastMessageId = messages[messages.length - 1].id;
+        } catch (error) {
+            if (!messages) messages = [];
+        }
+        if (tab === "chat" && !card) render();
+    }
+
+    function startChat() {
+        clearInterval(chatTimer);
+        loadChat(true);
+        chatTimer = setInterval(() => { if (!panel.hidden && tab === "chat" && !card) loadChat(false); }, 3000);
+    }
+
+    function stopChat() {
+        clearInterval(chatTimer);
+        chatTimer = null;
+    }
+
     async function act(action, fields) {
         const data = new FormData();
         data.append("csrf_token", config.csrf);
@@ -379,6 +471,12 @@
         try {
             const response = await fetch(config.action, { method: "POST", body: data, credentials: "same-origin", headers: { Accept: "application/json" } });
             const result = await response.json();
+            if (action === "post_message" || action === "delete_message") {
+                if (!result.ok) showMessage(result.message, false);
+                else showMessage("", true);
+                await loadChat(action === "delete_message");
+                return result.ok;
+            }
             showMessage(result.message, result.ok);
             if (result.state) {
                 state = result.state;
@@ -417,6 +515,7 @@
         shield.setAttribute("aria-expanded", "false");
         confirmBox.hidden = true;
         clearInterval(refreshTimer);
+        stopChat();
         shield.focus();
     }
 
@@ -430,14 +529,24 @@
             card = null;
             editing = false;
             showMessage("", true);
+            if (tab === "chat") startChat(); else stopChat();
             if (tab === "find") search(query);
-            else render();
+            render();
+            load();  // fresh data on every tab change (an alliance or a challenge may have changed meanwhile)
+            return;
+        }
+        const channelButton = event.target.closest("[data-channel]");
+        if (channelButton) {
+            channel = channelButton.dataset.channel;
+            startChat();
             return;
         }
         const target = event.target.closest("[data-action]");
         if (!target) return;
         const { action, id, name } = target.dataset;
         const simple = { accept_request: "request_id", reject_request: "request_id", make_assist: "target_id", remove_assist: "target_id",
+            delete_message: "message_id", propose_alliance: "clan_id", accept_alliance: "alliance_id", decline_alliance: "alliance_id",
+            cancel_alliance: "alliance_id",
             accept_challenge: "challenge_id", decline_challenge: "challenge_id", cancel_challenge: "challenge_id", cancel_request: "clan_id", join: "clan_id" };
         if (action === "close") close();
         else if (action === "confirm_yes") { confirmBox.hidden = true; const run = pendingConfirm; pendingConfirm = null; if (run) run(); }
@@ -450,6 +559,8 @@
         else if (action === "transfer") askConfirm(fill(T.transfer_confirm, { name }), () => act("transfer", { target_id: id }));
         else if (action === "surrender") askConfirm(T.surrender_confirm, () => act("surrender", { challenge_id: id }));
         else if (action === "leave") askConfirm(T.leave_confirm, () => act("leave"));
+        else if (action === "end_alliance") askConfirm(T.end_alliance_confirm, () => act("end_alliance", { alliance_id: id }));
+        else if (action === "cancel_alliance") act("end_alliance", { alliance_id: id });
         else if (action === "dissolve") askConfirm(T.dissolve_confirm, () => act("dissolve", { confirm: "yes" }));
         else if (simple[action]) act(action, { [simple[action]]: id });
     });
@@ -462,5 +573,11 @@
         else if (form.dataset.form === "create") act("create", fields);
         else if (form.dataset.form === "settings") act("settings", fields);
         else if (form.dataset.form === "challenge") act("challenge", { clan_id: form.dataset.id, best_of: fields.best_of });
+        else if (form.dataset.form === "chat" && fields.text && fields.text.trim()) {
+            act("post_message", { channel, text: fields.text }).then((ok) => {
+                const input = body.querySelector('[data-form="chat"] input');
+                if (ok && input) { input.value = ""; input.focus(); }
+            });
+        }
     });
 })(typeof window !== "undefined" ? window : globalThis);

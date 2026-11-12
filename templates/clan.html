@@ -9,7 +9,7 @@
 <div class="clans-heading">
     <h1><span class="clan-tag">[{{ clan.tag }}]</span> {{ clan.name }}</h1>
     {% if clan.description %}<p>{{ clan.description }}</p>{% endif %}
-    <p class="clans-meta">{{ _('{count} de {max} membros', count=clan.members | length, max=clan_limits.members) }} · {{ _('Assist: {count} de {max}', count=assist_count, max=clan_limits.assists) }}</p>
+    <p class="clans-meta">{{ _('{count} de {max} membros', count=clan.members | length, max=clan_limits.members) }} · {{ _('Assist: {count} de {max}', count=assist_count, max=clan_limits.assists) }}{% if ally %} · {{ _('Aliado: {name}', name='[' ~ ally.ally_tag ~ '] ' ~ ally.ally_name) }}{% endif %}</p>
 </div>
 
 {% if not role %}

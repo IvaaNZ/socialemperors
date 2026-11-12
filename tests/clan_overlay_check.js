@@ -54,6 +54,22 @@ out.pendingOutgoing = View.challenges(T, pending, "/duels");
 out.noClan = { tabs: View.tabs(T, noClan, "find"), find: View.find(T, noClan, [card], evil), create: View.create(T, noClan),
     findLoading: View.find(T, noClan, null, ""), card: View.clanCard(T, noClan, card, "es"), ranking: View.ranking(T, noClan) };
 out.cardForMaster = View.clanCard(T, clanState("master"), card, "en");
+const allied = clanState("master");
+allied.clan.alliance = { id: 8, status: "active", incoming: false, ally_id: 2, ally_tag: "BET", ally_name: evil };
+out.alliedClan = View.clan(T, allied, "es", false);
+const chatMessages = [{ id: 1, author: evil, tag: "ALF", text: evil, at: 1700000000, mine: false, can_delete: true },
+    { id: 2, author: "Ana", tag: "BET", text: "hola", at: 1700000060, mine: true, can_delete: false }];
+out.chatClan = View.chat(T, allied, "clan", chatMessages);
+out.chatEmpty = View.chat(T, clanState("member"), "clan", []);
+out.chatLoading = View.chat(T, clanState("member"), "clan", null);
+const incoming = clanState("master");
+incoming.clan.alliance = { id: 9, status: "pending", incoming: true, ally_id: 3, ally_tag: "GAM", ally_name: "Gama" };
+out.allianceIncoming = View.clan(T, incoming, "es", false);
+incoming.clan.alliance.incoming = false;
+out.allianceOutgoing = View.clan(T, incoming, "es", false);
+out.allianceMemberView = View.clan(T, Object.assign(clanState("member"), {}), "es", false);
+out.cardAlly = View.clanCard(T, clanState("master"), Object.assign({}, card, { can_ally_this: true }), "es");
+out.cardAllied = View.clanCard(T, clanState("master"), Object.assign({}, card, { allied_with_me: true, can_challenge_this: true }), "es");
 out.emblems = Array.from({ length: 12 }, (_, i) => View.emblemSvg(i + 1, 40));
 out.keys = Object.keys(T);
 console.log(JSON.stringify(out));

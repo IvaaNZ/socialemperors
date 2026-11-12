@@ -140,7 +140,8 @@ Clan dentro del juego (en curso, 4 fases):
     aspecto del juego: Mi clan (emblema, lema, poder, líder, anuncio,
     reclutamiento abierto o con solicitud, nivel mínimo, idioma), Miembros,
     Retos, Clasificación y Buscar clan.
-  - Fase 2: chat del clan y Alianza (una por clan, con chat compartido).
+  - Fase 2 (hecha): chat del clan y Alianza (una por clan, los aliados no
+    se retan, con chat compartido).
   - Fase 3: misiones diarias y nivel del clan.
   - Fase 4: tienda del clan (recursos y unidades).
 

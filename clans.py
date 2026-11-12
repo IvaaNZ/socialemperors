@@ -34,6 +34,16 @@ roster). The first clan to the majority (2, 3 or 4 wins) wins. Either Guild
 Master may surrender (the other clan wins); a clan dissolved during a
 challenge loses it. A clan has one pending or active challenge at a time and
 may challenge again, the same clan or another, as soon as it ends.
+
+Chat (in-game window): each clan has a channel, and an alliance has one shared
+by its two clans. Messages of up to CHAT_LENGTH characters, one every
+CHAT_INTERVAL_SECONDS per player, the last CHAT_KEEP kept per channel. The
+author, or the Guild Master or an Assist of the author's clan, may delete one.
+
+Alliance: a Guild Master proposes it to another clan and that clan's Guild
+Master accepts or declines (the proposer may cancel it while pending). A clan
+has one alliance at a time, pending or active. Allies cannot challenge each
+other. Either Guild Master may end it; a dissolved clan ends it.
 """
 
 from contextlib import contextmanager
@@ -55,6 +65,9 @@ ROLES = ('master', 'assist', 'member')
 EMBLEMS = 12                       # emblem 1..12 (own art, templates/js/clan_overlay.js)
 ANNOUNCEMENT_LENGTH = 500
 RECRUIT_LANGUAGES = ('all', 'es', 'pt-BR', 'en')
+CHAT_LENGTH = 300
+CHAT_KEEP = 200                    # messages kept per channel
+CHAT_INTERVAL_SECONDS = 2          # one message per player every 2 seconds
 CHALLENGE_SIZES = (3, 5, 7)        # best of N duels
 CHALLENGE_ANSWER_SECONDS = 10 * 60  # time the challenged clan has to accept
 
@@ -194,6 +207,33 @@ class ClanStore:
                     clan_id INTEGER NOT NULL,
                     PRIMARY KEY (challenge_id, account_id)
                 );
+                CREATE TABLE IF NOT EXISTS clan_messages (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    channel TEXT NOT NULL,
+                    clan_id INTEGER NOT NULL,
+                    account_id INTEGER NOT NULL,
+                    author_name TEXT NOT NULL,
+                    text TEXT NOT NULL,
+                    created_at REAL NOT NULL
+                );
+                CREATE INDEX IF NOT EXISTS clan_messages_channel ON clan_messages (channel, id);
+                CREATE TABLE IF NOT EXISTS clan_alliances (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    proposer_clan INTEGER NOT NULL,
+                    proposer_name TEXT NOT NULL,
+                    proposer_tag TEXT NOT NULL,
+                    partner_clan INTEGER NOT NULL,
+                    partner_name TEXT NOT NULL,
+                    partner_tag TEXT NOT NULL,
+                    status TEXT NOT NULL CHECK (status IN ('pending', 'active', 'declined', 'cancelled', 'ended')),
+                    proposed_by INTEGER NOT NULL,
+                    answered_by INTEGER,
+                    ended_by INTEGER,
+                    created_at REAL NOT NULL,
+                    accepted_at REAL,
+                    ended_at REAL
+                );
+                CREATE INDEX IF NOT EXISTS clan_alliances_status ON clan_alliances (status);
                 CREATE TABLE IF NOT EXISTS clan_challenge_duels (
                     duel_id INTEGER PRIMARY KEY,
                     challenge_id INTEGER NOT NULL,
@@ -473,6 +513,9 @@ class ClanStore:
                                           AND (challenger_clan = ? OR defender_clan = ?)""", (clan['id'], clan['id'])).fetchall():
             other = row['defender_clan'] if row['challenger_clan'] == clan['id'] else row['challenger_clan']
             self._end_challenge(connection, row['id'], other, 'dissolved', actor_id, now)
+        connection.execute("""UPDATE clan_alliances SET status = CASE status WHEN 'pending' THEN 'cancelled' ELSE 'ended' END,
+                                  ended_by = ?, ended_at = ? WHERE status IN ('pending', 'active')
+                                  AND (proposer_clan = ? OR partner_clan = ?)""", (actor_id, now, clan['id'], clan['id']))
         connection.execute('DELETE FROM clan_members WHERE clan_id = ?', (clan['id'],))
         connection.execute('DELETE FROM clan_requests WHERE clan_id = ?', (clan['id'],))
         connection.execute('DELETE FROM clans WHERE id = ?', (clan['id'],))
@@ -528,6 +571,8 @@ class ClanStore:
             if actor['clan_id'] == target_clan_id:
                 raise ClanError('own_clan')
             own, target = self._clan(connection, actor['clan_id']), self._clan(connection, target_clan_id)
+            if self._alliance_between(connection, own['id'], target['id']):
+                raise ClanError('allied')
             if self._open_challenge(connection, own['id']):
                 raise ClanError('challenge_busy')
             if self._open_challenge(connection, target['id']):
@@ -664,6 +709,144 @@ class ClanStore:
                    FROM clans JOIN clan_challenges c ON c.status = 'done'
                         AND (c.challenger_clan = clans.id OR c.defender_clan = clans.id)
                    GROUP BY clans.id ORDER BY won DESC, duel_wins DESC, lost ASC, clans.name_key LIMIT ?""", (limit,))]
+
+    # -- alliance --
+    @staticmethod
+    def _alliance_of(connection, clan_id):
+        row = connection.execute("""SELECT * FROM clan_alliances WHERE status IN ('pending', 'active')
+                                    AND (proposer_clan = ? OR partner_clan = ?)""", (clan_id, clan_id)).fetchone()
+        return dict(row) if row else None
+
+    @staticmethod
+    def _alliance_between(connection, first, second):
+        return connection.execute("""SELECT 1 FROM clan_alliances WHERE status = 'active' AND
+                                     ((proposer_clan = ? AND partner_clan = ?) OR (proposer_clan = ? AND partner_clan = ?))""",
+                                  (first, second, second, first)).fetchone() is not None
+
+    @staticmethod
+    def _alliance_row(connection, alliance_id):
+        row = connection.execute('SELECT * FROM clan_alliances WHERE id = ?', (alliance_id,)).fetchone()
+        return dict(row) if row else None
+
+    def propose_alliance(self, actor_id, target_clan_id, actor_name=None):
+        with self._write() as (connection, now):
+            actor = self._master_of(connection, actor_id)
+            if actor['clan_id'] == target_clan_id:
+                raise ClanError('own_clan')
+            own, target = self._clan(connection, actor['clan_id']), self._clan(connection, target_clan_id)
+            if self._alliance_of(connection, own['id']):
+                raise ClanError('alliance_busy')
+            if self._alliance_of(connection, target['id']):
+                raise ClanError('target_alliance_busy')
+            cursor = connection.execute(
+                """INSERT INTO clan_alliances (proposer_clan, proposer_name, proposer_tag, partner_clan, partner_name, partner_tag,
+                       status, proposed_by, created_at) VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?)""",
+                (own['id'], own['name'], own['tag'], target['id'], target['name'], target['tag'], actor_id, now))
+            self._log(connection, own, actor_id, actor_name, 'propose_alliance', now, detail='[%s] %s' % (target['tag'], target['name']))
+            return self._alliance_row(connection, cursor.lastrowid)
+
+    def answer_alliance(self, actor_id, alliance_id, accept, actor_name=None):
+        with self._write() as (connection, now):
+            row = self._alliance_row(connection, alliance_id)
+            if not row or row['status'] != 'pending':
+                raise ClanError('gone')
+            actor = self._master_of(connection, actor_id)
+            if actor['clan_id'] != row['partner_clan']:
+                raise ClanError('forbidden')
+            status = 'active' if accept else 'declined'
+            connection.execute("""UPDATE clan_alliances SET status = ?, answered_by = ?, accepted_at = ?, ended_at = ?
+                                  WHERE id = ?""", (status, actor_id, now if accept else None, None if accept else now, alliance_id))
+            clan = self._clan(connection, row['partner_clan'])
+            self._log(connection, clan, actor_id, actor_name, 'accept_alliance' if accept else 'decline_alliance', now,
+                      detail='[%s] %s' % (row['proposer_tag'], row['proposer_name']))
+            return self._alliance_row(connection, alliance_id)
+
+    def end_alliance(self, actor_id, alliance_id, actor_name=None):
+        """The proposer cancels a pending alliance, or either Guild Master ends an active one."""
+        with self._write() as (connection, now):
+            row = self._alliance_row(connection, alliance_id)
+            if not row or row['status'] not in ('pending', 'active'):
+                raise ClanError('gone')
+            actor = self._master_of(connection, actor_id)
+            allowed = ((row['status'] == 'pending' and actor['clan_id'] == row['proposer_clan'])
+                       or (row['status'] == 'active' and actor['clan_id'] in (row['proposer_clan'], row['partner_clan'])))
+            if not allowed:
+                raise ClanError('forbidden')
+            status = 'cancelled' if row['status'] == 'pending' else 'ended'
+            connection.execute('UPDATE clan_alliances SET status = ?, ended_by = ?, ended_at = ? WHERE id = ?',
+                               (status, actor_id, now, alliance_id))
+            self._log(connection, self._clan(connection, actor['clan_id']), actor_id, actor_name, 'end_alliance', now)
+            return self._alliance_row(connection, alliance_id)
+
+    def alliance(self, clan_id):
+        """The clan's pending or active alliance, or None."""
+        with self._connection() as connection:
+            return self._alliance_of(connection, clan_id)
+
+    # -- chat --
+    def _channel_for(self, connection, actor_id, channel):
+        """The channel key and the actor's membership, if the actor may read and write it."""
+        actor = self._member(connection, actor_id)
+        if not actor:
+            raise ClanError('not_in_clan')
+        if channel == 'clan':
+            return 'clan:%d' % actor['clan_id'], actor
+        if channel == 'alliance':
+            alliance = self._alliance_of(connection, actor['clan_id'])
+            if not alliance or alliance['status'] != 'active':
+                raise ClanError('no_alliance')
+            return 'alliance:%d' % alliance['id'], actor
+        raise ClanError('forbidden')
+
+    def post_message(self, actor_id, channel, text, actor_name):
+        text = ' '.join(str(text or '').split())
+        if not text or len(text) > CHAT_LENGTH:
+            raise ClanError('bad_message')
+        with self._write() as (connection, now):
+            key, actor = self._channel_for(connection, actor_id, channel)
+            last = connection.execute('SELECT MAX(created_at) FROM clan_messages WHERE account_id = ?', (actor_id,)).fetchone()[0]
+            if last is not None and now - last < CHAT_INTERVAL_SECONDS:
+                raise ClanError('chat_too_fast')
+            cursor = connection.execute(
+                """INSERT INTO clan_messages (channel, clan_id, account_id, author_name, text, created_at)
+                   VALUES (?, ?, ?, ?, ?, ?)""", (key, actor['clan_id'], actor_id, actor_name or '?', text, now))
+            connection.execute("""DELETE FROM clan_messages WHERE channel = ? AND id NOT IN
+                                  (SELECT id FROM clan_messages WHERE channel = ? ORDER BY id DESC LIMIT ?)""",
+                               (key, key, CHAT_KEEP))
+            return cursor.lastrowid
+
+    def messages(self, actor_id, channel, after=0, limit=CHAT_KEEP):
+        with self._connection() as connection:
+            key, actor = self._channel_for(connection, actor_id, channel)
+            rows = connection.execute("""SELECT m.*, c.tag FROM clan_messages m LEFT JOIN clans c ON c.id = m.clan_id
+                                         WHERE m.channel = ? AND m.id > ? ORDER BY m.id DESC LIMIT ?""",
+                                      (key, int(after or 0), limit)).fetchall()
+            role = actor['role']
+            result = []
+            for row in reversed(rows):
+                item = dict(row)
+                item['can_delete'] = (item['account_id'] == actor_id
+                                      or (role in ('master', 'assist') and item['clan_id'] == actor['clan_id']))
+                result.append(item)
+            return result
+
+    def delete_message(self, actor_id, message_id):
+        with self._write() as (connection, now):
+            row = connection.execute('SELECT * FROM clan_messages WHERE id = ?', (message_id,)).fetchone()
+            if not row:
+                raise ClanError('gone')
+            actor = self._member(connection, actor_id)
+            if not actor:
+                raise ClanError('forbidden')
+            visible = row['channel'] == 'clan:%d' % actor['clan_id']
+            if row['channel'].startswith('alliance:'):
+                alliance = self._alliance_of(connection, actor['clan_id'])
+                visible = bool(alliance and row['channel'] == 'alliance:%d' % alliance['id'])
+            allowed = visible and (row['account_id'] == actor_id
+                                   or (actor['role'] in ('master', 'assist') and row['clan_id'] == actor['clan_id']))
+            if not allowed:
+                raise ClanError('forbidden')
+            connection.execute('DELETE FROM clan_messages WHERE id = ?', (message_id,))
 
     # -- reading --
     def clan(self, clan_id):
