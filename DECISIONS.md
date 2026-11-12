@@ -109,3 +109,17 @@ Cambios de comportamiento (solo con `SE_CLANS=on`; los retos cuentan duelos, as�
 Configuración: `CHALLENGE_SIZES` y `CHALLENGE_ANSWER_SECONDS` al principio de `clans.py`.
 
 Probado: reglas con reloj simulado; las páginas y los permisos (un Assist no puede retar, aceptar ni rendirse, ni armando el pedido a mano); de punta a punta con duelos reales (reto, aviso en vivo, aceptación, un duelo con alguien de fuera que no suma, dos duelos que suman y el reto termina 2–0); y en el navegador con el servidor espejo: reto, aviso "¡[NAN] Los Ñandúes retó a tu clan!", aceptación, aviso de respuesta y la marca "Clan rival" en Duelos.
+
+## Clan dentro del juego, fase 1 (ventana del clan)
+
+Cambios de comportamiento (solo con `SE_CLANS=on`; apagado, la página del juego queda igual):
+- **Escudo "Clan" sobre el juego:** a la derecha del dibujo del juego (debajo del ícono de la mano), en la aldea y en la arena. Se ubica sobre el juego mismo, no sobre las franjas negras de los costados, con las mismas medidas que usa `game.css` para el reproductor. Es una capa HTML encima de Ruffle (`templates/_clan_overlay.html`, `js/clan_overlay.js`, `css/clan_overlay.css`); la película del juego no cambia.
+- **Ventana con aspecto del juego** (pergamino, título "CLAN", pestañas): sin clan, *Buscar clan*, *Crear clan* y *Clasificación*; con clan, *Mi clan*, *Miembros*, *Retos*, *Clasificación* y *Buscar clan*. Las fichas de otros clanes se abren desde la búsqueda o el ranking. Arte propio: 12 emblemas (escudo con un símbolo), sin imágenes de otros servidores.
+- **Mi clan:** estandarte con emblema, etiqueta, nombre y lema; poder (suma de la fuerza de duelo de los miembros); miembros; líder y tu rango; anuncio; resumen del reto; reclutamiento; *Editar* (Guild Master), *Disolver*, *Salir*.
+- **Nuevo en el clan** (columnas nuevas en `clans`, que una base existente recibe sola al arrancar): **emblema** (1 a 12), **anuncio** (hasta 500 caracteres, con saltos de línea), **reclutamiento** abierto o con solicitud, **nivel mínimo** de la aldea principal (1 a 99) e **idioma** (todos, español, portugués, inglés). Solo el Guild Master los edita.
+- **Reclutamiento abierto:** un jugador que cumple el nivel mínimo entra al momento, sin aprobación (se registra como "join" en la actividad). Con solicitud, como antes. El nivel mínimo vale para las dos formas; el idioma se muestra, no bloquea.
+- **API JSON de la ventana:** `GET /clans/api/state`, `GET /clans/api/clans?q=`, `GET /clans/api/clans/<id>`, `POST /clans/api/action` (formulario con el token CSRF; cada acción pasa por las mismas reglas y permisos de `clans.py`). Un clan ajeno no muestra su reto en curso.
+- Las acciones peligrosas (expulsar, pasar el mando, rendirse, salir, disolver) piden confirmación dentro de la ventana, sin diálogos del navegador.
+- Todo el texto escrito por jugadores (nombres, lema, anuncio) se escapa antes de dibujarse; una prueba con Node lo verifica en cada vista.
+
+Probado: reglas nuevas (ajustes, entrada directa, nivel mínimo, migración de una base vieja); la API (crear, sin token rechazado, ajustes, un Assist no puede editar, nivel mínimo, entrada directa, retos, búsqueda); las vistas en Node (escape, botones según el rol, sin textos faltantes, 12 emblemas, separador de miles); y en el navegador, dentro del juego, con el servidor espejo: abrir la ventana, crear un clan con emblema, editar anuncio y reclutamiento, que Tuki2 lo encuentre y entre directo, nombrarlo Assist y la confirmación de expulsar.

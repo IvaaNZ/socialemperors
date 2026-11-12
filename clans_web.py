@@ -7,11 +7,13 @@ village matches the account; the permission itself is checked again by
 ClanStore inside the transaction, so a hand-made request cannot skip it.
 """
 
-from flask import abort, flash, g, redirect, render_template, request, session, url_for
+from flask import abort, flash, g, jsonify, redirect, render_template, request, session, url_for
 
 from auth import validate_csrf
-from clans import (CHALLENGE_ANSWER_SECONDS, CHALLENGE_SIZES, DESCRIPTION_LENGTH, MAX_ASSISTS, MAX_MEMBERS,
-                   MAX_OPEN_REQUESTS, NAME_LENGTH, REJOIN_SECONDS, REQUEST_SECONDS, TAG_LENGTH, ClanError, ClanStore)
+from clans import (ANNOUNCEMENT_LENGTH, CHALLENGE_ANSWER_SECONDS, CHALLENGE_SIZES, DESCRIPTION_LENGTH, EMBLEMS,
+                   MAX_ASSISTS, MAX_MEMBERS, MAX_OPEN_REQUESTS, NAME_LENGTH, RECRUIT_LANGUAGES, REJOIN_SECONDS,
+                   REQUEST_SECONDS, TAG_LENGTH, ClanError, ClanStore)
+from portal_i18n import translate as _
 from duels import utc_label
 
 # Error codes -> Portuguese source text (translated when the flash message is shown).
@@ -39,7 +41,61 @@ ERRORS = {
     'own_clan': 'Você não pode desafiar o seu próprio clã.',
     'challenge_busy': 'O seu clã já tem um desafio pendente ou em andamento.',
     'target_challenge_busy': 'Esse clã já tem um desafio pendente ou em andamento.',
+    'bad_announcement': 'O anúncio pode ter até 500 caracteres.',
+    'bad_settings': 'Confira o emblema, o nível mínimo e o idioma.',
+    'level_too_low': 'Sua vila principal não tem o nível mínimo deste clã.',
+    'not_open': 'Este clã aceita membros só por pedido.',
 }
+
+
+def overlay_texts():
+    """Texts of the in-game clan window, in the viewer's language (Portuguese source)."""
+    return {
+        'button': _('Clã'), 'title': _('Clã'), 'close': _('Fechar'), 'loading': _('Carregando…'),
+        'tab_clan': _('Meu clã'), 'tab_members': _('Membros'), 'tab_challenges': _('Desafios'),
+        'tab_ranking': _('Classificação'), 'tab_find': _('Buscar clã'), 'tab_create': _('Criar clã'),
+        'no_clan': _('Você ainda não está em um clã. Busque um clã para entrar ou crie o seu.'),
+        'search_placeholder': _('Buscar por nome ou etiqueta'), 'search': _('Buscar'),
+        'members_count': _('{count} de {max} membros'), 'power': _('Poder {power}'), 'level_min': _('Nível {level}+'),
+        'open': _('Aberto'), 'by_request': _('Com pedido'), 'join': _('Entrar'), 'ask': _('Pedir para entrar'),
+        'requested': _('Pedido enviado'), 'cancel_request': _('Cancelar pedido'), 'view': _('Ver'), 'back': _('Voltar'),
+        'leader': _('Líder: {name}'), 'your_rank': _('Seu cargo: {role}'),
+        'master': _('Guild Master'), 'assist': _('Assist'), 'member': _('Membro'),
+        'announcement': _('Anúncio'), 'no_announcement': _('Ainda não há anúncio.'),
+        'recruitment': _('Recrutamento'), 'language_all': _('Todos os idiomas'),
+        'language_es': _('Espanhol'), 'language_pt-BR': _('Português'), 'language_en': _('Inglês'),
+        'edit': _('Editar'), 'save': _('Salvar'), 'cancel': _('Cancelar'), 'dissolve': _('Dissolver clã'),
+        'dissolve_confirm': _('Quero dissolver o clã: todos os membros saem e não dá para desfazer.'),
+        'leave': _('Sair do clã'), 'leave_confirm': _('Tem certeza de que quer sair do clã?'),
+        'emblem': _('Emblema'), 'motto': _('Lema'), 'name': _('Nome'), 'tag': _('Etiqueta'),
+        'min_level': _('Nível mínimo'), 'language': _('Idioma'), 'recruit_mode': _('Entrada'),
+        'create': _('Criar clã'), 'create_tutorial': _('Conclua o tutorial para criar um clã.'),
+        'rejoin_wait': _('Você saiu de um clã há pouco. Poderá entrar em outro ou criar um em {minutes} min.'),
+        'requests': _('Pedidos para entrar'), 'no_requests': _('Nenhum pedido pendente.'),
+        'accept': _('Aceitar'), 'reject': _('Recusar'), 'make_assist': _('Nomear Assist'), 'remove_assist': _('Tirar Assist'),
+        'transfer': _('Passar liderança'), 'kick': _('Remover'), 'you': _('você'),
+        'transfer_confirm': _('Passar a liderança para {name}? Você vira membro comum.'),
+        'kick_confirm': _('Remover {name} do clã?'),
+        'challenge_title': _('Desafio entre clãs'), 'no_challenge': _('Nenhum desafio agora.'),
+        'challenge_hint': _('Para desafiar outro clã, busque-o e abra a ficha dele.'),
+        'challenge_incoming': _('{name} desafiou o seu clã para o melhor de {count} duelos.'),
+        'challenge_outgoing': _('Vocês desafiaram {name} para o melhor de {count} duelos. Esperando a resposta…'),
+        'minutes_left': _('Restam {minutes} min para responder.'), 'only_master_answers': _('Só o Guild Master pode responder.'),
+        'accept_challenge': _('Aceitar desafio'), 'decline_challenge': _('Recusar desafio'), 'cancel_challenge': _('Cancelar desafio'),
+        'best_of_against': _('Melhor de {count} contra {name}'),
+        'needed': _('Vence o clã que chegar primeiro a {needed} vitórias. Cada duelo terminado entre os dois clãs soma uma vitória.'),
+        'duel_line': _('{winner} venceu {loser}'), 'go_duels': _('Ir para Duelos'),
+        'surrender': _('Render-se'), 'surrender_confirm': _('Render-se? O outro clã ganha o desafio.'),
+        'challenge_clan': _('Desafiar este clã'), 'best_of': _('Melhor de'), 'duels_count': _('{count} duelos'),
+        'challenge_send': _('Desafiar'), 'answer_minutes': _('O Guild Master do outro clã tem {minutes} min para aceitar.'),
+        'history': _('Desafios anteriores'), 'won': _('Vitória'), 'lost': _('Derrota'),
+        'declined': _('Recusado'), 'expired': _('Venceu sem resposta'), 'cancelled': _('Cancelado'),
+        'by_majority': _('por maioria'), 'by_surrender': _('por rendição'), 'by_dissolved': _('o clã rival foi dissolvido'),
+        'ranking': _('Ranking de clãs'), 'no_ranking': _('Ainda não há desafios terminados.'),
+        'challenges_won': _('Desafios ganhos'), 'challenges_lost': _('Desafios perdidos'), 'duels_won': _('Duelos ganhos'),
+        'no_clans': _('Nenhum clã encontrado.'), 'error': _('Não foi possível concluir. Tente de novo.'),
+        'portal_page': _('Abrir no portal'),
+    }
 
 
 def install_clans(app, accounts, village_lock, all_saves_userid, village_session, data_dir):
@@ -128,6 +184,12 @@ def install_clans(app, accounts, village_lock, all_saves_userid, village_session
                                    'request_days': REQUEST_SECONDS // 86400, 'rejoin_minutes': REJOIN_SECONDS // 60,
                                    'sizes': CHALLENGE_SIZES, 'answer_minutes': CHALLENGE_ANSWER_SECONDS // 60}}
         account = current_player()
+        if account:
+            context['clan_overlay'] = {'state': url_for('clan_api_state'), 'search': url_for('clan_api_search'),
+                                       'clan': url_for('clan_api_clan', clan_id=0).rsplit('/', 1)[0] + '/',
+                                       'action': url_for('clan_api_action'), 'portal': url_for('clans_page'),
+                                       'duels': url_for('duels_page') if app.extensions.get('duels') is not None else '',
+                                       'texts': overlay_texts()}
         if account and app.extensions.get('duels') is not None:
             # For the duel pages: clan tags next to the names, and the rivals of an active challenge.
             membership = store.membership(account['id'])
@@ -312,6 +374,205 @@ def install_clans(app, accounts, village_lock, all_saves_userid, village_session
             return redirect(back)
         flash(message, 'success')
         return redirect(back)
+
+    # -- JSON API for the in-game clan window (templates/js/clan_overlay.js) --
+    def village_level(account):
+        from pvp import _main_map
+        with village_lock:
+            if account['village_id'] not in all_saves_userid():
+                return 1
+            try:
+                _, town = _main_map(village_session(account['village_id']))
+                return max(1, int(town.get('level') or 1))
+            except Exception:
+                return 1
+
+    def member_power(account_id, accounts_by_id):
+        from duels import army_profile
+        account = accounts_by_id.get(account_id)
+        if not account or not account.get('village_id'):
+            return 0
+        with village_lock:
+            if account['village_id'] not in all_saves_userid():
+                return 0
+            try:
+                return army_profile(village_session(account['village_id']))['power']
+            except Exception:
+                return 0
+
+    def clan_summary(clan, count=None):
+        return {'id': clan['id'], 'name': clan['name'], 'tag': clan['tag'], 'description': clan['description'],
+                'emblem': clan.get('emblem', 1), 'open': bool(clan.get('recruit_open')),
+                'min_level': clan.get('recruit_min_level', 1), 'language': clan.get('recruit_language', 'all'),
+                'members': count if count is not None else len(clan.get('members', []))}
+
+    def clan_detail(clan_id, viewer):
+        clan = store.clan(clan_id)
+        if not clan:
+            return None
+        rows = {row['id']: row for row in accounts().list_accounts()}
+        everyone = {k: v['name'] for k, v in rows.items()}
+        mine = next((m for m in clan['members'] if m['account_id'] == viewer['id']), None)
+        detail = clan_summary(clan)
+        detail.update(
+            announcement=clan.get('announcement', ''),
+            power=sum(member_power(m['account_id'], rows) for m in clan['members']),
+            leader=next((everyone.get(m['account_id'], '?') for m in clan['members'] if m['role'] == 'master'), '?'),
+            role=mine['role'] if mine else None,
+            members_list=[{'id': m['account_id'], 'name': everyone.get(m['account_id'], '?'), 'role': m['role'],
+                           'joined': utc_label(m['joined_at'])} for m in clan['members']],
+            assists=sum(m['role'] == 'assist' for m in clan['members']),
+        )
+        if mine and mine['role'] in ('master', 'assist'):
+            detail['requests'] = [{'id': r['id'], 'name': everyone.get(r['account_id'], '?'), 'when': utc_label(r['created_at'])}
+                                  for r in store.requests_for(clan_id)]
+        current = challenge_view(store.current_challenge(clan_id), clan_id, everyone)
+        if current and not mine:
+            current = None  # a clan's ongoing challenge is shown to its own members
+        detail['challenge'] = public_challenge(current)
+        detail['history'] = [public_challenge(item) for item in
+                             (challenge_view(row, clan_id, everyone) for row in store.challenge_history(clan_id))] if mine else []
+        return detail
+
+    def public_challenge(view):
+        if not view:
+            return None
+        keys = ('id', 'status', 'best_of', 'incoming', 'rival_id', 'rival_tag', 'rival_name', 'our_wins', 'their_wins',
+                'needed', 'outcome', 'minutes_left', 'ending', 'when', 'duel_lines')
+        return {key: view.get(key) for key in keys}
+
+    def api_state(account):
+        membership = store.membership(account['id'])
+        own_requests = store.requests_of(account['id'])
+        state = {
+            'me': {'id': account['id'], 'name': account['name'], 'level': village_level(account),
+                   'rejoin_minutes': -(-store.rejoin_wait(account['id']) // 60),
+                   'can_create': tutorial_complete(account),
+                   'requests': [{'clan_id': r['clan_id'], 'name': r['name'], 'tag': r['tag']} for r in own_requests]},
+            'clan': clan_detail(membership['clan_id'], account) if membership else None,
+            'ranking': store.ranking(),
+            'limits': {'members': MAX_MEMBERS, 'assists': MAX_ASSISTS, 'name': NAME_LENGTH, 'tag': TAG_LENGTH,
+                       'description': DESCRIPTION_LENGTH, 'announcement': ANNOUNCEMENT_LENGTH, 'emblems': EMBLEMS,
+                       'languages': RECRUIT_LANGUAGES, 'sizes': CHALLENGE_SIZES,
+                       'answer_minutes': CHALLENGE_ANSWER_SECONDS // 60},
+            'can_challenge': bool(membership and membership['role'] == 'master'
+                                  and not store.current_challenge(membership['clan_id'])),
+        }
+        return state
+
+    def api_player():
+        account = current_player()
+        if not account:
+            abort(403, description='Sua conta não está aprovada.')
+        return account
+
+    @app.get('/clans/api/state', endpoint='clan_api_state')
+    def clan_api_state():
+        return jsonify(api_state(api_player()))
+
+    @app.get('/clans/api/clans', endpoint='clan_api_search')
+    def clan_api_search():
+        api_player()
+        found = store.clans(request.args.get('q', '')[:40])
+        return jsonify({'clans': [clan_summary(clan, clan['member_count']) for clan in found[:50]]})
+
+    @app.get('/clans/api/clans/<int:clan_id>', endpoint='clan_api_clan')
+    def clan_api_clan(clan_id):
+        account = api_player()
+        detail = clan_detail(clan_id, account)
+        if not detail:
+            return jsonify({'ok': False, 'message': _(ERRORS['no_clan'])}), 404
+        membership = store.membership(account['id'])
+        detail['requested'] = any(r['clan_id'] == clan_id for r in store.requests_of(account['id']))
+        detail['can_challenge_this'] = bool(
+            membership and membership['role'] == 'master' and membership['clan_id'] != clan_id
+            and not store.current_challenge(membership['clan_id']) and not store.current_challenge(clan_id))
+        return jsonify(detail)
+
+    @app.post('/clans/api/action', endpoint='clan_api_action')
+    def clan_api_action():
+        account = api_player()
+        validate_csrf()
+        form = request.form
+        action = form.get('action', '')
+        me, name = account['id'], account['name']
+
+        def number(field):
+            try:
+                return int(form.get(field, ''))
+            except ValueError:
+                raise ClanError('forbidden') from None
+
+        def create():
+            if not tutorial_complete(account):
+                raise ClanError('tutorial')
+            store.create(me, form.get('name', ''), form.get('tag', ''), form.get('description', ''), actor_name=name,
+                         emblem=form.get('emblem', 1))
+            return 'Clã criado.'
+
+        def join():
+            clan_id = number('clan_id')
+            clan = store.clan(clan_id)
+            if not clan:
+                raise ClanError('no_clan')
+            if clan.get('recruit_open'):
+                store.join(me, clan_id, village_level(account), actor_name=name)
+                return 'Você entrou no clã.'
+            store.request_join(me, clan_id, village_level(account))
+            return 'Pedido enviado. Um líder do clã vai responder.'
+
+        def challenge():
+            target = number('clan_id')
+            created = store.challenge(me, target, form.get('best_of'), actor_name=name)
+            notify(master_id(target), {
+                'type': 'clan_challenge', 'id': created['id'], 'best_of': created['best_of'],
+                'clan': {'tag': created['challenger_tag'], 'name': created['challenger_name']},
+                'minutes': CHALLENGE_ANSWER_SECONDS // 60, 'url': url_for('clan_page', clan_id=target)})
+            return 'Desafio enviado. O outro clã tem 10 minutos para responder.'
+
+        def challenge_answer(accept):
+            answered = store.answer_challenge(me, number('challenge_id'), accept, actor_name=name)
+            notify(master_id(answered['challenger_clan']), {
+                'type': 'clan_challenge_answer', 'id': answered['id'], 'accepted': accept,
+                'clan': {'tag': answered['defender_tag'], 'name': answered['defender_name']},
+                'url': url_for('clan_page', clan_id=answered['challenger_clan'])})
+            return 'Desafio aceito. Desafiem os membros do outro clã em Duelos.' if accept else 'Desafio recusado.'
+
+        def dissolve():
+            if form.get('confirm') != 'yes':
+                raise ClanError('confirm')
+            store.dissolve(me, actor_name=name)
+            return 'O clã foi dissolvido.'
+
+        actions = {
+            'create': create,
+            'join': join,
+            'cancel_request': lambda: (store.cancel_request(me, number('clan_id')), 'Pedido cancelado.')[1],
+            'accept_request': lambda: (store.answer_request(me, number('request_id'), True, actor_name=name), 'Membro aceito.')[1],
+            'reject_request': lambda: (store.answer_request(me, number('request_id'), False, actor_name=name), 'Pedido recusado.')[1],
+            'kick': lambda: (store.kick(me, number('target_id'), actor_name=name), 'Membro removido do clã.')[1],
+            'make_assist': lambda: (store.set_role(me, number('target_id'), 'assist', actor_name=name), 'Agora é Assist.')[1],
+            'remove_assist': lambda: (store.set_role(me, number('target_id'), 'member', actor_name=name), 'Deixou de ser Assist.')[1],
+            'transfer': lambda: (store.transfer(me, number('target_id'), actor_name=name), 'Liderança transferida.')[1],
+            'leave': lambda: 'O clã foi dissolvido.' if store.leave(me, actor_name=name) == 'dissolved' else 'Você saiu do clã.',
+            'settings': lambda: (store.settings(me, form.get('emblem'), form.get('description', ''), form.get('announcement', ''),
+                                                form.get('recruit_open'), form.get('min_level'), form.get('language'),
+                                                actor_name=name), 'Clã atualizado.')[1],
+            'dissolve': dissolve,
+            'challenge': challenge,
+            'accept_challenge': lambda: challenge_answer(True),
+            'decline_challenge': lambda: challenge_answer(False),
+            'cancel_challenge': lambda: (store.cancel_challenge(me, number('challenge_id'), actor_name=name), 'Desafio cancelado.')[1],
+            'surrender': lambda: (store.surrender(me, number('challenge_id'), actor_name=name),
+                                  'Seu clã se rendeu. O outro clã ganhou o desafio.')[1],
+        }
+        if action not in actions:
+            return jsonify({'ok': False, 'message': _('Ação inválida.')}), 400
+        try:
+            message = actions[action]()
+        except ClanError as error:
+            return jsonify({'ok': False, 'message': _(ERRORS.get(error.code, ERRORS['forbidden'])), 'state': api_state(account)})
+        return jsonify({'ok': True, 'message': _(message), 'state': api_state(account)})
 
     def require_admin():
         account = g.get('account')

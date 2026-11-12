@@ -181,6 +181,54 @@ class RoleTests(ClanTestCase):
         self.assertEqual(self.code(self.store.admin_dissolve, clan['id'], 99, 'Admin', 'x'), 'no_clan')
 
 
+class SettingsAndRecruitmentTests(ClanTestCase):
+    def test_guild_master_edits_emblem_motto_announcement_and_recruitment(self):
+        clan = self.clan_with(1, 2)
+        self.store.set_role(1, 2, 'assist')
+        self.assertEqual(self.code(self.store.settings, 2, 3, '', '', 1, 10, 'es'), 'forbidden')  # an Assist cannot
+        updated = self.store.settings(1, '7', 'Los mejores', 'Línea 1\r\n\r\n\r\nLínea 2', 'on', '25', 'es')
+        self.assertEqual((updated['emblem'], updated['description'], updated['announcement'], updated['recruit_open'],
+                          updated['recruit_min_level'], updated['recruit_language']),
+                         (7, 'Los mejores', 'Línea 1\n\nLínea 2', 1, 25, 'es'))
+        for bad in ((0, 1, 'es'), (13, 1, 'es'), (1, 0, 'es'), (1, 100, 'es'), (1, 1, 'fr'), ('x', 1, 'es')):
+            with self.subTest(bad=bad):
+                self.assertEqual(self.code(self.store.settings, 1, bad[0], '', '', 0, bad[1], bad[2]), 'bad_settings')
+        self.assertEqual(self.code(self.store.settings, 1, 1, '', 'x' * 501, 0, 1, 'all'), 'bad_announcement')
+        self.assertEqual(self.store.clan(clan['id'])['emblem'], 7)
+
+    def test_open_clans_take_eligible_players_at_once(self):
+        clan = self.store.create(1, 'Abiertos', 'ABI', emblem=4)
+        self.assertEqual(self.store.clan(clan['id'])['emblem'], 4)
+        self.assertEqual(self.code(self.store.join, 2, clan['id'], 30), 'not_open')
+        self.store.settings(1, 4, '', '', 1, 20, 'all')
+        self.assertEqual(self.code(self.store.join, 2, clan['id'], 19), 'level_too_low')
+        self.store.request_join(2, self.store.create(9, 'Otro', 'OTR')['id'])
+        self.store.join(2, clan['id'], 20)
+        self.assertEqual(self.role(2), 'member')
+        self.assertEqual(self.store.requests_of(2), [])  # joining clears the other requests
+        self.assertEqual(self.store.log(clan['id'])[0]['action'], 'join')
+        self.assertEqual(self.code(self.store.request_join, 3, clan['id'], 5), 'level_too_low')  # requests too
+        self.store.request_join(3, clan['id'], 25)
+
+    def test_an_old_database_gets_the_new_columns(self):
+        import sqlite3
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        path = Path(directory.name) / 'old.sqlite3'
+        connection = sqlite3.connect(path)
+        connection.executescript(
+            "CREATE TABLE clans (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, name_key TEXT NOT NULL UNIQUE,"
+            " tag TEXT NOT NULL UNIQUE, description TEXT NOT NULL DEFAULT '', created_by INTEGER NOT NULL, created_at REAL NOT NULL);"
+            "INSERT INTO clans (name, name_key, tag, created_by, created_at) VALUES ('Viejo', 'viejo', 'VIE', 1, 1.0);")
+        connection.commit()
+        connection.close()
+        store = ClanStore(path, self.clock)
+        clan = store.clan(1)
+        self.assertEqual((clan['name'], clan['emblem'], clan['announcement'], clan['recruit_open'], clan['recruit_min_level'],
+                          clan['recruit_language']), ('Viejo', 1, '', 0, 1, 'all'))
+        ClanStore(path, self.clock)  # opening it again changes nothing
+
+
 class WaitTests(ClanTestCase):
     def test_leaving_or_being_removed_waits_an_hour(self):
         first = self.clan_with(1, 2, 3)

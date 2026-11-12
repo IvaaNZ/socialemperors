@@ -12,6 +12,12 @@ Permissions (checked here, inside each transaction, never only on the page):
   * Assist: approves or rejects requests and removes plain members.
   * Member: leaves the clan.
 
+Recruitment: a clan is either open (an eligible player joins at once) or by
+request (the default). Either way a player's main village must be at least
+the clan's minimum level. The recruitment language is shown and used to
+filter, not enforced. The Guild Master edits the emblem, motto, announcement
+and recruitment.
+
 A player who leaves (or is removed from) a clan waits REJOIN_SECONDS before
 joining or creating another, so nobody hops between clans during a challenge.
 Join requests expire after REQUEST_SECONDS; a player keeps at most
@@ -46,6 +52,9 @@ NAME_LENGTH = (3, 24)
 TAG_LENGTH = (2, 5)
 DESCRIPTION_LENGTH = 200
 ROLES = ('master', 'assist', 'member')
+EMBLEMS = 12                       # emblem 1..12 (own art, templates/js/clan_overlay.js)
+ANNOUNCEMENT_LENGTH = 500
+RECRUIT_LANGUAGES = ('all', 'es', 'pt-BR', 'en')
 CHALLENGE_SIZES = (3, 5, 7)        # best of N duels
 CHALLENGE_ANSWER_SECONDS = 10 * 60  # time the challenged clan has to accept
 
@@ -80,6 +89,26 @@ def clean_description(value):
     if len(text) > DESCRIPTION_LENGTH:
         raise ClanError('bad_description')
     return text
+
+
+def clean_announcement(value):
+    text = unicodedata.normalize('NFC', str(value or '').replace('\r\n', '\n').strip())
+    text = '\n'.join(' '.join(line.split()) for line in text.split('\n'))
+    while '\n\n\n' in text:
+        text = text.replace('\n\n\n', '\n\n')
+    if len(text) > ANNOUNCEMENT_LENGTH:
+        raise ClanError('bad_announcement')
+    return text
+
+
+def clean_settings(emblem, recruit_open, min_level, language):
+    try:
+        emblem, min_level = int(emblem), int(min_level)
+    except (TypeError, ValueError):
+        raise ClanError('bad_settings') from None
+    if not 1 <= emblem <= EMBLEMS or not 1 <= min_level <= 99 or language not in RECRUIT_LANGUAGES:
+        raise ClanError('bad_settings')
+    return emblem, 1 if recruit_open in (True, 1, '1', 'on', 'true', 'yes') else 0, min_level, language
 
 
 def name_key(value):
@@ -175,6 +204,23 @@ class ClanStore:
                 );
                 """
             )
+        self._migrate()
+
+    NEW_CLAN_COLUMNS = (
+        ('emblem', 'INTEGER NOT NULL DEFAULT 1'),
+        ('announcement', "TEXT NOT NULL DEFAULT ''"),
+        ('recruit_open', 'INTEGER NOT NULL DEFAULT 0'),
+        ('recruit_min_level', 'INTEGER NOT NULL DEFAULT 1'),
+        ('recruit_language', "TEXT NOT NULL DEFAULT 'all'"),
+    )
+
+    def _migrate(self):
+        """Columns added after the first version: an existing database gets them with their defaults."""
+        with self._connection() as connection:
+            present = {row['name'] for row in connection.execute('PRAGMA table_info(clans)')}
+            for name, definition in self.NEW_CLAN_COLUMNS:
+                if name not in present:
+                    connection.execute(f'ALTER TABLE clans ADD COLUMN {name} {definition}')
 
     @contextmanager
     def _connection(self):
@@ -242,8 +288,9 @@ class ClanStore:
                               ON CONFLICT(account_id) DO UPDATE SET left_at = excluded.left_at""", (account_id, now))
 
     # -- actions --
-    def create(self, actor_id, name, tag, description='', actor_name=None):
+    def create(self, actor_id, name, tag, description='', actor_name=None, emblem=1):
         name, tag, description = clean_name(name), clean_tag(tag), clean_description(description)
+        emblem = clean_settings(emblem, 0, 1, 'all')[0]
         with self._write() as (connection, now):
             if self._member(connection, actor_id):
                 raise ClanError('already_in_clan')
@@ -253,8 +300,8 @@ class ClanStore:
             if connection.execute('SELECT 1 FROM clans WHERE tag = ?', (tag,)).fetchone():
                 raise ClanError('tag_taken')
             cursor = connection.execute(
-                'INSERT INTO clans (name, name_key, tag, description, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?)',
-                (name, name_key(name), tag, description, actor_id, now))
+                'INSERT INTO clans (name, name_key, tag, description, emblem, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                (name, name_key(name), tag, description, emblem, actor_id, now))
             connection.execute("INSERT INTO clan_members (account_id, clan_id, role, joined_at) VALUES (?, ?, 'master', ?)",
                                (actor_id, cursor.lastrowid, now))
             connection.execute('DELETE FROM clan_requests WHERE account_id = ?', (actor_id,))
@@ -262,12 +309,15 @@ class ClanStore:
             self._log(connection, clan, actor_id, actor_name, 'create', now)
             return clan
 
-    def request_join(self, actor_id, clan_id):
+    def request_join(self, actor_id, clan_id, level=None):
+        """Ask to join a clan (`level`: the player's main village level, checked against the minimum)."""
         with self._write() as (connection, now):
             clan = self._clan(connection, clan_id)
             if self._member(connection, actor_id):
                 raise ClanError('already_in_clan')
             self._check_rejoin(connection, actor_id, now)
+            if level is not None and level < clan['recruit_min_level']:
+                raise ClanError('level_too_low')
             if self._count(connection, clan_id) >= MAX_MEMBERS:
                 raise ClanError('clan_full')
             if connection.execute('SELECT 1 FROM clan_requests WHERE clan_id = ? AND account_id = ?',
@@ -278,6 +328,41 @@ class ClanStore:
                 raise ClanError('too_many_requests')
             connection.execute('INSERT INTO clan_requests (clan_id, account_id, created_at) VALUES (?, ?, ?)',
                                (clan_id, actor_id, now))
+            return clan
+
+    def join(self, actor_id, clan_id, level, actor_name=None):
+        """Join an open clan at once (the minimum level still applies)."""
+        with self._write() as (connection, now):
+            clan = self._clan(connection, clan_id)
+            if not clan['recruit_open']:
+                raise ClanError('not_open')
+            if self._member(connection, actor_id):
+                raise ClanError('already_in_clan')
+            self._check_rejoin(connection, actor_id, now)
+            if level < clan['recruit_min_level']:
+                raise ClanError('level_too_low')
+            if self._count(connection, clan_id) >= MAX_MEMBERS:
+                raise ClanError('clan_full')
+            connection.execute("INSERT INTO clan_members (account_id, clan_id, role, joined_at) VALUES (?, ?, 'member', ?)",
+                               (actor_id, clan_id, now))
+            connection.execute('DELETE FROM clan_requests WHERE account_id = ?', (actor_id,))
+            self._log(connection, clan, actor_id, actor_name, 'join', now)
+            return clan
+
+    def settings(self, actor_id, emblem, description, announcement, recruit_open, min_level, language, actor_name=None):
+        """The Guild Master edits the emblem, motto, announcement and recruitment."""
+        description, announcement = clean_description(description), clean_announcement(announcement)
+        emblem, recruit_open, min_level, language = clean_settings(emblem, recruit_open, min_level, language)
+        with self._write() as (connection, now):
+            actor = self._member(connection, actor_id)
+            if not actor or actor['role'] != 'master':
+                raise ClanError('forbidden')
+            connection.execute(
+                """UPDATE clans SET emblem = ?, description = ?, announcement = ?, recruit_open = ?, recruit_min_level = ?,
+                       recruit_language = ? WHERE id = ?""",
+                (emblem, description, announcement, recruit_open, min_level, language, actor['clan_id']))
+            clan = self._clan(connection, actor['clan_id'])
+            self._log(connection, clan, actor_id, actor_name, 'edit', now)
             return clan
 
     def cancel_request(self, actor_id, clan_id):

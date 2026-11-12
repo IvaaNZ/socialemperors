@@ -1,0 +1,80 @@
+/* In-game clan window (SE_CLANS=on). Drawn over the game in its parchment style; own art. */
+/* Placed on the game picture itself (same box as .game-player in game.css), not on the letterbox bars. */
+.clanx-shield { --clanx-gw: min(100cqw, 100cqh * 760 / 600); --clanx-gh: min(100cqh, 100cqw * 600 / 760); position: absolute; z-index: 5; right: calc((100cqw - var(--clanx-gw)) / 2 + var(--clanx-gw) * .012); top: calc((100cqh - var(--clanx-gh)) / 2 + var(--clanx-gh) * .36); display: grid; justify-items: center; gap: 0; width: clamp(44px, calc(var(--clanx-gw) * .08), 74px); padding: 0; border: 0; background: none; cursor: pointer; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .55)); }
+.clanx-shield svg { width: 78%; height: auto; transition: transform .12s ease; }
+.clanx-shield:hover svg, .clanx-shield:focus-visible svg { transform: scale(1.08); }
+.clanx-shield:focus-visible { outline: 2px solid #f4d77a; outline-offset: 2px; border-radius: 6px; }
+.clanx-shield-label { margin-top: -2px; color: #fff; font: 700 clamp(10px, 1.7cqw, 14px)/1.1 "Trebuchet MS", system-ui, sans-serif; text-shadow: -1px -1px 0 #2b1a0b, 1px -1px 0 #2b1a0b, -1px 1px 0 #2b1a0b, 1px 1px 0 #2b1a0b; }
+
+.clanx-overlay { position: absolute; z-index: 20; inset: 0; display: grid; justify-items: center; align-items: start; padding: 3% 2% 2%; background: rgba(20, 12, 4, .45); }
+.clanx-overlay .clanx-window { max-height: 100%; }
+.clanx-overlay[hidden] { display: none; }
+.clanx-window { display: flex; flex-direction: column; width: min(720px, 96%); max-height: 94%; border: 4px solid #6b3d16; border-radius: 10px; background: linear-gradient(#f6e7c1, #ead08f); box-shadow: inset 0 0 0 2px #c9974f, 0 12px 36px rgba(0, 0, 0, .55); color: #3b2410; font: 14px/1.4 "Trebuchet MS", system-ui, sans-serif; overflow: hidden; }
+.clanx-titlebar { position: relative; display: flex; align-items: center; justify-content: center; padding: 8px 44px; background: linear-gradient(#8a5524, #5e3412); border-bottom: 3px solid #3e220b; }
+.clanx-titlebar h2 { margin: 0; color: #fff8e2; font-size: 18px; letter-spacing: 3px; text-transform: uppercase; text-shadow: 0 2px 0 #2b1a0b; }
+.clanx-close { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 30px; height: 30px; border: 2px solid #fff; border-radius: 6px; background: #c62828; color: #fff; font: 700 20px/1 system-ui, sans-serif; cursor: pointer; }
+.clanx-tabsbar { padding: 8px 10px 0; }
+.clanx-tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.clanx-tab { padding: 6px 12px; border: 2px solid #5e3412; border-radius: 6px 6px 0 0; background: linear-gradient(#a36a33, #7a4a1e); color: #fff3d0; font: 700 13px/1.2 inherit; cursor: pointer; }
+.clanx-tab.is-active { background: linear-gradient(#fff6d8, #f3dfa8); color: #3b2410; }
+.clanx-body { flex: 1; min-height: 0; overflow: auto; padding: 12px 14px 16px; border-top: 2px solid #5e3412; }
+.clanx-message { margin: 8px 12px 0; padding: 6px 10px; border-radius: 6px; font-weight: 700; }
+.clanx-message.is-ok { background: #dcefd0; color: #1d5a1f; }
+.clanx-message.is-error { background: #f8d7d3; color: #8c1d18; }
+.clanx-message[hidden], .clanx-confirm[hidden] { display: none; }
+.clanx-confirm { margin: 8px 12px 0; padding: 8px 10px; border: 2px solid #b3261e; border-radius: 6px; background: #fff4e5; }
+.clanx-confirm p { margin: 0 0 6px; font-weight: 700; }
+
+.clanx-banner { display: flex; gap: 12px; align-items: center; padding: 8px; border: 2px solid #c9974f; border-radius: 8px; background: #fbf1d4; }
+.clanx-banner-text { min-width: 0; flex: 1; }
+.clanx-ribbon { display: inline-block; max-width: 100%; padding: 4px 18px; background: linear-gradient(#c62828, #8c1d18); clip-path: polygon(0 0, 100% 0, 96% 50%, 100% 100%, 0 100%, 4% 50%); color: #fff; font-size: 17px; font-weight: 700; overflow-wrap: anywhere; }
+.clanx-motto { margin: 4px 0 0; font-style: italic; overflow-wrap: anywhere; }
+.clanx-facts { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 4px 0 0; font-weight: 700; }
+.clanx-leader { margin: 8px 0; }
+.clanx-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.clanx-card { margin: 10px 0 0; padding: 8px 10px; border: 2px solid #c9974f; border-radius: 8px; background: #fbf1d4; }
+.clanx-card h3 { display: inline-block; margin: 0 0 6px; padding: 2px 10px; border-radius: 4px; background: #7a4a1e; color: #fff3d0; font-size: 13px; }
+.clanx-announcement { margin: 0; overflow-wrap: anywhere; }
+.clanx-score { margin: 4px 0; font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.clanx-recruit { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 10px 0 0; }
+.clanx-chip { display: inline-block; padding: 2px 8px; border: 1px solid #a36a33; border-radius: 999px; background: #fff6d8; font-size: 12px; font-weight: 700; }
+.clanx-muted { margin: 4px 0; color: #6d5434; }
+.clanx-warn { margin: 6px 0; padding: 6px 8px; border-radius: 6px; background: #fff0c2; font-weight: 700; }
+.clanx-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; }
+.clanx-top { margin: 0 0 8px; }
+.clanx-btn { display: inline-block; min-height: 32px; padding: 5px 12px; border: 2px solid #3e220b; border-radius: 6px; background: #fff6d8; color: #3b2410; font: 700 13px/1.2 inherit; text-decoration: none; cursor: pointer; }
+.clanx-btn-green { border-color: #24561a; background: linear-gradient(#78b84a, #4e8a2b); color: #fff; text-shadow: 0 1px 0 #24561a; }
+.clanx-btn-brown { background: linear-gradient(#a36a33, #7a4a1e); color: #fff3d0; }
+.clanx-btn-red { border-color: #8c1d18; color: #8c1d18; }
+.clanx-btn-link { border: 0; background: none; color: #8c1d18; text-decoration: underline; }
+.clanx-btn:focus-visible, .clanx-tab:focus-visible, .clanx-close:focus-visible { outline: 2px solid #1f5fa8; outline-offset: 2px; }
+.clanx-linklike { padding: 0; border: 0; background: none; color: #1f3f8a; font: 700 13px/1.3 inherit; text-decoration: underline; cursor: pointer; text-align: left; }
+.clanx-list { margin: 8px 0 0; padding: 0; list-style: none; }
+.clanx-list li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px; padding: 6px 0; border-bottom: 1px solid #d6b97a; overflow-wrap: anywhere; }
+.clanx-list li > span:last-child { display: flex; flex-wrap: wrap; gap: 4px; }
+.clanx-small li { padding: 4px 0; font-size: 13px; }
+.clanx-inline { display: inline-flex; align-items: center; gap: 6px; }
+.clanx-role { display: inline-block; padding: 0 7px; border-radius: 999px; background: #efe3c3; font-size: 11px; font-weight: 700; }
+.clanx-role-master { background: #f4d77a; color: #5a3d00; }
+.clanx-role-assist { background: #cfe0f8; color: #1f3f8a; }
+.is-won strong, li.is-won { color: #1d5a1f; }
+.is-lost strong, li.is-lost { color: #8c1d18; }
+.clanx-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.clanx-table th, .clanx-table td { padding: 6px; border-bottom: 1px solid #d6b97a; text-align: left; }
+.clanx-search { display: flex; gap: 6px; }
+.clanx-search input, .clanx-form input, .clanx-form textarea, .clanx-form select, .clanx-row select { min-height: 32px; padding: 4px 8px; border: 2px solid #a36a33; border-radius: 6px; background: #fffaf0; color: #3b2410; font: inherit; }
+.clanx-search input { flex: 1; min-width: 0; }
+.clanx-form { display: grid; gap: 8px; }
+.clanx-form label, .clanx-row label { display: grid; gap: 3px; font-weight: 700; font-size: 13px; }
+.clanx-form fieldset { margin: 0; padding: 6px 8px; border: 2px solid #c9974f; border-radius: 8px; }
+.clanx-form legend { padding: 0 4px; font-weight: 700; }
+.clanx-row { display: flex; flex-wrap: wrap; align-items: end; gap: 8px; }
+.clanx-row label { flex: 1 1 140px; }
+.clanx-upper { text-transform: uppercase; }
+.clanx-emblems { display: flex; flex-wrap: wrap; gap: 6px; }
+.clanx-emblem-pick { position: relative; cursor: pointer; }
+.clanx-emblem-pick input { position: absolute; opacity: 0; }
+.clanx-emblem-pick svg { display: block; padding: 2px; border: 2px solid transparent; border-radius: 6px; }
+.clanx-emblem-pick input:checked + svg { border-color: #1f5fa8; background: #fff6d8; }
+.clanx-emblem-pick input:focus-visible + svg { outline: 2px solid #1f5fa8; }
+@media (max-width: 560px) { .clanx-grid { grid-template-columns: 1fr; } .clanx-window { font-size: 13px; } }

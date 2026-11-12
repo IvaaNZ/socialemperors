@@ -135,6 +135,15 @@ primero a la mayoría. Se puede rendir, y al terminar se puede retar de nuevo
 al mismo clan o a otro. Avisos en vivo al Guild Master, etiqueta del clan y
 marca "Clan rival" en Duelos, historial de retos y ranking de clanes.
 
+Clan dentro del juego (en curso, 4 fases):
+  - Fase 1 (hecha): escudo "Clan" sobre el juego que abre una ventana con
+    aspecto del juego: Mi clan (emblema, lema, poder, líder, anuncio,
+    reclutamiento abierto o con solicitud, nivel mínimo, idioma), Miembros,
+    Retos, Clasificación y Buscar clan.
+  - Fase 2: chat del clan y Alianza (una por clan, con chat compartido).
+  - Fase 3: misiones diarias y nivel del clan.
+  - Fase 4: tienda del clan (recursos y unidades).
+
 
 PUNTOS QUE SIGUEN
 -----------------

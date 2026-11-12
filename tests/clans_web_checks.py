@@ -6,7 +6,9 @@ imported with SE_CLANS=on, and the rest of the suite imports it with clans off.
 
 import contextlib
 import io
+import json
 import os
+import re
 from pathlib import Path
 import tempfile
 import unittest
@@ -212,6 +214,90 @@ class ClanWebTests(unittest.TestCase):
         self.assertLess(ranking.index('[ARE]'), ranking.index('[BRE]'))
         self.post(beta, f'/clans/{alfa_id}/challenge', best_of='3')  # free to challenge again at once
         self.assertEqual(self.clans.current_challenge(beta_id)['status'], 'pending')
+
+    def api(self, client, path):
+        with contextlib.redirect_stdout(io.StringIO()):
+            response = client.get(path)
+        self.assertEqual(response.status_code, 200, path)
+        return response.get_json()
+
+    def action(self, client, action, **fields):
+        with contextlib.redirect_stdout(io.StringIO()):
+            response = client.post('/clans/api/action', data={'csrf_token': client.token, 'action': action, **fields})
+        return response.get_json(), response.status_code
+
+    def test_game_page_carries_the_clan_window(self):
+        ana = self.player()
+        page = self.page(ana, '/play.html')
+        config = json.loads(re.search(r'<script id="clan-overlay-config" type="application/json">(.*?)</script>', page).group(1))
+        self.assertEqual((config['state'], config['action'], config['csrf']), ('/clans/api/state', '/clans/api/action', ana.token))
+        self.assertEqual(config['texts']['button'], 'Clan')
+        self.assertIn('js/clan_overlay.js', page)
+
+    def test_the_window_api_creates_edits_and_joins(self):
+        ana, beto, caro = self.player(), self.player(), self.player()
+        state = self.api(ana, '/clans/api/state')
+        self.assertIsNone(state['clan'])
+        self.assertTrue(state['me']['can_create'])
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(ana.post('/clans/api/action', data={'action': 'create', 'name': 'Sin token', 'tag': 'STK'}).status_code, 400)
+        result, _ = self.action(ana, 'create', name='Ventana', tag='VEN', description='Lema', emblem='6')
+        self.assertTrue(result['ok'], result)
+        self.assertEqual(result['message'], 'Clan creado.')
+        clan = result['state']['clan']
+        self.assertEqual((clan['tag'], clan['emblem'], clan['role'], clan['leader'], clan['members']), ('VEN', 6, 'master', ana.account['name'], 1))
+        self.assertGreaterEqual(clan['power'], 0)
+        # By request: Beto asks; the Guild Master accepts from the window.
+        result, _ = self.action(beto, 'join', clan_id=str(clan['id']))
+        self.assertEqual((result['ok'], result['message']), (True, 'Solicitud enviada. Un líder del clan la va a responder.'))
+        self.assertTrue(self.api(beto, f'/clans/api/clans/{clan["id"]}')['requested'])
+        request_id = self.api(ana, '/clans/api/state')['clan']['requests'][0]['id']
+        self.assertTrue(self.action(ana, 'accept_request', request_id=str(request_id))[0]['ok'])
+        # An Assist cannot edit the clan.
+        self.assertTrue(self.action(ana, 'make_assist', target_id=str(beto.account['id']))[0]['ok'])
+        result, _ = self.action(beto, 'settings', emblem='2', description='', announcement='x', recruit_open='1', min_level='1', language='all')
+        self.assertEqual((result['ok'], result['message']), (False, 'No tienes permiso para hacer eso.'))
+        # Open recruitment with a minimum level.
+        result, _ = self.action(ana, 'settings', emblem='9', description='Nuevo lema', announcement='Hola\nclan', recruit_open='1',
+                                min_level='99', language='es')
+        self.assertTrue(result['ok'], result)
+        self.assertEqual((result['state']['clan']['announcement'], result['state']['clan']['open']), ('Hola\nclan', True))
+        result, _ = self.action(caro, 'join', clan_id=str(clan['id']))
+        self.assertEqual((result['ok'], result['message']), (False, 'Tu aldea principal no tiene el nivel mínimo de este clan.'))
+        self.action(ana, 'settings', emblem='9', description='Nuevo lema', announcement='', recruit_open='1', min_level='1', language='es')
+        result, _ = self.action(caro, 'join', clan_id=str(clan['id']))
+        self.assertEqual((result['ok'], result['message'], result['state']['clan']['role']), (True, 'Entraste al clan.', 'member'))
+        found = self.api(caro, '/clans/api/clans?q=venta')['clans']
+        self.assertEqual([(c['tag'], c['open'], c['language'], c['members']) for c in found], [('VEN', True, 'es', 3)])
+        self.assertEqual(self.action(caro, 'dance')[1], 400)
+
+    def test_the_window_api_runs_clan_challenges(self):
+        ana, beto = self.player(), self.player()
+        alfa = self.action(ana, 'create', name='Alfa API', tag='AAP')[0]['state']['clan']['id']
+        beta = self.action(beto, 'create', name='Beta API', tag='BAP')[0]['state']['clan']['id']
+        card = self.api(ana, f'/clans/api/clans/{beta}')
+        self.assertTrue(card['can_challenge_this'])
+        self.assertIsNone(card['challenge'])  # another clan's challenge is not shown to outsiders
+        result, _ = self.action(ana, 'challenge', clan_id=str(beta), best_of='3')
+        self.assertTrue(result['ok'], result)
+        incoming = self.api(beto, '/clans/api/state')['clan']['challenge']
+        self.assertEqual((incoming['status'], incoming['incoming'], incoming['best_of'], incoming['rival_tag']), ('pending', True, 3, 'AAP'))
+        self.assertTrue(self.action(beto, 'accept_challenge', challenge_id=str(incoming['id']))[0]['ok'])
+        active = self.api(ana, '/clans/api/state')['clan']['challenge']
+        self.assertEqual((active['status'], active['needed'], active['our_wins']), ('active', 2, 0))
+        self.assertFalse(self.api(ana, f'/clans/api/clans/{beta}')['can_challenge_this'])
+        result, _ = self.action(ana, 'surrender', challenge_id=str(active['id']))
+        self.assertTrue(result['ok'])
+        history = result['state']['clan']['history'][0]
+        self.assertEqual((history['outcome'], history['ending']), ('lost', 'surrender'))
+        tags = [row['tag'] for row in self.api(ana, '/clans/api/state')['ranking']]
+        self.assertLess(tags.index('BAP'), tags.index('AAP'))  # the clan that won the challenge ranks higher
+
+    def test_the_window_api_needs_an_approved_player(self):
+        anonymous = server.app.test_client()
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(anonymous.get('/clans/api/state').status_code, 403)
+            self.assertIn(anonymous.post('/clans/api/action', data={'action': 'create'}).status_code, (400, 403))
 
     def test_pages_need_an_approved_session(self):
         anonymous = server.app.test_client()

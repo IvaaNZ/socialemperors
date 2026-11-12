@@ -1,0 +1,4 @@
+{# In-game clan window (SE_CLANS=on only): the "Clan" shield over the game and its window. #}
+<link rel="stylesheet" href="{{ url_for('css', path='clan_overlay.css') }}">
+<script id="clan-overlay-config" type="application/json">{{ dict(clan_overlay, csrf=csrf_token()) | tojson }}</script>
+<script src="{{ url_for('javascript', path='clan_overlay.js') }}" defer></script>

@@ -16,7 +16,7 @@ NODE = shutil.which('node')
 @unittest.skipUnless(NODE, 'Node.js is not installed')
 class DuelScriptTests(unittest.TestCase):
     def run_page(self, mode):
-        result = subprocess.run([NODE, str(TESTS / 'duels_js_check.js'), mode], capture_output=True, text=True, timeout=60)
+        result = subprocess.run([NODE, str(TESTS / 'duels_js_check.js'), mode], capture_output=True, text=True, encoding='utf-8', timeout=60)
         self.assertEqual(result.returncode, 0, result.stderr)
         return json.loads(result.stdout.strip().splitlines()[-1])
 
