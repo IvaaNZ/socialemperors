@@ -15,7 +15,9 @@ ground and below those units:
     NEAR_TILES (measured from the units' current positions): red area;
   * in battles (attacks, adventures, survival, tournaments), enemy towers
     and castles — buildings with attack and range — always show their red
-    area, so you can see the ground they cover.
+    area, so you can see the ground they cover;
+  * with duels on (all_in_tournament), in the duel arena every unit of both
+    armies always shows its area: yours blue, the rival's red.
 
 The area is the game's own range test (`BBox.intersectsRange`): a square of
 iAttackRange tiles around the unit's tile, which on the isometric ground is a
@@ -40,6 +42,7 @@ FILL_ALPHA = 0.14
 LINE_WIDTH = 2
 NEAR_TILES = 3
 BATTLE_MODES = (3, 6)  # Constants.GAME_MODE_ASSAULT .. GAME_MODE_TOURNAMENT (campaign, survival between)
+TOURNAMENT_MODE = 6    # Constants.GAME_MODE_TOURNAMENT: the duel arena
 SHAPE_SLOT = '__rangeShape'
 DRAW_METHOD = '__drawRanges'
 DO_ABC = 82
@@ -138,7 +141,7 @@ def _loop(collection_ops, obj, idx, el, body, tag):
              ('label:', 'done_' + tag), ('kill', obj), ('kill', idx)])
 
 
-def build_draw_method(abc, slot):
+def build_draw_method(abc, slot, all_in_tournament=False):
     """Bytecode of Base.__drawRanges (see the module docstring)."""
     n = {name: _qname(abc, name, package) for name, package in NAMES.items()}
     push = _qname(abc, *BUILTIN_PUSH)
@@ -148,7 +151,7 @@ def build_draw_method(abc, slot):
     # 6 element, 7/8 loop index/object, 9 show, 10 colour, 11 range, 12 selected element,
     # 13/14 inner loop index/object, 15 dx, 16 dy, 17 graphics, 18 cx, 19 cy, 20 half width, 21 half height,
     # 22 child index, 23 lowest child index among the units drawn (-1: none),
-    # 24 game mode, 25 in a battle
+    # 24 game mode, 25 in a battle, 26 show every unit (duel arena)
     elements = [('getlex', n['Base']), ('getproperty', n['Iso']), ('getproperty', n['vIsoElements'])]
     selected_body = _filters(n, 6, 'next_sel') + [
         ('getlocal', 6), ('getproperty', n['PlayerID']), ('getlex', n['Constants']), ('getproperty', n['PLAYER_SELF']),
@@ -187,11 +190,19 @@ def build_draw_method(abc, slot):
         ('getlocal', 6), ('getproperty', n['PlayerID']), ('getlex', n['Constants']), ('getproperty', n['PLAYER_SELF']),
         ('ifne', 'enemy'),
         ('getlocal', 6), ('getproperty', n['iconoSeleccionado']), ('pushnull',), ('equals',), ('not',), ('setlocal', 9),
+    ] + ([
+        ('getlocal', 26), ('iffalse', 'own_selected'), ('pushtrue',), ('setlocal', 9),
+        ('label:', 'own_selected'),
+    ] if all_in_tournament else []) + [
         ('pushint', blue), ('setlocal', 10), ('jump', 'check'),
         ('label:', 'enemy'),
         ('getlocal', 6), ('getproperty', n['PlayerID']), ('getlex', n['Constants']), ('getproperty', n['PLAYER_ENEMY']),
         ('ifne', 'next_draw'),
         ('pushint', red), ('setlocal', 10),
+    ] + ([
+        ('getlocal', 26), ('iffalse', 'not_all'), ('pushtrue',), ('setlocal', 9), ('jump', 'check'),
+        ('label:', 'not_all'),
+    ] if all_in_tournament else []) + [
         # In battles, enemy towers and castles (buildings that attack) always show their area.
         ('getlocal', 25), ('iffalse', 'near_check'),
         ('getlocal', 6), ('getlex', n['IsoUnit']), ('istypelate',), ('iftrue', 'near_check'),
@@ -251,7 +262,13 @@ def build_draw_method(abc, slot):
         ('getlocal', 24), ('pushbyte', BATTLE_MODES[1]), ('ifgt', 'not_battle'),
         ('pushtrue',), ('setlocal', 25),
         ('label:', 'not_battle'),
-    ] + _loop(elements, 8, 7, 6, selected_body, 'sel') + [
+    ] + ([
+        # Duel arena (tournament mode): both armies' areas, always.
+        ('pushfalse',), ('setlocal', 26),
+        ('getlocal', 24), ('pushbyte', TOURNAMENT_MODE), ('ifne', 'not_all_mode'),
+        ('pushtrue',), ('setlocal', 26),
+        ('label:', 'not_all_mode'),
+    ] if all_in_tournament else []) + _loop(elements, 8, 7, 6, selected_body, 'sel') + [
         ('getlocal', 5), ('getproperty', n['length']), ('pushbyte', 0), ('ifne', 'has_selection'),
         ('getlocal', 25), ('iffalse', 'end'),
         ('label:', 'has_selection'),
@@ -275,7 +292,7 @@ def _public_trait_name(abc, name):
     return abc.add_qname('', name)
 
 
-def add_range_overlay_to_abc(abc):
+def add_range_overlay_to_abc(abc, all_in_tournament=False):
     """Add Base.__rangeShape, Base.__drawRanges and the call in UpdateGame2."""
     base_index = abc.class_index('Base')
     base = abc.instances[base_index]
@@ -285,11 +302,11 @@ def add_range_overlay_to_abc(abc):
     reference = abc.body_of(abc.method_of('Base', 'DebugUnitTiles'))
     slot = _public_trait_name(abc, SHAPE_SLOT)
     base['traits'].append({'name': slot, 'kind': 0, 'data': [0, 0, 0], 'metadata': None})
-    code = build_draw_method(abc, slot)
+    code = build_draw_method(abc, slot, all_in_tournament)
     method_index = len(abc.methods)
     abc.methods.append({'return_type': 0, 'param_types': [], 'name': abc.add_string(DRAW_METHOD), 'flags': 0,
                         'options': None, 'param_names': None})
-    abc.bodies.append({'method': method_index, 'max_stack': 8, 'local_count': 26,
+    abc.bodies.append({'method': method_index, 'max_stack': 8, 'local_count': 27 if all_in_tournament else 26,
                        'init_scope_depth': reference['init_scope_depth'],
                        'max_scope_depth': reference['init_scope_depth'] + 1,
                        'code': code, 'exceptions': [], 'traits': []})
@@ -304,8 +321,12 @@ def add_range_overlay_to_abc(abc):
     return abc
 
 
-def add_range_overlay(data):
-    """Return the movie with the attack-area overlay added to its DoABC block."""
+def add_range_overlay(data, all_in_tournament=False):
+    """Return the movie with the attack-area overlay added to its DoABC block.
+
+    all_in_tournament (SE_DUELS=on): in the duel arena (tournament mode) every
+    unit of both armies shows its area, without selecting anything.
+    """
     from swf_localization import decode_swf, encode_tag, iter_tags
     body, header_length = decode_swf(data)
     tags = []
@@ -315,7 +336,7 @@ def add_range_overlay(data):
             count += 1
             offset = payload.index(b'\0', 4) + 1
             abc = Abc(payload[offset:])
-            payload = payload[:offset] + add_range_overlay_to_abc(abc).serialize()
+            payload = payload[:offset] + add_range_overlay_to_abc(abc, all_in_tournament).serialize()
         tags.append(encode_tag(code, payload, long_length))
     if count != 1:
         raise AbcError('Expected exactly one DoABC tag')

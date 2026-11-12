@@ -725,7 +725,7 @@ def localized_game_movie(language=None):
     original = (Path(ASSETS_DIR) / 'flash' / GAME_VERSION).read_bytes()
     patched = patch_tutorial(patch_private_economy(localize_swf(original, language=language)))
     # Bytecode strings change last: the audited patches above pin the ABC checksum.
-    translated = add_range_overlay(localize_abc_strings(patched, language))
+    translated = add_range_overlay(localize_abc_strings(patched, language), all_in_tournament=DUELS_ENABLED)
     if DUELS_ENABLED:  # lets the duel page open the tournament arena
         from swf_duel_bridge import add_duel_bridge
         translated = add_duel_bridge(translated)

@@ -25,6 +25,12 @@ destroyed". This edit adds, without changing any original instruction:
   * a static slot TournamentManager.__duelAlive, set at the start of
     TournamentIA.end to the enemy units still alive
     (countArrayItems(arUnits), the same count the game's own score uses);
+  * TournamentIA.waitingTime lowered from 10 s to AI_WAITING_MS, so the rival
+    army (in the weekly-tournament mode the duel config turns on) advances and
+    attacks soon after the start;
+  * at the start of TournamentIA.changeState, when the battle starts
+    (STATE_FORMING): the player's units (TournamentIA.foes) become aggressive
+    with an aggro range over the whole arena, so both armies charge;
   * at the start of TournamentManager.end(victory, score), when that slot is
     set: score.value = 100 x (enemyArmy.length - alive) / enemyArmy.length.
     finish_tournament_match.php then sends it as attacker_points.
@@ -38,7 +44,7 @@ import struct
 import zlib
 
 from swf_abc import Abc, AbcError, OPCODES, Reader, s24, u30
-from swf_range_overlay import OPCODE_BY_NAME, _qname
+from swf_range_overlay import OPCODE_BY_NAME, _add_int, _loop, _qname
 
 DO_ABC = 82
 CALLBACK = 'startDuel'
@@ -46,6 +52,8 @@ START_METHOD = '__startDuel'
 REGISTER_METHOD = '__registerDuel'
 ALIVE_SLOT = '__duelAlive'
 GAME_MODE_NORMAL = 1
+AI_WAITING_MS = 2000      # TournamentIA.waitingTime (the game's 10000): the rival army waits less before charging
+PLAYER_AGGRO_TILES = 200  # the player's arena units look for enemies across the whole arena
 
 BRANCH_OPS = {'jump', 'iftrue', 'iffalse', 'ifeq', 'ifne', 'iflt', 'ifle', 'ifgt', 'ifge',
               'ifnlt', 'ifnle', 'ifngt', 'ifnge', 'ifstricteq', 'ifstrictne'}
@@ -171,6 +179,42 @@ def add_duel_bridge_to_abc(abc):
     body = abc.body_of(manager_end)
     prepend(body, code)
     body['max_stack'] = max(body['max_stack'], 5)
+
+    # TournamentIA.waitingTime: shorter waits before the rival army advances and attacks.
+    ia_class = abc.instances[abc.class_index('TournamentIA')]
+    waiting = next(t for t in ia_class['traits'] if abc.multiname_name(t['name']) == 'waitingTime')
+    waiting['data'] = [waiting['data'][0], waiting['data'][1], _add_int(abc, AI_WAITING_MS), 3]
+
+    # TournamentIA.changeState(STATE_FORMING) (the player pressed "start"): the player's
+    # units turn aggressive, so they go for the enemy by themselves like the rival army.
+    change_state = abc.method_of('TournamentIA', 'changeState')
+    body = abc.body_of(change_state)
+    obj, idx, unit, ia = (body['local_count'] + offset for offset in range(4))
+    ia_init = ia_class['iinit']
+    m = {
+        'STATE_FORMING': used_multiname(abc, abc.method_of('TournamentIA', 'update'), 'getproperty', 'STATE_FORMING'),
+        'foes': used_multiname(abc, ia_end, 'getproperty', 'foes'),
+        'iaIA': used_multiname(abc, ia_init, 'getproperty', 'iaIA'),
+        'iCondition': used_multiname(abc, ia_init, 'setproperty', 'iCondition'),
+        'IA': used_multiname(abc, ia_init, 'getlex', 'IA'),
+        'CONDITION_AGGRESSIVE': used_multiname(abc, abc.method_of('IA', 'Update'), 'getproperty', 'CONDITION_AGGRESSIVE'),
+        'iAggroRange': used_multiname(abc, abc.method_of('IA', 'Update'), 'getproperty', 'iAggroRange'),
+    }
+    each_unit = [
+        ('getlocal', unit), ('pushnull',), ('ifeq', 'next_foes'),
+        ('getlocal', unit), ('getproperty', m['iaIA']), ('coerce_a',), ('setlocal', ia),
+        ('getlocal', ia), ('pushnull',), ('ifeq', 'next_foes'),
+        ('getlocal', ia), ('getlex', m['IA']), ('getproperty', m['CONDITION_AGGRESSIVE']), ('setproperty', m['iCondition']),
+        ('getlocal', ia), ('pushshort', PLAYER_AGGRO_TILES), ('setproperty', m['iAggroRange']),
+    ]
+    code, _ = assemble([
+        ('getlocal1',), ('getlocal0',), ('getproperty', m['STATE_FORMING']), ('ifne', 'keep_state'),
+    ] + _loop([('getlocal0',), ('getproperty', m['foes'])], obj, idx, unit, each_unit, 'foes') + [
+        ('label:', 'keep_state'),
+    ])
+    prepend(body, code)
+    body['local_count'] += 4
+    body['max_stack'] = max(body['max_stack'], 4)
 
     # Base.__startDuel(duelId, typeId, enemyId, enemyName, army, enemyArmy, playerName): Boolean
     reference = abc.body_of(abc.method_of('Base', 'DebugUnitTiles'))

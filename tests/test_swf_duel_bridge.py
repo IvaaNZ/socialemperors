@@ -88,6 +88,22 @@ class DuelBridgeTests(unittest.TestCase):
                      else static_method(self.abc, class_name, method))
             self.assertTrue(self.abc.body_of(after)['code'].endswith(self.before.body_of(before)['code']))
 
+    def test_both_armies_charge(self):
+        from swf_abc import Reader
+        from swf_duel_bridge import AI_WAITING_MS, PLAYER_AGGRO_TILES
+        ia = self.abc.instances[self.abc.class_index('TournamentIA')]
+        waiting = next(t for t in ia['traits'] if self.abc.multiname_name(t['name']) == 'waitingTime')
+        self.assertEqual(Reader(self.abc.ints[waiting['data'][2] - 1]).u30(), AI_WAITING_MS)
+        change = self.abc.method_of('TournamentIA', 'changeState')
+        code = ops(self.abc, change)
+        self.assertEqual(code[:4], [('getlocal1', ''), ('getlocal0', ''), ('getproperty', 'STATE_FORMING'), code[3]])
+        self.assertIn(('getproperty', 'foes'), code[:12])
+        self.assertIn(('getproperty', 'CONDITION_AGGRESSIVE'), code)
+        self.assertIn(('pushshort', str(PLAYER_AGGRO_TILES)), code)
+        before = self.before.body_of(self.before.method_of('TournamentIA', 'changeState'))
+        self.assertTrue(self.abc.body_of(change)['code'].endswith(before['code']))  # the original code follows
+        self.assertEqual(self.abc.body_of(change)['local_count'], before['local_count'] + 4)
+
     def test_the_bridge_is_added_once(self):
         with self.assertRaises(AbcError):
             add_duel_bridge_to_abc(abc_of(self.bridged)[0])

@@ -67,6 +67,19 @@ class RangeOverlayTests(unittest.TestCase):
         movie = add_range_overlay(MOVIE.read_bytes())
         self.assertEqual(Abc(game_abc(movie)).serialize(), game_abc(movie))
 
+    def test_duel_arena_shows_both_armies_only_when_asked(self):
+        from swf_range_overlay import TOURNAMENT_MODE
+        duel = add_range_overlay_to_abc(Abc(self.source), all_in_tournament=True)
+        body = duel.body_of(duel.method_of('Base', DRAW_METHOD))
+        code = [(name, operands) for _, name, operands in disassemble(duel, body['code'])]
+        self.assertEqual(body['local_count'], 27)
+        self.assertIn(('pushbyte', str(TOURNAMENT_MODE)), code)
+        self.assertEqual(sum(1 for item in code if item == ('getlocal', '26')), 2)  # own units and enemy units
+        plain = self.abc.body_of(self.abc.method_of('Base', DRAW_METHOD))
+        self.assertEqual(plain['local_count'], 26)  # without duels, the drawing is exactly as before
+        self.assertNotIn(('getlocal', '26'), [(n, o) for _, n, o in disassemble(self.abc, plain['code'])])
+        self.assertEqual(Abc(duel.serialize()).serialize(), duel.serialize())
+
     def test_assembler_resolves_forward_and_backward_branches(self):
         code = assemble([('label:', 'top'), ('label',), ('jump', 'end'), ('jump', 'top'), ('label:', 'end'), ('returnvoid',)])
         ops = disassemble(Abc(self.source), code)
