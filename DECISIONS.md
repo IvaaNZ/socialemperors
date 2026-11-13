@@ -187,3 +187,7 @@ Fallas encontradas y corregidas:
 - **Duelo con la ventana del clan abierta:** la ventana se cierra al entrar a la arena, para que no tape la batalla.
 
 Probado en el navegador con una copia de los datos y los dos roles: nombrar y quitar Assist, pasar el mando, editar el clan (anuncio con HTML, que se muestra como texto, en varias líneas), expulsar, la espera para volver a entrar, "Retar clan" sin clan, y duelos cancelados, rechazados y vencidos.
+
+## Sin el botón "Retar clan" en el juego
+
+Decisión del dueño: en la pantalla del juego queda solo el botón **Clan**; para retar se usa la pestaña **Retar clan** de su ventana. Se quitaron el segundo ícono y sus imágenes, y el panel del juego vuelve a su capacidad original (2 íconos, alcanza para el cofre del lunes y "Clan"), así que el parche ya no cambia ninguna instrucción original del juego: solo agrega el ícono y su clic.

@@ -745,7 +745,7 @@ def localized_game_movie(language=None):
         def art(prefix):
             name = f'{prefix}_{locale}.png'
             return '/img/' + (name if (Path(TEMPLATES_DIR) / 'img' / name).exists() else f'{prefix}_es.png')
-        translated = add_clan_button(translated, image_url=art('clan_button'), challenge_image_url=art('clan_challenge_button'))
+        translated = add_clan_button(translated, image_url=art('clan_button'))
     return translated, hashlib.sha256(translated).hexdigest()
 
 ## GAME DYNAMIC
