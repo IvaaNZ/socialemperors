@@ -166,7 +166,7 @@ class AccessTests(unittest.TestCase):
                 self.assertIn(f'src="{prefix}/js/game.js"', page.text)
                 self.assertNotIn('http://', configuration['baseUrl'])
 
-    def test_ruffle_draws_with_its_own_webgl_only_with_abilities_on(self):
+    def test_the_server_picks_ruffles_renderer_and_quality(self):
         self.create_player(status='approved')
         self.login()
 
@@ -175,11 +175,21 @@ class AccessTests(unittest.TestCase):
             return json.loads(re.search(r'<script id="game-config" type="application/json">(.*?)</script>',
                                         page.text, re.S).group(1))
 
-        self.assertFalse(configuration()['webglRenderer'])
-        with patch.object(server, 'ABILITIES_ENABLED', True):
-            self.assertTrue(configuration()['webglRenderer'])
+        cases = [({}, False, {'renderer': '', 'quality': '16x16'}),
+                 ({}, True, {'renderer': '', 'quality': 'high'}),  # abilities: no "16x16" (filter shader crash)
+                 ({'SE_RUFFLE_RENDERER': 'webgl', 'SE_RUFFLE_QUALITY': 'medium'}, True, {'renderer': 'webgl', 'quality': 'medium'}),
+                 ({'SE_RUFFLE_RENDERER': 'nope', 'SE_RUFFLE_QUALITY': 'nope'}, False, {'renderer': '', 'quality': '16x16'})]
+        for environment, abilities, expected in cases:
+            with self.subTest(environment=environment, abilities=abilities):
+                with patch.dict(os.environ, environment), patch.object(server, 'ABILITIES_ENABLED', abilities):
+                    settings = server.ruffle_settings()
+                self.assertEqual(settings, expected)
+                with patch.object(server, 'RUFFLE_SETTINGS', settings):
+                    page = configuration()
+                self.assertEqual((page['ruffle'], page['webglRenderer']), (expected, expected['renderer'] == 'webgl'))
         script = Path('templates/js/game.js').read_text(encoding='utf-8')
-        self.assertIn('if (config.webglRenderer) window.RufflePlayer.config.preferredRenderer = "webgl";', script)
+        self.assertIn('if (ruffleSettings.renderer) window.RufflePlayer.config.preferredRenderer = ruffleSettings.renderer;', script)
+        self.assertIn('quality: ruffleSettings.quality || "16x16",', script)
 
     def test_language_defaults_to_spanish_and_rejects_unknown_values(self):
         with patch.dict(os.environ, {}, clear=False):

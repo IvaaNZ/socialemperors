@@ -266,7 +266,10 @@
     window.RufflePlayer.config = { publicPath: runtimePath, polyfills: false, favorFlash: false };
     // SE_ABILITIES=on: Ruffle's wgpu-over-WebGL renderer (its usual pick, even with WebGPU present) crashes
     // drawing the ability effects' colour filters (freeze, poison, stone); its own WebGL renderer does not.
-    if (config.webglRenderer) window.RufflePlayer.config.preferredRenderer = "webgl";
+    // The server picks Ruffle's renderer and quality (SE_RUFFLE_RENDERER, SE_RUFFLE_QUALITY). Pages from an older
+    // server only say webglRenderer: with SE_ABILITIES=on, Ruffle's own WebGL renderer.
+    const ruffleSettings = config.ruffle || { renderer: config.webglRenderer ? "webgl" : "", quality: "16x16" };
+    if (ruffleSettings.renderer) window.RufflePlayer.config.preferredRenderer = ruffleSettings.renderer;
     const script = document.createElement("script");
     script.src = `${runtimePath}ruffle.js`;
     script.addEventListener("error", () => {
@@ -319,7 +322,7 @@
                     || document.getElementById("pvp-overlay-config")),
                 allowFullscreen: true,
                 splashScreen: false,
-                quality: "16x16",
+                quality: ruffleSettings.quality || "16x16",
                 scale: "showAll",
                 forceScale: true,
                 letterbox: "on",

@@ -20,6 +20,7 @@
         'eventsUrl': url_for('village_events'),
         'texts': script_texts | default({}),
         'webglRenderer': webgl_renderer | default(false),
+        'ruffle': ruffle_settings | default({'renderer': 'webgl' if webgl_renderer else '', 'quality': '16x16'}),
     } | tojson }}</script>
     <script src="{{ url_for('javascript', path='game.js') }}" defer></script>
 </head>

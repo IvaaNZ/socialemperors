@@ -271,7 +271,16 @@ Pedido del dueño: que la ventana PvP se lea mejor, un borde negro en las letras
 - **Juego** (`swf_readable_text.py`): cada texto blanco que aparece en pantalla (un `TextField` con color 0xFFFFFF y sin filtros) recibe un borde negro (`GlowFilter`), como los rótulos propios del juego. Lo hace un único escucha en la fase de captura de `ADDED_TO_STAGE` del escenario, dentro de su propio try/catch.
 - **Ventana de equipo:** el juego solo agrisaba una miniatura agotada con un filtro de color; ahora se oculta (`ThumbUnit.deactivate`) y vuelve a verse cuando se quita esa unidad del equipo (`activate`). Queda el hueco: el juego no reacomoda la lista.
 - Es un pedido del dueño, por eso está encendido por defecto; `SE_READABLE_UI=off` sirve el juego como antes.
-- **Limitación:** los bordes del juego son filtros. Con `SE_ABILITIES=on` la página pide a Ruffle su forma de dibujo WebGL propia, que no dibuja filtros: ahí los bordes dentro del juego no se ven (las ventanas HTML sí). Ocultar las unidades agotadas funciona con cualquier forma de dibujo.
+- Los bordes del juego son filtros: se ven con la forma de dibujo normal de Ruffle (ver la sección siguiente). Ocultar las unidades agotadas funciona con cualquier forma de dibujo.
 
 Probado en el navegador con la copia de los datos (forma de dibujo habitual de Ruffle): borde en "Elige tu equipo", "Unidades seleccionadas" y las cantidades x1/x2; un caballero x1 desapareció al elegirlo y el dragón azul volvió con x1 al quitarlo del equipo.
+
+## Forma de dibujo de Ruffle: la normal, con calidad "alta" si hay habilidades
+
+Pedido del dueño: algunas palabras no se distinguían y aparecían puntos verdes al pasar el puntero sobre edificios y unidades (y puntos oscuros en el pasto).
+
+- **Causa:** con `SE_ABILITIES=on` la página pedía a Ruffle su forma de dibujo WebGL propia, para evitar que el juego se cerrara con los efectos de las habilidades. Esa forma de dibujo no dibuja los filtros del juego: ni el borde de las letras blancas, ni el gris de lo deshabilitado, y el resaltado verde (un brillo) salía como puntos sueltos.
+- **Lo que se encontró:** el cierre no era de la forma de dibujo normal en sí, sino de la calidad máxima que pedía la página (`16x16`): con esa calidad, Ruffle fallaba al preparar el filtro de color. Con calidad `high`, 4 duelos con habilidades (con los dos juegos completos) terminaron sin ninguna caída; con `16x16` se caía un juego en cada tanda.
+- **Ahora:** la página usa la forma de dibujo que elige Ruffle y, con las habilidades encendidas, calidad `high`. Sin habilidades, todo igual que antes (`16x16`). Se cambia con `SE_RUFFLE_RENDERER` (`webgpu`, `wgpu-webgl`, `webgl`, `canvas`; sin poner, la elige Ruffle) y `SE_RUFFLE_QUALITY` (`low`, `medium`, `high`, `best`, `8x8`, `16x16`...). Si el juego volviera a cerrarse en alguna computadora, `SE_RUFFLE_RENDERER=webgl` vuelve a la forma anterior.
+- Probado en el navegador con la copia de los datos: 4 duelos con habilidades sin caídas; el resaltado del molino se ve parejo, sin puntos; "CONSTRUIR", "Campamento enemigo", "Elegir área" y los carteles de las unidades con borde negro.
 

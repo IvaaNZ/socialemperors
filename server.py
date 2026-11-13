@@ -671,7 +671,7 @@ def play():
         if not isinstance(last_login, int) or last_login < 0:
             last_login = server_time
         return render_template("play.html", script_texts=game_script_texts(), save_info=save_info(USERID), serverTime=server_time, last_logged_in=last_login, friendsInfo=fb_friends_str(USERID), version=version_name, GAMEVERSION=GAME_VERSION, raid_revision=village_revision(USERID), game_user_key=game_session_key(USERID),
-                               webgl_renderer=ABILITIES_ENABLED)
+                               webgl_renderer=RUFFLE_SETTINGS['renderer'] == 'webgl', ruffle_settings=RUFFLE_SETTINGS)
 
 
 @app.route('/village', methods=['GET', 'POST'])
@@ -1010,6 +1010,21 @@ ABILITIES_ENABLED = os.environ.get('SE_ABILITIES', 'off').strip().lower() in ('o
 PVP_ENABLED = os.environ.get('SE_PVP', 'off').strip().lower() in ('on', '1', 'true', 'yes')
 SOUND_FIX_ENABLED = os.environ.get('SE_SOUND_FIX', 'on').strip().lower() in ('on', '1', 'true', 'yes')
 READABLE_UI_ENABLED = os.environ.get('SE_READABLE_UI', 'on').strip().lower() in ('on', '1', 'true', 'yes')
+# Ruffle's renderer and quality for the game page ("default" lets Ruffle choose its renderer). With SE_ABILITIES=on
+# the quality is "high": at "16x16" Ruffle's wgpu renderer crashed building the ability effects' colour-filter
+# shader; its own WebGL renderer does not crash but draws no filters (no outlines, dotted hover highlights).
+RUFFLE_RENDERERS = ('webgpu', 'wgpu-webgl', 'webgl', 'canvas')
+RUFFLE_QUALITIES = ('low', 'medium', 'high', 'best', '8x8', '8x8linear', '16x16', '16x16linear')
+
+
+def ruffle_settings():
+    renderer = os.environ.get('SE_RUFFLE_RENDERER', 'default').strip().lower()
+    quality = os.environ.get('SE_RUFFLE_QUALITY', 'high' if ABILITIES_ENABLED else '16x16').strip().lower()
+    return {'renderer': renderer if renderer in RUFFLE_RENDERERS else '',
+            'quality': quality if quality in RUFFLE_QUALITIES else '16x16'}
+
+
+RUFFLE_SETTINGS = ruffle_settings()
 app.jinja_env.globals['clans_enabled'] = CLANS_ENABLED
 if CLANS_ENABLED:
     from clans_web import install_clans
