@@ -1,5 +1,5 @@
 "use strict";
-// In-game clan window (SE_CLANS=on): a "Clan" shield over the game that opens a
+// In-game clan window (SE_CLANS=on): the game's "Clan" button (swf_clan_button.py) opens a
 // window drawn in the game's style. Every text a player wrote (names, motto,
 // announcement) goes through esc() before it reaches the page. Actions are form
 // posts with the page's CSRF token; the server checks every permission again.
@@ -337,12 +337,8 @@
     let chatTimer = null;
     let lastMessageId = 0;
 
-    const shield = document.createElement("button");
-    shield.type = "button";
-    shield.className = "clanx-shield";
-    shield.setAttribute("aria-haspopup", "dialog");
-    shield.innerHTML = emblemSvg(3, 40) + '<span class="clanx-shield-label">' + esc(T.button) + "</span>";
-    stage.appendChild(shield);
+    // The "Clan" button lives inside the game (swf_clan_button.py), in its icon panel at the
+    // right, once the player is in the empire; the game calls window.seOpenClan() on a click.
 
     const panel = document.createElement("div");
     panel.className = "clanx-overlay";
@@ -542,7 +538,6 @@
 
     function open() {
         panel.hidden = false;
-        shield.setAttribute("aria-expanded", "true");
         showMessage("", true);
         load();
         clearInterval(refreshTimer);
@@ -552,14 +547,15 @@
 
     function close() {
         panel.hidden = true;
-        shield.setAttribute("aria-expanded", "false");
         confirmBox.hidden = true;
         clearInterval(refreshTimer);
         stopChat();
-        shield.focus();
+        const game = stage.querySelector("ruffle-player, ruffle-object, ruffle-embed");
+        if (game) game.focus();  // back to the game, where the button is
     }
 
-    shield.addEventListener("click", () => (panel.hidden ? open() : close()));
+    // Called by the game (ExternalInterface): later, so the game's click handler returns first.
+    window.seOpenClan = () => { setTimeout(() => (panel.hidden ? open() : close()), 0); };
     document.addEventListener("keydown", (event) => { if (event.key === "Escape" && !panel.hidden) close(); });
     panel.addEventListener("click", (event) => {
         if (event.target === panel) { close(); return; }

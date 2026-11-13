@@ -63,7 +63,7 @@ function type(field, text) {
 }
 (async () => {
     try {
-        $(".clanx-shield").click();
+        window.seOpenClan();  // what the game's "Clan" button calls
         await wait(300);
         document.querySelector('[data-tab="create"]').click();
         await wait(300);

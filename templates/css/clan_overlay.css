@@ -1,10 +1,4 @@
 /* In-game clan window (SE_CLANS=on). Drawn over the game in its parchment style; own art. */
-/* Placed on the game picture itself (same box as .game-player in game.css), not on the letterbox bars. */
-.clanx-shield { --clanx-gw: min(100cqw, 100cqh * 760 / 600); --clanx-gh: min(100cqh, 100cqw * 600 / 760); position: absolute; z-index: 5; right: calc((100cqw - var(--clanx-gw)) / 2 + var(--clanx-gw) * .012); top: calc((100cqh - var(--clanx-gh)) / 2 + var(--clanx-gh) * .36); display: grid; justify-items: center; gap: 0; width: clamp(44px, calc(var(--clanx-gw) * .08), 74px); padding: 0; border: 0; background: none; cursor: pointer; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .55)); }
-.clanx-shield svg { width: 78%; height: auto; transition: transform .12s ease; }
-.clanx-shield:hover svg, .clanx-shield:focus-visible svg { transform: scale(1.08); }
-.clanx-shield:focus-visible { outline: 2px solid #f4d77a; outline-offset: 2px; border-radius: 6px; }
-.clanx-shield-label { margin-top: -2px; color: #fff; font: 700 clamp(10px, 1.7cqw, 14px)/1.1 "Trebuchet MS", system-ui, sans-serif; text-shadow: -1px -1px 0 #2b1a0b, 1px -1px 0 #2b1a0b, -1px 1px 0 #2b1a0b, 1px 1px 0 #2b1a0b; }
 
 .clanx-overlay { position: absolute; z-index: 20; inset: 0; display: grid; justify-items: center; align-items: start; padding: 3% 2% 2%; background: rgba(20, 12, 4, .45); }
 .clanx-overlay .clanx-window { max-height: 100%; }

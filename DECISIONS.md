@@ -148,3 +148,10 @@ Probado: reglas con reloj simulado (canales privados, largo y ritmo, quién borr
 - **Portal, entrar a un clan:** ahora sigue las mismas reglas que la ventana del juego: el nivel mínimo del clan se aplica también desde el portal, y un clan abierto acepta al jugador al instante (el botón dice "Entrar al clan").
 - **Portal, retar:** la página de un clan aliado ya no ofrece el formulario para retarlo.
 - **Texto:** el estado de un reto sin respuesta dice "Expiró sin respuesta" (antes "Venció sin respuesta", que podía leerse como que ganó).
+
+## Botón "Clan" dentro del juego
+
+- El botón "Clan" ahora es un ícono del propio juego, en el panel de íconos de la derecha (debajo del engranaje), donde antes estaba la mano de "Más logros". Lo agrega `swf_clan_button.py` solo con `SE_CLANS=on` (apagado, la película no cambia). El juego arma ese panel recién cuando el jugador está en el imperio, así que el botón no aparece en la pantalla de carga; el juego lo ubica junto a sus otros íconos (por ejemplo el cofre del lunes) y muestra "Clan" como ayuda al pasar el mouse.
+- Al tocarlo, el juego llama a `window.seOpenClan()` (ExternalInterface) y la página abre o cierra la ventana del clan. Por eso `allowScriptAccess` se enciende también con los clanes encendidos. Las dos partes nuevas del juego están dentro de su propio try/catch: un error no puede romper la interfaz.
+- La imagen (el mismo escudo verde con la palabra debajo) está en `templates/img/clan_button_<idioma>.png` ("Clan" en español e inglés, "Clã" en portugués); se dibuja de nuevo con `tools/make_clan_button.py`.
+- Se quitó el escudo HTML que flotaba sobre el juego (también se veía durante la carga).

@@ -729,6 +729,12 @@ def localized_game_movie(language=None):
     if DUELS_ENABLED:  # lets the duel page open the tournament arena
         from swf_duel_bridge import add_duel_bridge
         translated = add_duel_bridge(translated)
+    if CLANS_ENABLED:  # the "Clan" button in the game's icon panel, once inside the empire
+        from portal_i18n import load_portal_catalog, normalize_locale
+        from swf_clan_button import add_clan_button
+        locale = normalize_locale(language)
+        art = f'clan_button_{locale}.png' if (Path(TEMPLATES_DIR) / 'img' / f'clan_button_{locale}.png').exists() else 'clan_button_es.png'
+        translated = add_clan_button(translated, tooltip=load_portal_catalog(locale)[0].get('Clã', 'Clã'), image_url='/img/' + art)
     return translated, hashlib.sha256(translated).hexdigest()
 
 ## GAME DYNAMIC
