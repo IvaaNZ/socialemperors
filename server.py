@@ -810,6 +810,9 @@ def localized_game_movie(language=None):
     if SOUND_FIX_ENABLED:  # the game's music and sound buttons keep their choice after a reload
         from swf_sound_settings import fix_sound_settings
         translated = fix_sound_settings(translated)
+    if READABLE_UI_ENABLED:  # white lettering with a black outline; no "x0" units in the team window
+        from swf_readable_text import make_text_readable
+        translated = make_text_readable(translated)
     if DUELS_ENABLED:  # lets the duel page open the tournament arena
         from swf_duel_bridge import add_duel_bridge
         translated = add_duel_bridge(translated)
@@ -1006,6 +1009,7 @@ AUTO_APPROVE = os.environ.get('SE_AUTO_APPROVE', 'on').strip().lower() in ('on',
 ABILITIES_ENABLED = os.environ.get('SE_ABILITIES', 'off').strip().lower() in ('on', '1', 'true', 'yes')
 PVP_ENABLED = os.environ.get('SE_PVP', 'off').strip().lower() in ('on', '1', 'true', 'yes')
 SOUND_FIX_ENABLED = os.environ.get('SE_SOUND_FIX', 'on').strip().lower() in ('on', '1', 'true', 'yes')
+READABLE_UI_ENABLED = os.environ.get('SE_READABLE_UI', 'on').strip().lower() in ('on', '1', 'true', 'yes')
 app.jinja_env.globals['clans_enabled'] = CLANS_ENABLED
 if CLANS_ENABLED:
     from clans_web import install_clans

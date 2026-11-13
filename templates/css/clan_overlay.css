@@ -82,3 +82,11 @@
 .clanx-chat-empty { display: grid; align-content: center; gap: 6px; text-align: center; }
 .clanx-chat-empty p { margin: 0; }
 .clanx-inline select { max-width: 9em; }
+
+/* Readable light lettering (clan and PvP windows): pure white with a black outline, as in the game's own labels. */
+.clanx-titlebar h2, .clanx-tab, .clanx-card h3, .clanx-ribbon, .clanx-close, .clanx-btn-green, .clanx-btn-brown {
+    color: #fff;
+    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 2px 2px rgba(0, 0, 0, .6);
+}
+.clanx-tab.is-active { color: #3b2410; text-shadow: none; }
+.clanx-muted { color: #4f3a20; }

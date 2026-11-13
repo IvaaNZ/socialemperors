@@ -31,3 +31,6 @@
 @media (max-width: 600px) { .duels-main { padding: 0 16px; } }
 .duel-game-retired { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 12px; padding: 16px; background: #2b3a1c; color: #f6f1e3; text-align: center; }
 .duel-game-retired p { margin: 0; max-width: 32em; }
+
+/* White lettering with a black outline, like the game's labels. */
+.duel-button-primary { text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; }

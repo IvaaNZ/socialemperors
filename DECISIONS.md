@@ -263,3 +263,15 @@ Probado en el navegador con la copia de los datos: el ícono aparece debajo de "
 
 Limitación conocida: el botón "+" del zoom del juego tapa parte de la palabra "PvP" debajo del ícono.
 
+## Letras blancas con borde negro y unidades agotadas fuera de la ventana de equipo (`SE_READABLE_UI`, encendido por defecto)
+
+Pedido del dueño: que la ventana PvP se lea mejor, un borde negro en las letras blancas de todo el juego, y que en "Elige tu equipo" una unidad que llegó a x0 deje de verse.
+
+- **Ventanas HTML** (clan, PvP, avisos de duelo): los textos claros (título, pestañas, encabezados, botones verdes y marrones) pasan a blanco con borde negro; la ventana PvP tiene letra un poco más grande y los textos grises, más oscuros.
+- **Juego** (`swf_readable_text.py`): cada texto blanco que aparece en pantalla (un `TextField` con color 0xFFFFFF y sin filtros) recibe un borde negro (`GlowFilter`), como los rótulos propios del juego. Lo hace un único escucha en la fase de captura de `ADDED_TO_STAGE` del escenario, dentro de su propio try/catch.
+- **Ventana de equipo:** el juego solo agrisaba una miniatura agotada con un filtro de color; ahora se oculta (`ThumbUnit.deactivate`) y vuelve a verse cuando se quita esa unidad del equipo (`activate`). Queda el hueco: el juego no reacomoda la lista.
+- Es un pedido del dueño, por eso está encendido por defecto; `SE_READABLE_UI=off` sirve el juego como antes.
+- **Limitación:** los bordes del juego son filtros. Con `SE_ABILITIES=on` la página pide a Ruffle su forma de dibujo WebGL propia, que no dibuja filtros: ahí los bordes dentro del juego no se ven (las ventanas HTML sí). Ocultar las unidades agotadas funciona con cualquier forma de dibujo.
+
+Probado en el navegador con la copia de los datos (forma de dibujo habitual de Ruffle): borde en "Elige tu equipo", "Unidades seleccionadas" y las cantidades x1/x2; un caballero x1 desapareció al elegirlo y el dragón azul volvió con x1 al quitarlo del equipo.
+
