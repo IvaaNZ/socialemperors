@@ -51,6 +51,7 @@ ERRORS = {
     'no_alliance': 'O seu clã não tem uma aliança ativa.',
     'bad_message': 'Escreva uma mensagem de até 300 caracteres.',
     'chat_too_fast': 'Espere um instante antes de enviar outra mensagem.',
+    'challenge_between': 'Há um desafio pendente ou em andamento entre os dois clãs: termine-o antes de se aliarem.',
 }
 
 
@@ -269,9 +270,11 @@ def install_clans(app, accounts, village_lock, all_saves_userid, village_session
         membership = store.membership(account['id'])
         current = challenge_view(store.current_challenge(clan_id), clan_id, everyone)
         history = [challenge_view(item, clan_id, everyone) for item in store.challenge_history(clan_id)]
-        can_challenge = (not role and membership and membership['role'] == 'master' and not current
-                         and not store.current_challenge(membership['clan_id']))
         ally = alliance_view(store.alliance(clan_id), clan_id, bool(role))
+        own_alliance = store.alliance(membership['clan_id']) if membership else None
+        allied_with_me = bool(ally and ally['status'] == 'active' and own_alliance and own_alliance['id'] == ally['id'])
+        can_challenge = (not role and membership and membership['role'] == 'master' and not current
+                         and not store.current_challenge(membership['clan_id']) and not allied_with_me)
         return render_template('clan.html', clan=clan, role=role, me=account['id'], requests=requests_list,
                                ally=ally if ally and ally['status'] == 'active' else None,
                                challenge=current, history=history, can_challenge=can_challenge,
@@ -291,7 +294,18 @@ def install_clans(app, accounts, village_lock, all_saves_userid, village_session
         back = url_for('clan_page', clan_id=clan_id)
         if request.form.get('action') == 'cancel':
             return act(lambda: store.cancel_request(account['id'], clan_id), 'Pedido cancelado.', back)
-        return act(lambda: store.request_join(account['id'], clan_id), 'Pedido enviado. Um líder do clã vai responder.', back)
+        def join():
+            # Same rules as the in-game window: an open clan takes the player at once, and the
+            # clan's minimum level applies either way.
+            clan = store.clan(clan_id)
+            if not clan:
+                raise ClanError('no_clan')
+            if clan.get('recruit_open'):
+                store.join(account['id'], clan_id, village_level(account), actor_name=account['name'])
+                return 'Você entrou no clã.'
+            store.request_join(account['id'], clan_id, village_level(account))
+            return 'Pedido enviado. Um líder do clã vai responder.'
+        return act(join, lambda message: message, back)
 
     @app.post('/clans/requests/<int:request_id>', endpoint='clan_answer')
     def clan_answer(request_id):
@@ -524,8 +538,10 @@ def install_clans(app, accounts, village_lock, all_saves_userid, village_session
         theirs = store.alliance(clan_id)
         detail['allied_with_me'] = bool(mine and mine['status'] == 'active' and theirs and mine['id'] == theirs['id'])
         detail['can_challenge_this'] = detail['can_challenge_this'] and not detail['allied_with_me']  # allies do not challenge
+        own_challenge = store.current_challenge(membership['clan_id']) if membership else None
+        challenge_between = bool(own_challenge and clan_id in (own_challenge['challenger_clan'], own_challenge['defender_clan']))
         detail['can_ally_this'] = bool(membership and membership['role'] == 'master' and membership['clan_id'] != clan_id
-                                       and not mine and not theirs)
+                                       and not mine and not theirs and not challenge_between)
         return jsonify(detail)
 
     @app.get('/clans/api/chat', endpoint='clan_api_chat')

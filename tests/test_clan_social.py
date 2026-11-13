@@ -114,6 +114,21 @@ class AllianceTests(SocialTestCase):
         self.assertEqual(self.code(self.store.challenge, 10, self.a, 3), 'allied')
         self.store.challenge(1, self.c, 3)  # others, yes
 
+    def test_challenge_rivals_cannot_ally(self):
+        challenge = self.store.challenge(1, self.b, 3)
+        self.assertEqual(self.code(self.store.propose_alliance, 1, self.b), 'challenge_between')
+        self.assertEqual(self.code(self.store.propose_alliance, 10, self.a), 'challenge_between')
+        self.store.propose_alliance(1, self.c)  # another clan, yes
+        self.store.cancel_challenge(1, challenge['id'])
+        self.assertEqual(self.store.alliance(self.a)['partner_clan'], self.c)
+
+    def test_a_challenge_sent_after_the_proposal_blocks_accepting_it(self):
+        alliance = self.store.propose_alliance(1, self.b)
+        challenge = self.store.challenge(10, self.a, 3)  # still only a proposal: they may challenge
+        self.assertEqual(self.code(self.store.answer_alliance, 10, alliance['id'], True), 'challenge_between')
+        self.store.answer_alliance(10, alliance['id'], False)  # declining is always possible
+        self.store.answer_challenge(1, challenge['id'], True)
+
     def test_shared_alliance_channel(self):
         self.assertEqual(self.code(self.store.messages, 1, 'alliance'), 'no_alliance')
         self.store.propose_alliance(1, self.b)

@@ -609,7 +609,7 @@
   "Restam {minutes} min para responder.": "Quedan {minutes} min para responder.",
   "Só o Guild Master pode responder.": "Solo el Guild Master puede responder.",
   "Vence o clã que chegar primeiro a {needed} vitórias. Desafiem os membros do outro clã em Duelos: cada duelo terminado entre os dois clãs soma uma vitória (empates e duelos anulados não contam). Só contam os membros que estavam nos clãs quando o desafio foi aceito.": "Gana el clan que llega primero a {needed} victorias. Reten a los miembros del otro clan en Duelos: cada duelo terminado entre los dos clanes suma una victoria (los empates y los duelos anulados no cuentan). Solo cuentan los miembros que estaban en los clanes cuando se aceptó el reto.",
-  "Venceu sem resposta": "Venció sin respuesta",
+  "Venceu sem resposta": "Expiró sin respuesta",
   "Ver desafio": "Ver reto",
   "Vitória": "Victoria",
   "Você não pode desafiar o seu próprio clã.": "No puedes retar a tu propio clan.",
@@ -704,5 +704,6 @@
   "Aliança aceita.": "Alianza aceptada.",
   "Aliança recusada.": "Alianza rechazada.",
   "A aliança terminou.": "La alianza terminó.",
-  "Ver aliança": "Ver alianza"
+  "Ver aliança": "Ver alianza",
+  "Há um desafio pendente ou em andamento entre os dois clãs: termine-o antes de se aliarem.": "Hay un reto pendiente o en curso entre los dos clanes: termínenlo antes de aliarse."
 }

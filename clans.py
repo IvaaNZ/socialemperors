@@ -43,7 +43,8 @@ Nobody deletes messages (the owner's decision); the oldest drop off by themselve
 Alliance: a Guild Master proposes it to another clan and that clan's Guild
 Master accepts or declines (the proposer may cancel it while pending). A clan
 has one alliance at a time, pending or active. Allies cannot challenge each
-other. Either Guild Master may end it; a dissolved clan ends it.
+other, and two clans with a pending or active challenge between them cannot
+ally. Either Guild Master may end it; a dissolved clan ends it.
 """
 
 from contextlib import contextmanager
@@ -593,6 +594,8 @@ class ClanStore:
             actor = self._master_of(connection, actor_id)
             if actor['clan_id'] != row['defender_clan']:
                 raise ClanError('forbidden')
+            if accept and self._alliance_between(connection, row['challenger_clan'], row['defender_clan']):
+                raise ClanError('allied')
             clan = self._clan(connection, row['defender_clan'])
             rival = '[%s] %s' % (row['challenger_tag'], row['challenger_name'])
             if not accept:
@@ -724,6 +727,13 @@ class ClanStore:
                                   (first, second, second, first)).fetchone() is not None
 
     @staticmethod
+    def _challenge_between(connection, first, second):
+        """True when the two clans have a pending or active challenge against each other."""
+        return connection.execute("""SELECT 1 FROM clan_challenges WHERE status IN ('pending', 'active') AND
+                                     ((challenger_clan = ? AND defender_clan = ?) OR (challenger_clan = ? AND defender_clan = ?))""",
+                                  (first, second, second, first)).fetchone() is not None
+
+    @staticmethod
     def _alliance_row(connection, alliance_id):
         row = connection.execute('SELECT * FROM clan_alliances WHERE id = ?', (alliance_id,)).fetchone()
         return dict(row) if row else None
@@ -738,6 +748,8 @@ class ClanStore:
                 raise ClanError('alliance_busy')
             if self._alliance_of(connection, target['id']):
                 raise ClanError('target_alliance_busy')
+            if self._challenge_between(connection, own['id'], target['id']):
+                raise ClanError('challenge_between')  # rivals of an open challenge do not ally
             cursor = connection.execute(
                 """INSERT INTO clan_alliances (proposer_clan, proposer_name, proposer_tag, partner_clan, partner_name, partner_tag,
                        status, proposed_by, created_at) VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?)""",
@@ -753,6 +765,8 @@ class ClanStore:
             actor = self._master_of(connection, actor_id)
             if actor['clan_id'] != row['partner_clan']:
                 raise ClanError('forbidden')
+            if accept and self._challenge_between(connection, row['proposer_clan'], row['partner_clan']):
+                raise ClanError('challenge_between')  # challenged each other after the proposal
             status = 'active' if accept else 'declined'
             connection.execute("""UPDATE clan_alliances SET status = ?, answered_by = ?, accepted_at = ?, ended_at = ?
                                   WHERE id = ?""", (status, actor_id, now if accept else None, None if accept else now, alliance_id))

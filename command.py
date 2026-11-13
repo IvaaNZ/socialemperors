@@ -219,6 +219,10 @@ def do_command(USERID, cmd, args):
         map["xp"] = new_xp
         map["level"] = get_level_from_xp(new_xp)
 
+    elif cmd == Constant.CMD_RT_PUBLISH_ACHIEVEMENT_UNIT:
+        # Facebook wall post for an achievement building: nothing to do on a private server.
+        print("Achievement post ignored:", args)
+
     elif cmd == Constant.CMD_EXPAND:
         land_id = args[0]
         resource = args[1]

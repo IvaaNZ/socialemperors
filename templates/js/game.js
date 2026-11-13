@@ -323,6 +323,9 @@
                     // This token selects the bundled font SWFs; visible text comes from the pt-BR catalog.
                     language: "en", accessToken: "", sex: "m", lastLoggedIn: String(config.lastLoggedIn ?? config.serverTime), dailyBonus: "0",
                     gocash: new URL("/treasury", base).href,
+                    // Facebook's "publish achievements" permission counts as granted: otherwise, from
+                    // level 10, the game shows a "More achievements" hand that only asks Facebook for it.
+                    publishActions: "1",
                     friendsInfo: JSON.stringify(config.friendsInfo), serverTime: String(config.serverTime),
                     forceSyncError: "1", forceAttackReload: "0", forceQuestReload: "0",
                 },

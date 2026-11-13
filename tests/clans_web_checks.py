@@ -293,6 +293,35 @@ class ClanWebTests(unittest.TestCase):
         tags = [row['tag'] for row in self.api(ana, '/clans/api/state')['ranking']]
         self.assertLess(tags.index('BAP'), tags.index('AAP'))  # the clan that won the challenge ranks higher
 
+    def test_portal_join_follows_the_recruitment_rules(self):
+        ana, beto, caro = self.player(), self.player(), self.player()
+        clan_id = self.make_clan(ana, 'Portal Abierto', 'POA')
+        self.action(ana, 'settings', emblem='1', description='', announcement='', recruit_open='1', min_level='99', language='all')
+        self.assertIn('Entrar al clan', self.page(beto, f'/clans/{clan_id}'))
+        self.post(beto, f'/clans/{clan_id}/request', action='join')  # the minimum level applies in the portal too
+        self.assertIsNone(self.role(beto))
+        self.assertEqual(self.clans.requests_for(clan_id), [])
+        self.action(ana, 'settings', emblem='1', description='', announcement='', recruit_open='1', min_level='1', language='all')
+        self.post(caro, f'/clans/{clan_id}/request', action='join')  # an open clan takes the player at once
+        self.assertEqual(self.role(caro), 'member')
+
+    def test_allies_and_challenge_rivals_in_the_portal_and_window(self):
+        ana, beto, caro = self.player(), self.player(), self.player()
+        alfa = self.make_clan(ana, 'Alfa Portal', 'AFP')
+        beta = self.make_clan(beto, 'Beta Portal', 'BTP')
+        gama = self.make_clan(caro, 'Gama Portal', 'GMP')
+        alliance = self.action(ana, 'propose_alliance', clan_id=str(beta))[0]['state']['clan']['alliance']
+        self.assertTrue(self.action(beto, 'accept_alliance', alliance_id=str(alliance['id']))[0]['ok'])
+        self.assertNotIn('Retar a este clan', self.page(ana, f'/clans/{beta}'))  # allies: no challenge form
+        self.assertIn('Retar a este clan', self.page(ana, f'/clans/{gama}'))
+        self.action(ana, 'end_alliance', alliance_id=str(alliance['id']))
+        # Rivals of an open challenge cannot ally.
+        self.assertTrue(self.action(ana, 'challenge', clan_id=str(gama), best_of='3')[0]['ok'])
+        self.assertFalse(self.api(ana, f'/clans/api/clans/{gama}')['can_ally_this'])
+        result, _ = self.action(ana, 'propose_alliance', clan_id=str(gama))
+        self.assertEqual((result['ok'], result['message']),
+                         (False, 'Hay un reto pendiente o en curso entre los dos clanes: termínenlo antes de aliarse.'))
+
     def test_the_window_api_needs_an_approved_player(self):
         anonymous = server.app.test_client()
         with contextlib.redirect_stdout(io.StringIO()):

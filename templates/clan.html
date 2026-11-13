@@ -22,7 +22,7 @@
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         {% if requested %}<button class="duel-button" name="action" value="cancel" type="submit">{{ _('Cancelar pedido') }}</button> <span class="clans-meta">{{ _('Pedido enviado') }}</span>
         {% elif clan.members | length >= clan_limits.members %}<p class="clans-note">{{ _('O clã está completo (70 membros).') }}</p>
-        {% else %}<button class="duel-button duel-button-primary" name="action" value="join" type="submit">{{ _('Pedir para entrar') }}</button>{% endif %}
+        {% else %}<button class="duel-button duel-button-primary" name="action" value="join" type="submit">{{ _('Entrar no clã') if clan.recruit_open else _('Pedir para entrar') }}</button>{% endif %}
     </form>
     {% endif %}
 </section>
