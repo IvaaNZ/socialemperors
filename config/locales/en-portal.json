@@ -277,7 +277,7 @@
   "Nenhuma vila disponível": "No villages available",
   "As vilas aparecem aqui quando o acesso de uma conta é aprovado.": "Villages appear here when an account's access is approved.",
   "Gerenciar contas": "Manage accounts",
-  "Gerenciar {name}": "Manage {name}",
+  "Gerenciar a vila de {name}": "Manage {name}'s village",
   "Os valores informados substituem os saldos e o progresso atuais.": "The values entered replace the current balances and progress.",
   "Voltar para as vilas": "Back to the villages",
   "Vila e progresso": "Village and progress",

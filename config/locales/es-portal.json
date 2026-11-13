@@ -285,7 +285,7 @@
   "Nenhuma vila disponível": "No hay aldeas disponibles",
   "As vilas aparecem aqui quando o acesso de uma conta é aprovado.": "Las aldeas aparecen aquí cuando se aprueba el acceso de una cuenta.",
   "Gerenciar contas": "Administrar cuentas",
-  "Gerenciar {name}": "Administrar {name}",
+  "Gerenciar a vila de {name}": "Administrar la aldea de {name}",
   "Os valores informados substituem os saldos e o progresso atuais.": "Los valores ingresados reemplazan los saldos y el progreso actuales.",
   "Voltar para as vilas": "Volver a las aldeas",
   "Vila e progresso": "Aldea y progreso",

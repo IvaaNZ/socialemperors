@@ -1,10 +1,10 @@
 {% extends 'base.html' %}
-{% block title %}{{ _('Gerenciar {name}', name=village.name) }} · Social Empires{% endblock %}
+{% block title %}{{ _('Gerenciar a vila de {name}', name=account.name) }} · Social Empires{% endblock %}
 {% block head %}<link rel="stylesheet" href="{{ url_for('css', path='management.css') }}">{% endblock %}
 {% block main_class %}management-main{% endblock %}
 {% block content %}
 <div class="management-heading">
-    <div><h1>{{ _('Gerenciar {name}', name=village.name) }}</h1><p>{{ _('Os valores informados substituem os saldos e o progresso atuais.') }}</p></div>
+    <div><h1>{{ _('Gerenciar a vila de {name}', name=account.name) }}</h1><p>{{ _('Os valores informados substituem os saldos e o progresso atuais.') }}</p></div>
     <a class="button button-secondary" href="{{ url_for('admin_villages') }}">{{ _('Voltar para as vilas') }}</a>
 </div>
 <nav class="management-nav" aria-label="{{ _('Administração') }}">

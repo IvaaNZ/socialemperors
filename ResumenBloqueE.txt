@@ -1,7 +1,9 @@
-RESUMEN DEL BLOQUE E (funciones de la lista) - actualizado el 11/11/2026
+RESUMEN DEL BLOQUE E (funciones de la lista) - actualizado el 13/11/2026
 =======================================================================
 
-Avance del bloque E: 20 % (2 de 10 puntos terminados, más un pedido extra).
+Avance del bloque E: 4 de 12 puntos terminados (19 a 22), más dos pedidos
+extra (área de ataque y habilidades automáticas). Del 22 quedan las fases 3
+y 4 del clan dentro del juego.
 El detalle completo está en TareaDFinalizada.txt (secciones 15, 16 y 17).
 
 
@@ -83,7 +85,7 @@ Probado en la aldea, en ataques a otros jugadores (con 16 torres
 enemigas) y en una aventura.
 
 
-PUNTO 21. DUELOS PVP EN VIVO Y RANKED DESDE NIVEL 25 (en curso, rama duelos-en-vivo)
+PUNTO 21. DUELOS PVP EN VIVO Y RANKED DESDE NIVEL 25 ................ 100 % (opción B)
 -----------------------------------------------------------------------
 Hecho (fase 1): retos en vivo entre jugadores conectados, con resultado
 calculado por el servidor según la fuerza de las 30 mejores tropas,
@@ -136,21 +138,33 @@ al mismo clan o a otro. Avisos en vivo al Guild Master, etiqueta del clan y
 marca "Clan rival" en Duelos, historial de retos y ranking de clanes.
 
 Clan dentro del juego (en curso, 4 fases):
-  - Fase 1 (hecha): escudo "Clan" sobre el juego que abre una ventana con
+  - Fase 1 (hecha): botón "Clan" dentro del juego que abre una ventana con
     aspecto del juego: Mi clan (emblema, lema, poder, líder, anuncio,
     reclutamiento abierto o con solicitud, nivel mínimo, idioma), Miembros,
     Retos, Clasificación y Buscar clan.
   - Fase 2 (hecha): chat del clan y Alianza (una por clan, los aliados no
-    se retan, con chat compartido).
-  - Fase 3: misiones diarias y nivel del clan.
+    se retan, con chat compartido), pestaña "Retar clan".
+  - Fase 3: misiones diarias y nivel del clan (a rediseñar junto con el
+    punto 29: prestigio por aventuras).
   - Fase 4: tienda del clan (recursos y unidades).
+
+
+PEDIDO EXTRA. HABILIDADES AUTOMÁTICAS DE LAS UNIDADES (SE_ABILITIES=on)
+-----------------------------------------------------------------------
+Las habilidades de usos ilimitados se lanzan solas en combate (unidades del
+jugador y enemigas); las de usos limitados siguen a mano. Las invocaciones
+tienen un límite de 1 viva; el botón queda rojo con "Límite 1/1" mientras
+la invocación vive. Al pasar el mouse, cada habilidad muestra su
+descripción, con "Límite X/1" en las invocaciones. Detalle en DECISIONS.md.
 
 
 PUNTOS QUE SIGUEN
 -----------------
-  23. Casino ............................................................ 0 %
-  24. Clima y ciclo día/noche ........................................... 0 %
-  25. Editor de mundo ................................................... 0 %
-  26. Pase de temporada gratuito ........................................ 0 %
-  27. Mejorar el HUD .................................................... 0 %
-  28. Mejorar la IA de combate .......................................... 0 %
+  23. Clima y ciclo día/noche ........................................... 0 %
+  24. Editor de mundo ................................................... 0 %
+  25. Pase de temporada gratuito ........................................ 0 %
+  26. Mejorar el HUD .................................................... 0 %
+  27. Mejorar la IA de combate .......................................... 0 %
+  28. Aventuras en solitario o con el clan, 10 unidades elegidas ........ 0 %
+  29. Prestigio del clan por aventuras (5 solo, 15 en grupo de 3) ....... 0 %
+  30. Dificultad y reparto de recursos de las aventuras ................. 0 %
