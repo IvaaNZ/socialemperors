@@ -26,6 +26,10 @@ Decisiones:
 - Los dos jugadores reciben **el mismo mensaje de resultado** en el mismo momento; los mensajes llevan códigos y números, y cada página los muestra en su idioma.
 - Duelo aceptado de alguien que se quedó sin tropas en el medio: se cancela.
 
+## Duelo en vivo de verdad (opción A): para más adelante
+
+Decidido el 13/11/2026: el duelo en vivo con combate calculado en el servidor (unas 4 a 6 semanas de trabajo) queda para después de las aventuras (puntos 28 a 30). Mientras tanto sigue la opción B.
+
 ## Fase 2 (batalla en la arena, opción B)
 
 Cambios de comportamiento (solo con `SE_DUELS=on`; apagado, nada cambia: ni la película del juego, ni las rutas, ni los comandos):

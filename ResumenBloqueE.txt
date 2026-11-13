@@ -117,6 +117,8 @@ solo lo dibujan. Es el trabajo más grande del plan (unas 4 a 6 semanas):
 motor de combate en el servidor y un modo del juego que dibuje lo que manda
 el servidor. Las unidades con habilidades especiales quedarían fuera en la
 primera versión.
+Decidido el 13/11/2026: queda para más adelante, después de las aventuras
+(puntos 28 a 30). Por ahora sigue la opción B.
 
 
 PUNTO 22. CLANES (rama clanes) ................................... 100 %
