@@ -351,7 +351,7 @@ print (" [+] Configuring server routes...")
 def login():
     if g.account and g.account['status'] == 'approved' and request.method == 'GET':
         return redirect(url_for('play'))
-    error = None
+    error = block_reason = None
     values = {'email': request.form.get('email', '').strip()}
     if request.method == 'POST':
         validate_csrf()
@@ -367,7 +367,8 @@ def login():
             elif account['status'] == 'pending':
                 error = 'Seu cadastro está aguardando aprovação do administrador. Tente entrar novamente após a liberação.'
             elif account['status'] != 'approved':
-                error = 'Seu acesso não foi liberado. Entre em contato com o administrador.'
+                error = 'Sua conta está bloqueada. Entre em contato com o administrador.'
+                block_reason = account.get('block_reason')
             else:
                 account = ensure_village(account)
                 accounts().clear_login_failures(email, address)
@@ -383,7 +384,7 @@ def login():
                 return redirect(url_for('play'))
         except AccountError as exc:
             error = str(exc)
-    return render_template('login.html', error=error, values=values)
+    return render_template('login.html', error=error, block_reason=block_reason, values=values)
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -397,8 +398,12 @@ def register():
             if password != request.form.get('password_confirm', ''):
                 raise AccountError('As senhas não conferem.')
             language = session.get('language') if session.get('language') in PLAYER_LANGUAGES else None
-            accounts().create_account(values['name'], values['email'], password, language=language)
-            flash('Cadastro recebido! Aguarde a aprovação do administrador para entrar na sua vila.', 'success')
+            accounts().create_account(values['name'], values['email'], password, language=language,
+                                      status='approved' if AUTO_APPROVE else 'pending')
+            if AUTO_APPROVE:
+                flash('Conta criada! Já pode entrar na sua vila.', 'success')
+            else:
+                flash('Cadastro recebido! Aguarde a aprovação do administrador para entrar na sua vila.', 'success')
             return redirect(url_for('login'))
         except AccountError as exc:
             error = str(exc)
@@ -437,10 +442,12 @@ def require_admin():
 @app.get('/admin')
 def admin_accounts():
     require_admin()
-    selected_filter = request.args.get('status', 'pending')
+    all_accounts = accounts().list_accounts()
+    # With automatic approval nobody waits: the page opens on every account unless some are pending.
+    default_filter = 'pending' if any(account['status'] == 'pending' for account in all_accounts) else 'all'
+    selected_filter = request.args.get('status', default_filter)
     if selected_filter not in ('all', 'pending', 'approved', 'rejected'):
         abort(400, description='Filtro de contas inválido.')
-    all_accounts = accounts().list_accounts()
     return render_template('admin.html', accounts=[account for account in all_accounts if selected_filter == 'all' or account['status'] == selected_filter], pending_count=sum(account['status'] == 'pending' for account in all_accounts), selected_filter=selected_filter)
 
 
@@ -457,20 +464,24 @@ def admin_accounts_alias(account_id=None):
 def update_account(account_id):
     require_admin()
     validate_csrf()
-    status = {'approve': 'approved', 'reject': 'rejected', 'suspend': 'pending'}.get(request.form.get('action'))
+    action = request.form.get('action')
+    status = {'approve': 'approved', 'unblock': 'approved', 'reject': 'rejected', 'block': 'rejected'}.get(action)
     if not status:
         abort(400, description='Ação inválida.')
+    # Blocking a player needs a reason (the player reads it when logging in); refusing a registration does not.
+    reason = request.form.get('reason', '') if action == 'block' else (request.form.get('reason') or None)
     account = accounts().get(account_id)
     if not account:
         abort(404, description='Conta não encontrada.')
     try:
         if status == 'approved':
             ensure_village(account)
-        accounts().set_status(account_id, status)
-        flash('Acesso da conta atualizado.', 'success')
+        accounts().set_status(account_id, status, reason)
+        flash({'block': 'Conta bloqueada.', 'unblock': 'Conta desbloqueada.'}.get(action, 'Acesso da conta atualizado.'), 'success')
     except AccountError as exc:
         flash(str(exc), 'error')
-    return redirect(url_for('admin_accounts', status=request.form.get('status', 'pending') if request.form.get('status') in ('pending', 'approved', 'rejected', 'all') else 'pending'))
+    chosen = request.form.get('status')
+    return redirect(url_for('admin_accounts', status=chosen) if chosen in ('pending', 'approved', 'rejected', 'all') else url_for('admin_accounts'))
 
 
 @app.get('/admin/villages')
@@ -979,6 +990,8 @@ def create_admin(name, email, password, village_id):
 DUELS_ENABLED = os.environ.get('SE_DUELS', 'off').strip().lower() in ('on', '1', 'true', 'yes')
 app.jinja_env.globals['duels_enabled'] = DUELS_ENABLED
 CLANS_ENABLED = os.environ.get('SE_CLANS', 'off').strip().lower() in ('on', '1', 'true', 'yes')
+# New accounts are active at once (the owner's decision); SE_AUTO_APPROVE=off brings back approval one by one.
+AUTO_APPROVE = os.environ.get('SE_AUTO_APPROVE', 'on').strip().lower() in ('on', '1', 'true', 'yes')
 # Unit abilities (swf_unit_abilities.py): automatic, one summon at most, tooltips. Off: the movie is unchanged.
 ABILITIES_ENABLED = os.environ.get('SE_ABILITIES', 'off').strip().lower() in ('on', '1', 'true', 'yes')
 app.jinja_env.globals['clans_enabled'] = CLANS_ENABLED

@@ -66,6 +66,20 @@ class AccessTests(unittest.TestCase):
                 'language': 'en', 'client_id': 'test',
             }
 
+    def test_registration_is_active_at_once_by_default(self):
+        self.assertTrue(server.AUTO_APPROVE)
+        response = self.client.post('/register', data={
+            'name': 'Maria', 'email': 'MARIA@example.com', 'password': 'secret-password',
+            'password_confirm': 'secret-password', 'csrf_token': self.token(),
+        }, follow_redirects=True)
+        self.assertIn('Conta criada!', response.text)
+        account = self.store.list_accounts()[0]
+        self.assertEqual((account['status'], account['is_admin']), ('approved', False))
+        self.assertEqual(self.login('maria@example.com').location, '/play.html')
+        self.assertIn(self.store.get(account['id'])['village_id'], sessions.all_saves_userid())
+        self.assertEqual(self.client.get('/admin').status_code, 403)
+
+    @patch.object(server, 'AUTO_APPROVE', False)
     def test_registration_waits_for_explicit_admin_approval(self):
         response = self.client.post('/register', data={
             'name': 'Maria', 'email': 'MARIA@example.com', 'password': 'secret-password',
@@ -226,11 +240,48 @@ class AccessTests(unittest.TestCase):
         }, follow_redirects=True)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(self.store.get(player['id'])['status'], 'rejected')
-        self.client.post(f"/admin/accounts/{admin['id']}", data={'action': 'suspend', 'csrf_token': token})
+        self.client.post(f"/admin/accounts/{admin['id']}", data={'action': 'block', 'reason': 'Teste', 'csrf_token': token})
         self.assertEqual(self.store.get(admin['id'])['status'], 'approved')
         self.assertEqual(self.client.get('/admin?status=unknown').status_code, 400)
         rejected_client = server.app.test_client()
-        self.assertIn('não foi liberado', self.login(client=rejected_client).text)
+        self.assertIn('está bloqueada', self.login(client=rejected_client).text)
+
+    def test_blocking_needs_a_reason_the_player_reads_and_unblocking_restores_access(self):
+        player = self.create_player(status='approved')
+        self.create_admin()
+        admin_client = server.app.test_client()
+        self.login('admin@example.com', admin_client)
+        token = self.token(admin_client)
+        player_client = server.app.test_client()
+        self.assertEqual(self.login(client=player_client).location, '/play.html')
+        missing = admin_client.post(f"/admin/accounts/{player['id']}", data={'action': 'block', 'csrf_token': token},
+                                    follow_redirects=True)
+        self.assertIn('Informe o motivo do bloqueio', missing.text)
+        self.assertEqual(self.store.get(player['id'])['status'], 'approved')
+        page = admin_client.post(f"/admin/accounts/{player['id']}", data={
+            'action': 'block', 'reason': '  Uso de   trapaças  ', 'csrf_token': token, 'status': 'rejected'},
+            follow_redirects=True)
+        self.assertIn('Uso de trapaças', page.text)
+        blocked = self.store.get(player['id'])
+        self.assertEqual((blocked['status'], blocked['block_reason']), ('rejected', 'Uso de trapaças'))
+        self.assertEqual(player_client.get('/play.html').status_code, 302)  # the open session is closed
+        login = self.login(client=player_client).text
+        self.assertIn('está bloqueada', login)
+        self.assertIn('Uso de trapaças', login)
+        admin_client.post(f"/admin/accounts/{player['id']}", data={'action': 'unblock', 'csrf_token': token})
+        unblocked = self.store.get(player['id'])
+        self.assertEqual((unblocked['status'], unblocked['block_reason']), ('approved', None))
+        self.assertEqual(self.login(client=player_client).location, '/play.html')
+
+    def test_accounts_page_opens_on_every_account_when_nobody_waits(self):
+        self.create_admin()
+        self.create_player(status='approved')
+        self.login('admin@example.com')
+        page = self.client.get('/admin')
+        self.assertIn('Jogador', page.text)
+        self.assertNotIn('status=pending', page.text)  # no "Pendentes" filter without pending accounts
+        self.create_player('other@example.com')
+        self.assertIn('status=pending', self.client.get('/admin').text)
 
     def test_game_commands_still_persist_to_authenticated_save(self):
         self.create_player(status='approved')

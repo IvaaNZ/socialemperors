@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
-{% block title %}{{ _('Aprovação de contas') }} · Social Empires{% endblock %}
+{% block title %}{{ _('Contas') }} · Social Empires{% endblock %}
 {% block head %}<link rel="stylesheet" href="{{ url_for('css', path='management.css') }}">{% endblock %}
 {% block main_class %}admin-main{% endblock %}
 {% block content %}
-{% set status_labels = {'pending': _('Aguardando aprovação'), 'approved': _('Aprovada'), 'rejected': _('Recusada'), 'suspended': _('Suspensa')} %}
+{% set status_labels = {'pending': _('Aguardando aprovação'), 'approved': _('Ativa'), 'rejected': _('Bloqueada')} %}
 <div class="page-heading">
-    <div><h1>{{ _('Aprovação de contas') }}</h1><p>{{ _('Gerencie quem pode entrar no jogo.') }}</p></div>
+    <div><h1>{{ _('Contas') }}</h1><p>{{ _('Gerencie quem pode entrar no jogo.') }}</p></div>
     {% if pending_count %}<p class="pending-summary">{{ _('{count} conta aguardando aprovação', count=pending_count) if pending_count == 1 else _('{count} contas aguardando aprovação', count=pending_count) }}</p>{% endif %}
 </div>
 <nav class="management-nav" aria-label="{{ _('Administração') }}">
@@ -13,14 +13,14 @@
     <a href="{{ url_for('admin_villages') }}">{{ _('Vilas') }}</a>{% if duels_enabled %}<a href="{{ url_for('admin_duels') }}">{{ _('Duelos') }}</a>{% endif %}{% if clans_enabled %}<a href="{{ url_for('admin_clans') }}">{{ _('Clãs') }}</a>{% endif %}
 </nav>
 <nav class="filter-nav" aria-label="{{ _('Filtrar contas') }}">
-    {% for key, label in [('pending', _('Pendentes')), ('approved', _('Aprovadas')), ('rejected', _('Recusadas')), ('all', _('Todas'))] %}
-        <a href="{{ url_for('admin_accounts', status=key) }}" {% if selected_filter == key %}aria-current="page"{% endif %}>{{ label }}{% if key == 'pending' %}<span class="filter-count">{{ pending_count }}</span>{% endif %}</a>
+    {% for key, label in [('all', _('Todas')), ('approved', _('Ativas')), ('rejected', _('Bloqueadas')), ('pending', _('Pendentes'))] %}
+        {% if key != 'pending' or pending_count %}<a href="{{ url_for('admin_accounts', status=key) }}" {% if selected_filter == key %}aria-current="page"{% endif %}>{{ label }}{% if key == 'pending' %}<span class="filter-count">{{ pending_count }}</span>{% endif %}</a>{% endif %}
     {% endfor %}
 </nav>
 {% if accounts %}
 <div class="accounts-table-wrap">
     <table class="accounts-table">
-        <caption class="sr-only">{{ {'pending': _('Contas pendentes de aprovação'), 'approved': _('Contas aprovadas'), 'rejected': _('Contas recusadas'), 'all': _('Contas cadastradas')}.get(selected_filter, _('Contas cadastradas')) }}</caption>
+        <caption class="sr-only">{{ {'pending': _('Contas pendentes de aprovação'), 'approved': _('Contas aprovadas'), 'rejected': _('Contas bloqueadas'), 'all': _('Contas cadastradas')}.get(selected_filter, _('Contas cadastradas')) }}</caption>
         <thead><tr><th scope="col">{{ _('Jogador') }}</th><th scope="col">{{ _('Situação') }}</th><th scope="col" class="actions-heading">{{ _('Ações') }}</th></tr></thead>
         <tbody>
             {% for account in accounts %}
@@ -30,16 +30,26 @@
                     <span class="account-email">{{ account.email }}</span>
                     {% if account.is_admin %}<span class="admin-label">{{ _('Administrador') }}{% if account.id == current_account.id %} · {{ _('você') }}{% endif %}</span>{% endif %}
                 </td>
-                <td data-label="{{ _('Situação') }}"><span class="status status-{{ account.status }}">{{ status_labels.get(account.status, account.status) }}</span></td>
+                <td data-label="{{ _('Situação') }}"><span class="status status-{{ account.status }}">{{ status_labels.get(account.status, account.status) }}</span>{% if account.status == 'rejected' and account.block_reason %}<span class="block-reason">{{ _('Motivo:') }} {{ account.block_reason }}</span>{% endif %}</td>
                 <td class="account-actions" data-label="{{ _('Ações') }}">
                     {% if account.is_admin %}<span class="field-hint">{{ _('Conta administrativa') }}</span>
                     {% else %}
                         <form action="{{ url_for('update_account', account_id=account.id) }}" method="post" class="actions-form">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            {% if account.status != 'approved' %}<button class="button button-primary button-small" name="action" value="approve" type="submit" aria-label="{{ _('Aprovar conta de {name}', name=account.name) }}">{{ _('Aprovar') }}</button>{% endif %}
-                            {% if account.status == 'pending' %}<button class="button button-secondary button-small" name="action" value="reject" type="submit" aria-label="{{ _('Recusar conta de {name}', name=account.name) }}">{{ _('Recusar') }}</button>{% endif %}
-                            {% if account.status == 'approved' %}<button class="button button-secondary button-small" name="action" value="suspend" type="submit" aria-label="{{ _('Suspender acesso de {name}', name=account.name) }}">{{ _('Suspender acesso') }}</button>{% endif %}
+                            <input type="hidden" name="status" value="{{ selected_filter }}">
+                            {% if account.status == 'pending' %}<button class="button button-primary button-small" name="action" value="approve" type="submit" aria-label="{{ _('Aprovar conta de {name}', name=account.name) }}">{{ _('Aprovar') }}</button>
+                            <button class="button button-secondary button-small" name="action" value="reject" type="submit" aria-label="{{ _('Recusar conta de {name}', name=account.name) }}">{{ _('Recusar') }}</button>{% endif %}
+                            {% if account.status == 'rejected' %}<button class="button button-primary button-small" name="action" value="unblock" type="submit" aria-label="{{ _('Desbloquear conta de {name}', name=account.name) }}">{{ _('Desbloquear') }}</button>{% endif %}
                         </form>
+                        {% if account.status == 'approved' %}
+                        <form action="{{ url_for('update_account', account_id=account.id) }}" method="post" class="actions-form block-form">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="status" value="{{ selected_filter }}">
+                            <label class="sr-only" for="block-reason-{{ account.id }}">{{ _('Motivo do bloqueio') }}</label>
+                            <input id="block-reason-{{ account.id }}" name="reason" minlength="3" maxlength="200" required autocomplete="off" placeholder="{{ _('Motivo do bloqueio') }}">
+                            <button class="button button-secondary button-small" name="action" value="block" type="submit" aria-label="{{ _('Bloquear conta de {name}', name=account.name) }}">{{ _('Bloquear') }}</button>
+                        </form>
+                        {% endif %}
                     {% endif %}
                 </td>
             </tr>

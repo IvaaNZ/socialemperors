@@ -746,5 +746,21 @@
   "A vila não tem tantas unidades desse tipo para retirar.": "La aldea no tiene tantas unidades de ese tipo para quitar.",
   "Missão não encontrada.": "Misión no encontrada.",
   "Esta missão já está concluída.": "Esta misión ya está completada.",
-  "Esta missão ainda não foi concluída.": "Esta misión todavía no se completó."
+  "Esta missão ainda não foi concluída.": "Esta misión todavía no se completó.",
+  "Bloqueada": "Bloqueada",
+  "Bloqueadas": "Bloqueadas",
+  "Ativas": "Activas",
+  "Contas bloqueadas": "Cuentas bloqueadas",
+  "Motivo:": "Motivo:",
+  "Motivo do bloqueio": "Motivo del bloqueo",
+  "Bloquear": "Bloquear",
+  "Desbloquear": "Desbloquear",
+  "Bloquear conta de {name}": "Bloquear la cuenta de {name}",
+  "Desbloquear conta de {name}": "Desbloquear la cuenta de {name}",
+  "Conta bloqueada.": "Cuenta bloqueada.",
+  "Conta desbloqueada.": "Cuenta desbloqueada.",
+  "Sua conta está bloqueada. Entre em contato com o administrador.": "Tu cuenta está bloqueada. Comunícate con el administrador.",
+  "Conta criada! Já pode entrar na sua vila.": "¡Cuenta creada! Ya puedes entrar a tu aldea.",
+  "Informe o motivo do bloqueio, com 3 a 200 caracteres.": "Escribe el motivo del bloqueo, de 3 a 200 caracteres.",
+  "Ativa": "Activa"
 }

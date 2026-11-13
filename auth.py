@@ -17,7 +17,9 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from localization import PLAYER_LANGUAGES
 
 
+# "rejected" is a blocked account (a refused registration or a blocked player); block_reason says why.
 ACCOUNT_STATUSES = frozenset({"pending", "approved", "rejected"})
+BLOCK_REASON_LENGTH = (3, 200)
 LOGIN_WINDOW_SECONDS = 15 * 60
 LOGIN_EMAIL_LIMIT = 5
 LOGIN_IP_LIMIT = 30
@@ -47,6 +49,7 @@ def _public_account(row):
         "created_at": row["created_at"],
         # None means the server's default language.
         "language": row["language"] if "language" in row.keys() else None,
+        "block_reason": row["block_reason"] if "block_reason" in row.keys() else None,
     }
 
 
@@ -88,6 +91,8 @@ class AccountStore:
             columns = {row["name"] for row in connection.execute("PRAGMA table_info(accounts)")}
             if "language" not in columns:  # Databases created before the language selector.
                 connection.execute("ALTER TABLE accounts ADD COLUMN language TEXT")
+            if "block_reason" not in columns:  # Databases created before blocking with a reason.
+                connection.execute("ALTER TABLE accounts ADD COLUMN block_reason TEXT")
 
     @contextmanager
     def _connection(self):
@@ -192,8 +197,20 @@ class AccountStore:
         if not isinstance(status, str) or status not in ACCOUNT_STATUSES:
             raise AccountError("O status da conta é inválido.")
 
-    def set_status(self, account_id, status):
+    @staticmethod
+    def _validate_block_reason(reason):
+        if reason is None:
+            return None
+        reason = " ".join(reason.split()) if isinstance(reason, str) else ""
+        low, high = BLOCK_REASON_LENGTH
+        if not low <= len(reason) <= high:
+            raise AccountError("Informe o motivo do bloqueio, com 3 a 200 caracteres.")
+        return reason
+
+    def set_status(self, account_id, status, reason=None):
+        """Change the account's status; a blocked ("rejected") account may keep a reason, the others never do."""
         self._validate_status(status)
+        reason = self._validate_block_reason(reason) if status == "rejected" else None
         with self._connection() as connection:
             connection.execute("BEGIN IMMEDIATE")
             row = connection.execute(
@@ -204,7 +221,7 @@ class AccountStore:
             if row["is_admin"] and status != "approved":
                 raise AccountError("A conta de administrador não pode ser desativada.")
             connection.execute(
-                "UPDATE accounts SET status = ? WHERE id = ?", (status, account_id)
+                "UPDATE accounts SET status = ?, block_reason = ? WHERE id = ?", (status, reason, account_id)
             )
             return _public_account(
                 connection.execute("SELECT * FROM accounts WHERE id = ?", (account_id,)).fetchone()

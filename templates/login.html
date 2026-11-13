@@ -6,7 +6,7 @@
         <img class="heading-character" src="{{ url_for('images', path='villager.png') }}" alt="" width="56" height="56">
         <div><h1 id="login-title">{{ _('Entre na sua vila') }}</h1><p>{{ _('Seu império está esperando por você.') }}</p></div>
     </div>
-    {% if error %}<div id="form-error" class="notice notice-error" role="alert">{{ _(error) }}</div>{% endif %}
+    {% if error %}<div id="form-error" class="notice notice-error" role="alert">{{ _(error) }}{% if block_reason %}<br>{{ _('Motivo:') }} {{ block_reason }}{% endif %}</div>{% endif %}
     <form action="{{ url_for('login') }}" method="post" class="account-form" {% if error %}aria-describedby="form-error"{% endif %}>
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="form-field">

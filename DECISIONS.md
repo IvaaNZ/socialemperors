@@ -216,3 +216,13 @@ Decisión del dueño (revisión del punto 19): el panel de cada aldea, además d
 - Cada cambio pide motivo, queda en el historial con el antes y el después (cantidad total de esa unidad, o el estado de la misión) y usa el mismo diario que la edición de recursos: se guarda la partida completa antes de escribirla, y si algo falla a mitad, se recupera. El jugador con el juego abierto ve el aviso para recargar.
 
 Probado en el navegador con una copia de los datos: se dieron 2 Dragón Vulcano (2 → 4), se quitó 1 (4 → 3), se completó "Entrena un aldeano", y en el juego de Tuki2 el almacén mostró los 3 dragones y uno se colocó en la aldea.
+
+## Cuentas activas al crearse, y bloqueo con motivo
+
+Decisiones del dueño (revisión del punto 19):
+- **Las cuentas nuevas quedan activas al registrarse:** el jugador entra enseguida y su aldea se crea al primer ingreso. Ya no hace falta aprobarlas una por una. Con `SE_AUTO_APPROVE=off` vuelve la aprobación manual (las pendientes se aprueban o se rechazan como antes).
+- **Bloquear con motivo:** en Administración > Cuentas, cada cuenta activa tiene "Bloquear", que pide un motivo (3 a 200 caracteres). El jugador queda afuera al instante, aunque tenga el juego abierto, y al intentar entrar lee "Tu cuenta está bloqueada… Motivo: …". "Desbloquear" le devuelve el acceso y borra el motivo. Antes, "Suspender" devolvía la cuenta a "pendiente", sin motivo, y se mezclaba con los registros nuevos.
+- Por dentro, una cuenta bloqueada usa el estado "rechazada" que ya existía (un registro rechazado también queda bloqueado, sin motivo) y una columna nueva, `block_reason`, que se agrega sola a la base de cuentas existente sin tocar las cuentas. Así no hace falta reconstruir la tabla.
+- La página de Cuentas abre en "Todas" y muestra los filtros Activas y Bloqueadas; "Pendientes" aparece solo si hay alguna.
+
+Probado en el navegador con una copia de los datos: una cuenta nueva entró al juego sin aprobación, se la bloqueó con motivo (se cerró su sesión abierta y al entrar vio el motivo) y se la desbloqueó.

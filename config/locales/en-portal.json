@@ -736,5 +736,21 @@
   "A vila não tem tantas unidades desse tipo para retirar.": "The village does not have that many units of that kind to remove.",
   "Missão não encontrada.": "Mission not found.",
   "Esta missão já está concluída.": "This mission is already completed.",
-  "Esta missão ainda não foi concluída.": "This mission has not been completed yet."
+  "Esta missão ainda não foi concluída.": "This mission has not been completed yet.",
+  "Bloqueada": "Blocked",
+  "Bloqueadas": "Blocked",
+  "Ativas": "Active",
+  "Contas bloqueadas": "Blocked accounts",
+  "Motivo:": "Reason:",
+  "Motivo do bloqueio": "Reason for the block",
+  "Bloquear": "Block",
+  "Desbloquear": "Unblock",
+  "Bloquear conta de {name}": "Block {name}'s account",
+  "Desbloquear conta de {name}": "Unblock {name}'s account",
+  "Conta bloqueada.": "Account blocked.",
+  "Conta desbloqueada.": "Account unblocked.",
+  "Sua conta está bloqueada. Entre em contato com o administrador.": "Your account is blocked. Contact the administrator.",
+  "Conta criada! Já pode entrar na sua vila.": "Account created! You can enter your village now.",
+  "Informe o motivo do bloqueio, com 3 a 200 caracteres.": "Write the reason for the block, 3 to 200 characters.",
+  "Ativa": "Active"
 }

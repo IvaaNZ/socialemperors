@@ -95,3 +95,8 @@
 .management-subform .form-field + .form-field { margin-top: 12px; }
 .management-subform .form-actions { margin-top: 16px; }
 .management-subform .field-hint { display: block; margin: 4px 0 14px; }
+
+/* Administração > Contas: bloquear com motivo */
+.block-reason { display: block; margin-top: 6px; color: var(--muted); font-size: .85rem; overflow-wrap: anywhere; }
+.block-form { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.block-form input { flex: 1 1 160px; min-height: 36px; padding: 6px 10px; }
