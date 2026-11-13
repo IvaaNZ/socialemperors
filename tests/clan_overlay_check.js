@@ -70,6 +70,22 @@ out.allianceOutgoing = View.clan(T, incoming, "es", false);
 out.allianceMemberView = View.clan(T, Object.assign(clanState("member"), {}), "es", false);
 out.cardAlly = View.clanCard(T, clanState("master"), Object.assign({}, card, { can_ally_this: true }), "es");
 out.cardAllied = View.clanCard(T, clanState("master"), Object.assign({}, card, { allied_with_me: true, can_challenge_this: true }), "es");
+// "Retar clan" tab and the alliance channel without an active alliance.
+const rivals = [{ id: 1, name: "Propio", tag: "ALF", emblem: 1, members: 3, own: true },
+    { id: 2, name: evil, tag: "BET", emblem: 2, members: 4, allied: true },
+    { id: 3, name: "Gama", tag: "GAM", emblem: 3, members: 5, busy: true },
+    { id: 4, name: "Delta", tag: "DEL", emblem: 4, members: 6 }];
+const freeMaster = clanState("master");
+freeMaster.clan.challenge = null;
+out.rivalsMaster = View.rivals(T, freeMaster, rivals, evil);
+const freeMember = clanState("member");
+freeMember.clan.challenge = null;
+out.rivalsMember = View.rivals(T, freeMember, rivals, "");
+out.rivalsBusy = View.rivals(T, clanState("master"), rivals, "");
+out.rivalsLoading = View.rivals(T, freeMaster, null, "");
+out.rivalsNone = View.rivals(T, freeMaster, [rivals[0]], "");
+out.chatAllianceNone = View.chat(T, clanState("member"), "alliance", []);
+out.chatAlliancePending = View.chat(T, incoming, "alliance", []);
 out.emblems = Array.from({ length: 12 }, (_, i) => View.emblemSvg(i + 1, 40));
 out.keys = Object.keys(T);
 console.log(JSON.stringify(out));

@@ -45,12 +45,32 @@ class DuelScriptTests(unittest.TestCase):
         self.assertEqual((challenge['hidden'], challenge['text'].split(']')[0] + ']'), (False, '[clan_challenge]'))
         self.assertIn('[ALF] Alfa', challenge['text'])
         self.assertIn('[clan_challenge_accepted]', self.notice(report, 'clan_challenge_answer')['text'])
+        # on the game page the clan notices open the in-game window instead of leaving the game
+        self.assertEqual(report['openedClan'], ['challenges', 'clan'])
+        self.assertIsNone(report['navigatedByClan'])
+        self.assertFalse(report['gameRetired'])  # the tab that opened the arena keeps its game
 
     def test_a_second_game_tab_stands_aside(self):
         report = self.run_page('aside')
         self.assertEqual(report['errors'], [])
         self.assertEqual(report['startDuel'], [])
         self.assertIn('[game_in_other_tab]', report['afterLaunch']['detail'])
+        self.assertTrue(report['gameRetired'])  # its game closes: one copy of the village at a time
+
+    def test_portal_page_does_not_open_a_second_game(self):
+        report = self.run_page('portal-game-open')
+        self.assertEqual(report['errors'], [])
+        self.assertIsNone(report['navigated'])  # the open game tab opens the arena
+        self.assertIn('[game_in_other_tab]', report['afterStart']['detail'])
+        self.assertNotIn({'type': 'taking-over', 'id': 9}, report['broadcasts'])
+
+    def test_a_game_tab_does_not_open_a_battle_another_tab_claimed(self):
+        report = self.run_page('claimed')
+        self.assertEqual(report['errors'], [])
+        self.assertEqual(report['startDuel'], [])
+        self.assertTrue(report['gameRetired'])
+        self.assertIn('[game_in_other_tab]', report['afterLaunch']['detail'])
+        self.assertNotIn('se-game-page', report['store'])  # its game closed: it no longer counts as an open game
 
     def test_portal_page_takes_the_player_to_the_game(self):
         report = self.run_page('portal')
@@ -58,6 +78,8 @@ class DuelScriptTests(unittest.TestCase):
         self.assertFalse(self.notice(report, 'challenge_received')['hidden'])
         self.assertEqual(report['startDuel'], [])
         self.assertEqual(report['navigated'], '/play.html')
+        self.assertEqual(report['openedClan'], [])
+        self.assertEqual(report['navigatedByClan'], '/clans/1')  # no game window here: the clan page
         self.assertIn({'type': 'taking-over', 'id': 9}, report['broadcasts'])
 
 

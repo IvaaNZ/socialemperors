@@ -36,10 +36,15 @@ function state() {
         clan: inClan ? JSON.parse(JSON.stringify(clan)) : null, can_challenge: inClan };
 }
 const posted = [];
+let chatRequests = 0;
 window.fetch = async (url, options) => {
     const reply = (data) => ({ ok: true, status: 200, json: async () => data });
     if (url === "/state") return reply(state());
-    if (url.startsWith("/search")) return reply({ clans: [] });
+    if (url.startsWith("/search")) return reply({ clans: [
+        { id: 1, name: "Prueba", tag: "PRU", emblem: 2, members: 1, own: true },
+        { id: 2, name: "Rival", tag: "RIV", emblem: 5, members: 3 },
+        { id: 3, name: "Ocupado", tag: "OCU", emblem: 6, members: 3, busy: true }] });
+    if (url.startsWith("/chat")) chatRequests += 1;
     if (url.startsWith("/chat")) return reply({ ok: true, messages: [{ id: 1, author: "Beto", tag: "PRU", text: "hola", at: 1700000000, mine: false }] });
     if (url === "/action") {
         const fields = Object.fromEntries(options.body.entries());
@@ -101,6 +106,26 @@ function type(field, text) {
         report.chatDraftKept = $('[data-form="chat"] input').value === "borrador";
         report.chatHasMessage = $(".clanx-chat").textContent.includes("hola");
         report.noDelete = !document.querySelector('[data-action="delete_message"]') && !/Borrar|Apagar|delete/i.test($(".clanx-chat").innerHTML);
+        // The alliance channel is always there; without an alliance it explains instead of polling.
+        const chatCalls = chatRequests;
+        $('[data-channel="alliance"]').click();
+        await wait(3500);
+        report.allianceExplained = Boolean($(".clanx-chat-empty")) && !$('[data-form="chat"]');
+        report.allianceNoRequests = chatRequests === chatCalls;
+        // "Retar clan", the game's second button: the window opens on that tab.
+        window.seOpenClan();  // close
+        await wait(200);
+        report.closed = $(".clanx-overlay").hidden;
+        window.seOpenClan("rivals");
+        await wait(500);
+        report.rivalsOpen = !$(".clanx-overlay").hidden && Boolean(document.querySelector('[data-tab="rivals"].is-active'));
+        report.rivalForms = Array.from(document.querySelectorAll('[data-form="challenge"]')).map((form) => form.dataset.id);
+        const rivalForm = $('[data-form="challenge"][data-id="2"]');
+        rivalForm.best_of.value = "7";
+        rivalForm.requestSubmit();
+        await wait(300);
+        const sent = posted[posted.length - 1];
+        report.challengeSent = sent.action === "challenge" && sent.clan_id === "2" && sent.best_of === "7";
     } catch (error) {
         report.error = String(error && error.stack || error);
     }

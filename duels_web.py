@@ -108,6 +108,8 @@ def duel_texts():
         'clan_challenge_declined': _('{name} recusou o desafio do seu clã.'),
         'clan_alliance': _('{name} propõe uma aliança ao seu clã!'),
         'clan_alliance_open': _('Ver aliança'),
+        'game_closed_here': _('O jogo foi fechado nesta aba porque a batalha abriu em outra aba.'),
+        'reopen_game_here': _('Abrir o jogo aqui'),
     }
 
 

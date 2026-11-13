@@ -96,8 +96,9 @@ class ClanOverlayViewTests(unittest.TestCase):
     def test_chat_and_alliance_views(self):
         out = self.out
         self.assertIn('data-tab="chat"', out['master']['tabs'])
-        self.assertIn('data-channel="alliance"', out['chatClan'])  # an active alliance adds the shared channel
-        self.assertNotIn('data-channel="alliance"', out['chatEmpty'])
+        self.assertIn('data-channel="alliance"', out['chatClan'])
+        self.assertIn('[BET]', out['chatClan'].split('data-channel="alliance"')[1].split('</button>')[0])  # the ally's tag
+        self.assertIn('data-channel="alliance"', out['chatEmpty'])  # always offered
         self.assertIn('data-form="chat"', out['chatClan'])
         self.assertNotIn('delete_message', out['chatClan'])  # nobody deletes chat messages
         self.assertIn('[no_messages]', out['chatEmpty'])
@@ -112,6 +113,35 @@ class ClanOverlayViewTests(unittest.TestCase):
         self.assertIn('data-action="propose_alliance"', out['cardAlly'])
         self.assertIn('[allied_label]', out['cardAllied'])
         self.assertNotIn('data-form="challenge"', out['cardAllied'])  # allies do not challenge each other
+
+    def test_alliance_channel_without_an_alliance(self):
+        none, pending = self.out['chatAllianceNone'], self.out['chatAlliancePending']
+        self.assertIn('[alliance_chat_none]', none)
+        self.assertIn('[alliance_chat_how]', none)
+        self.assertNotIn('data-form="chat"', none)  # nothing to write to yet
+        self.assertIn('[alliance_chat_pending]', pending)
+        self.assertNotIn('data-form="chat"', pending)
+
+    def test_challenge_a_clan_tab(self):
+        out = self.out
+        self.assertIn('data-tab="rivals"', out['master']['tabs'])
+        self.assertNotIn('data-tab="rivals"', out['noClan']['tabs'])
+        master = out['rivalsMaster']
+        self.assertEqual(master.count('data-form="challenge"'), 1)  # only Delta: not own, not the ally, not busy
+        self.assertIn('data-form="challenge" data-id="4"', master)
+        self.assertNotIn('[ALF] Propio', master)
+        self.assertIn('[allied_label]', master)
+        self.assertIn('[rival_busy]', master)
+        self.assertEqual(master.count('<option value='), 3)
+        self.assertIn('data-form="rivals-search"', master)
+        self.assertIn('[rivals_intro]', master)
+        self.assertNotIn('data-form="challenge"', out['rivalsMember'])
+        self.assertIn('[rivals_only_master]', out['rivalsMember'])
+        self.assertNotIn('data-form="challenge"', out['rivalsBusy'])  # own clan already in a challenge
+        self.assertIn('[rivals_own_busy]', out['rivalsBusy'])
+        self.assertIn('data-tab="challenges"', out['rivalsBusy'])
+        self.assertIn('[loading]', out['rivalsLoading'])
+        self.assertIn('[no_rivals]', out['rivalsNone'])
 
     def test_twelve_distinct_emblems(self):
         self.assertEqual(len(set(self.out['emblems'])), 12)

@@ -55,7 +55,8 @@
 
         tabs(T, state, active) {
             const tabs = state.clan
-                ? [["clan", T.tab_clan], ["members", T.tab_members], ["chat", T.tab_chat], ["challenges", T.tab_challenges], ["ranking", T.tab_ranking], ["find", T.tab_find]]
+                ? [["clan", T.tab_clan], ["members", T.tab_members], ["chat", T.tab_chat], ["challenges", T.tab_challenges], ["rivals", T.tab_rivals],
+                    ["ranking", T.tab_ranking], ["find", T.tab_find]]
                 : [["find", T.tab_find], ["create", T.tab_create], ["ranking", T.tab_ranking]];
             return '<div class="clanx-tabs" role="tablist">' + tabs.map(([key, label]) =>
                 '<button type="button" role="tab" class="clanx-tab' + (key === active ? " is-active" : "") + '" aria-selected="' +
@@ -116,11 +117,19 @@
         },
 
         chat(T, state, channel, messages) {
-            const alliance = state.clan && state.clan.alliance && state.clan.alliance.status === "active" ? state.clan.alliance : null;
+            const proposal = state.clan && state.clan.alliance;
+            const alliance = proposal && proposal.status === "active" ? proposal : null;
             let html = '<div class="clanx-channels">' +
                 '<button type="button" class="clanx-tab' + (channel === "clan" ? " is-active" : "") + '" data-channel="clan">' + esc(T.chat_clan) + "</button>" +
-                (alliance ? '<button type="button" class="clanx-tab' + (channel === "alliance" ? " is-active" : "") + '" data-channel="alliance">' +
-                    esc(T.chat_alliance) + " [" + esc(alliance.ally_tag) + "]</button>" : "") + "</div>";
+                '<button type="button" class="clanx-tab' + (channel === "alliance" ? " is-active" : "") + '" data-channel="alliance">' +
+                esc(T.chat_alliance) + (alliance ? " [" + esc(alliance.ally_tag) + "]" : "") + "</button></div>";
+            if (channel === "alliance" && !alliance) {
+                // The alliance channel is always offered; without an active alliance it explains how to get one.
+                const text = proposal
+                    ? '<p>' + esc(fill(T.alliance_chat_pending, { name: "[" + proposal.ally_tag + "] " + proposal.ally_name })) + "</p>"
+                    : '<p>' + esc(T.alliance_chat_none) + '</p><p class="clanx-muted">' + esc(T.alliance_chat_how) + "</p>";
+                return html + '<div class="clanx-chat clanx-chat-empty">' + text + "</div>";
+            }
             html += '<div class="clanx-chat" aria-live="polite">';
             if (!messages) html += '<p class="clanx-muted">' + esc(T.loading) + "</p>";
             else if (!messages.length) html += '<p class="clanx-muted">' + esc(T.no_messages) + "</p>";
@@ -207,7 +216,11 @@
             const clan = state.clan;
             const c = clan.challenge;
             let html = '<section class="clanx-card"><h3>' + esc(T.challenge_title) + "</h3>";
-            if (!c) html += '<p class="clanx-muted">' + esc(T.no_challenge) + "</p><p>" + esc(T.challenge_hint) + "</p>";
+            if (!c) {
+                html += '<p class="clanx-muted">' + esc(T.no_challenge) + "</p><p>" + esc(T.challenge_hint) + "</p>" +
+                    '<div class="clanx-actions"><button type="button" class="clanx-btn clanx-btn-green" data-tab="rivals">' + esc(T.tab_rivals) +
+                    "</button></div>";
+            }
             else if (c.status === "pending") {
                 const rival = "[" + c.rival_tag + "] " + c.rival_name;
                 html += "<p>" + esc(fill(c.incoming ? T.challenge_incoming : T.challenge_outgoing, { name: rival, count: c.best_of })) + "</p>" +
@@ -239,6 +252,37 @@
                 }).join("") + "</ul></section>";
             }
             return html;
+        },
+
+        rivals(T, state, results, query) {
+            const clan = state.clan;
+            const master = clan.role === "master";
+            let html = '<p class="clanx-muted">' + esc(fill(T.rivals_intro, { minutes: state.limits.answer_minutes })) + "</p>";
+            if (clan.challenge) {
+                html += '<p class="clanx-warn">' + esc(T.rivals_own_busy) + ' <button type="button" class="clanx-linklike" data-tab="challenges">' +
+                    esc(T.see_challenges) + "</button></p>";
+            } else if (!master) html += '<p class="clanx-warn">' + esc(T.rivals_only_master) + "</p>";
+            html += '<form class="clanx-search" data-form="rivals-search"><input name="q" value="' + esc(query || "") + '" placeholder="' +
+                esc(T.search_placeholder) + '" maxlength="40" aria-label="' + esc(T.search) + '"><button type="submit" class="clanx-btn clanx-btn-brown">' +
+                esc(T.search) + "</button></form>";
+            if (!results) return html + '<p class="clanx-muted">' + esc(T.loading) + "</p>";
+            const others = results.filter((item) => !item.own && item.id !== clan.id);
+            if (!others.length) return html + '<p class="clanx-muted">' + esc(T.no_rivals) + "</p>";
+            const canSend = master && !clan.challenge;
+            return html + '<ul class="clanx-list">' + others.map((item) => {
+                let side = "";
+                if (item.allied) side = '<span class="clanx-chip clanx-chip-ally">' + esc(T.allied_label) + "</span>";
+                else if (item.busy) side = '<span class="clanx-chip">' + esc(T.rival_busy) + "</span>";
+                else if (canSend) {
+                    side = '<form class="clanx-inline" data-form="challenge" data-id="' + esc(item.id) + '"><select name="best_of" aria-label="' +
+                        esc(T.best_of) + '">' + state.limits.sizes.map((n) => '<option value="' + n + '"' + (n === 5 ? " selected" : "") + ">" +
+                        esc(fill(T.duels_count, { count: n })) + "</option>").join("") + '</select><button type="submit" class="clanx-btn clanx-btn-green">' +
+                        esc(T.challenge_send) + "</button></form>";
+                }
+                return '<li><span class="clanx-inline">' + emblemSvg(item.emblem, 26) + '<button type="button" class="clanx-linklike" data-action="open_clan" data-id="' +
+                    esc(item.id) + '"><strong>[' + esc(item.tag) + "] " + esc(item.name) + "</strong></button> <small>" +
+                    esc(fill(T.members_count, { count: item.members, max: state.limits.members })) + "</small></span><span>" + side + "</span></li>";
+            }).join("") + "</ul>";
         },
 
         ranking(T, state) {
@@ -336,6 +380,11 @@
     let messages = null;
     let chatTimer = null;
     let lastMessageId = 0;
+    const CLAN_TABS = ["clan", "members", "chat", "challenges", "rivals"];  // only for players in a clan
+
+    function allianceActive() {
+        return Boolean(state && state.clan && state.clan.alliance && state.clan.alliance.status === "active");
+    }
 
     // The "Clan" button lives inside the game (swf_clan_button.py), in its icon panel at the
     // right, once the player is in the empire; the game calls window.seOpenClan() on a click.
@@ -367,7 +416,7 @@
         body.querySelectorAll("[data-form]").forEach((form) => {
             for (const field of form.elements) {
                 if (!field.name) continue;
-                const key = form.dataset.form + ":" + field.name;
+                const key = form.dataset.form + (form.dataset.id || "") + ":" + field.name;
                 if (field.type === "radio" || field.type === "checkbox") {
                     if (field.checked) values[key] = field.value;
                 } else {
@@ -384,7 +433,7 @@
     function restoreForms(snapshot) {
         body.querySelectorAll("[data-form]").forEach((form) => {
             for (const field of form.elements) {
-                const key = form.dataset.form + ":" + field.name;
+                const key = form.dataset.form + (form.dataset.id || "") + ":" + field.name;
                 if (!field.name || !(key in snapshot.values)) continue;
                 if (field.type === "radio" || field.type === "checkbox") field.checked = field.value === snapshot.values[key];
                 else field.value = snapshot.values[key];
@@ -410,7 +459,7 @@
             body.innerHTML = '<p class="clanx-muted">' + esc(T.loading) + "</p>";
             return;
         }
-        if (!tab || (!state.clan && ["clan", "members", "challenges"].includes(tab)) || (state.clan && tab === "create")) {
+        if (!tab || (!state.clan && CLAN_TABS.includes(tab)) || (state.clan && tab === "create")) {
             tab = state.clan ? "clan" : "find";
         }
         tabsBar.innerHTML = View.tabs(T, state, card ? null : tab);
@@ -423,6 +472,7 @@
             list.scrollTop = list.scrollHeight;
         }
         else if (tab === "challenges") body.innerHTML = View.challenges(T, state, config.duels);
+        else if (tab === "rivals") body.innerHTML = View.rivals(T, state, results, query);
         else if (tab === "ranking") body.innerHTML = View.ranking(T, state);
         else if (tab === "find") body.innerHTML = View.find(T, state, results, query);
         else if (tab === "create") body.innerHTML = View.create(T, state);
@@ -438,10 +488,10 @@
         try {
             state = await getJson(config.state);
             if (state.clan) state.clan.max = state.limits.members;
-            if (!tab || (!state.clan && ["clan", "members", "challenges"].includes(tab)) || (state.clan && tab === "create")) {
+            if (!tab || (!state.clan && CLAN_TABS.includes(tab)) || (state.clan && tab === "create")) {
                 tab = state.clan ? "clan" : "find";
             }
-            if (tab === "find" && results === null) search(query);
+            if ((tab === "find" || tab === "rivals") && results === null) search(query);
         } catch (error) {
             showMessage(T.error, false);
         }
@@ -472,10 +522,14 @@
 
     async function loadChat(reset) {
         if (reset) { messages = null; lastMessageId = 0; render(); }
+        if (channel === "alliance" && !allianceActive()) {  // nothing to fetch: the channel explains how to ally
+            messages = [];
+            if (tab === "chat" && !card) render();
+            return;
+        }
         try {
             const result = await getJson(config.chat + "?channel=" + encodeURIComponent(channel) + "&after=" + lastMessageId);
             if (!result.ok) {
-                if (channel !== "clan") { channel = "clan"; return loadChat(true); }
                 messages = [];
             } else {
                 messages = (reset || !messages) ? result.messages : messages.concat(result.messages).slice(-200);
@@ -522,6 +576,7 @@
                 editing = false;
                 if (card) card = state.clan && state.clan.id === card.id ? null : await getJson(config.clan + encodeURIComponent(card.id)).catch(() => null);
                 if (action === "create" || action === "join") { card = null; tab = "clan"; }
+                if (tab === "rivals" && !card) search(query);  // who is busy changed
             }
         } catch (error) {
             showMessage(T.error, false);
@@ -555,7 +610,21 @@
     }
 
     // Called by the game (ExternalInterface): later, so the game's click handler returns first.
-    window.seOpenClan = () => { setTimeout(() => (panel.hidden ? open() : close()), 0); };
+    // seOpenClan() opens or closes the window; seOpenClan("rivals") ("Retar clan") opens it on that tab.
+    window.seOpenClan = (wanted) => {
+        setTimeout(() => {
+            if (!wanted) {
+                if (panel.hidden) open(); else close();
+                return;
+            }
+            tab = wanted;
+            card = null;
+            editing = false;
+            stopChat();
+            if (tab === "rivals") search(query);
+            if (panel.hidden) open(); else load();
+        }, 0);
+    };
     document.addEventListener("keydown", (event) => { if (event.key === "Escape" && !panel.hidden) close(); });
     panel.addEventListener("click", (event) => {
         if (event.target === panel) { close(); return; }
@@ -566,7 +635,7 @@
             editing = false;
             showMessage("", true);
             if (tab === "chat") startChat(); else stopChat();
-            if (tab === "find") search(query);
+            if (tab === "find" || tab === "rivals") search(query);
             render();
             load();  // fresh data on every tab change (an alliance or a challenge may have changed meanwhile)
             return;
@@ -605,7 +674,7 @@
         if (!form) return;
         event.preventDefault();
         const fields = Object.fromEntries(new FormData(form).entries());
-        if (form.dataset.form === "search") search(fields.q);
+        if (form.dataset.form === "search" || form.dataset.form === "rivals-search") search(fields.q);
         else if (form.dataset.form === "create") act("create", fields);
         else if (form.dataset.form === "settings") act("settings", fields);
         else if (form.dataset.form === "challenge") act("challenge", { clan_id: form.dataset.id, best_of: fields.best_of });

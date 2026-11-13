@@ -733,8 +733,14 @@ def localized_game_movie(language=None):
         from portal_i18n import load_portal_catalog, normalize_locale
         from swf_clan_button import add_clan_button
         locale = normalize_locale(language)
-        art = f'clan_button_{locale}.png' if (Path(TEMPLATES_DIR) / 'img' / f'clan_button_{locale}.png').exists() else 'clan_button_es.png'
-        translated = add_clan_button(translated, tooltip=load_portal_catalog(locale)[0].get('Clã', 'Clã'), image_url='/img/' + art)
+        catalog = load_portal_catalog(locale)[0]
+
+        def art(prefix):
+            name = f'{prefix}_{locale}.png'
+            return '/img/' + (name if (Path(TEMPLATES_DIR) / 'img' / name).exists() else f'{prefix}_es.png')
+        translated = add_clan_button(translated, tooltip=catalog.get('Clã', 'Clã'), image_url=art('clan_button'),
+                                     challenge_tooltip=catalog.get('Desafiar clã', 'Desafiar clã'),
+                                     challenge_image_url=art('clan_challenge_button'))
     return translated, hashlib.sha256(translated).hexdigest()
 
 ## GAME DYNAMIC

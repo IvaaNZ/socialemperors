@@ -84,7 +84,7 @@ def overlay_texts():
         'transfer_confirm': _('Passar a liderança para {name}? Você vira membro comum.'),
         'kick_confirm': _('Remover {name} do clã?'),
         'challenge_title': _('Desafio entre clãs'), 'no_challenge': _('Nenhum desafio agora.'),
-        'challenge_hint': _('Para desafiar outro clã, busque-o e abra a ficha dele.'),
+        'challenge_hint': _('Para desafiar outro clã, use a aba Desafiar clã ou o botão do mesmo nome no jogo.'),
         'challenge_incoming': _('{name} desafiou o seu clã para o melhor de {count} duelos.'),
         'challenge_outgoing': _('Vocês desafiaram {name} para o melhor de {count} duelos. Esperando a resposta…'),
         'minutes_left': _('Restam {minutes} min para responder.'), 'only_master_answers': _('Só o Guild Master pode responder.'),
@@ -114,6 +114,15 @@ def overlay_texts():
         'cancel_alliance': _('Cancelar proposta'), 'end_alliance': _('Romper aliança'),
         'end_alliance_confirm': _('Romper a aliança? O chat compartilhado deixa de existir.'),
         'allied_label': _('Aliado'),
+        'tab_rivals': _('Desafiar clã'),
+        'rivals_intro': _('Escolha um clã e o melhor de quantos duelos. O Guild Master dele tem {minutes} min para aceitar.'),
+        'rivals_only_master': _('Só o Guild Master pode desafiar outro clã.'),
+        'rivals_own_busy': _('O seu clã já tem um desafio pendente ou em andamento. Veja em Desafios.'),
+        'rival_busy': _('Em desafio'), 'no_rivals': _('Não há outros clãs para desafiar.'),
+        'see_challenges': _('Ver desafios'),
+        'alliance_chat_none': _('O seu clã não tem uma aliança ativa. O chat da aliança é compartilhado pelos dois clãs aliados.'),
+        'alliance_chat_pending': _('A aliança com {name} ainda não foi aceita. O chat abre quando for aceita.'),
+        'alliance_chat_how': _('Para propor uma aliança, o Guild Master busca outro clã e abre a ficha dele.'),
     }
 
 
@@ -519,9 +528,21 @@ def install_clans(app, accounts, village_lock, all_saves_userid, village_session
 
     @app.get('/clans/api/clans', endpoint='clan_api_search')
     def clan_api_search():
-        api_player()
+        account = api_player()
         found = store.clans(request.args.get('q', '')[:40])
-        return jsonify({'clans': [clan_summary(clan, clan['member_count']) for clan in found[:50]]})
+        membership = store.membership(account['id'])
+        alliance = store.alliance(membership['clan_id']) if membership else None
+        ally_id = None
+        if alliance and alliance['status'] == 'active':
+            ally_id = alliance['partner_clan'] if alliance['proposer_clan'] == membership['clan_id'] else alliance['proposer_clan']
+        clans_out = []
+        for clan in found[:50]:
+            item = clan_summary(clan, clan['member_count'])
+            # For the "Retar clan" tab: which clans are the viewer's own, its ally, or busy with a challenge.
+            item.update(own=bool(membership and membership['clan_id'] == clan['id']), allied=clan['id'] == ally_id,
+                        busy=store.current_challenge(clan['id']) is not None)
+            clans_out.append(item)
+        return jsonify({'clans': clans_out})
 
     @app.get('/clans/api/clans/<int:clan_id>', endpoint='clan_api_clan')
     def clan_api_clan(clan_id):

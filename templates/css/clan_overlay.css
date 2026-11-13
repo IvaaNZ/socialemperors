@@ -79,3 +79,6 @@
 .clanx-chat-form { margin-top: 8px; }
 .clanx-chip-ally { border-color: #2e7d32; background: #dcefd0; color: #1d5a1f; }
 @media (max-width: 560px) { .clanx-grid { grid-template-columns: 1fr; } .clanx-window { font-size: 13px; } }
+.clanx-chat-empty { display: grid; align-content: center; gap: 6px; text-align: center; }
+.clanx-chat-empty p { margin: 0; }
+.clanx-inline select { max-width: 9em; }

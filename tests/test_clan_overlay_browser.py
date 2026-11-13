@@ -58,6 +58,16 @@ class ClanOverlayBrowserTests(unittest.TestCase):
         self.assertTrue(self.report['chatDraftKept'])
         self.assertTrue(self.report['noDelete'])
 
+    def test_alliance_channel_without_an_alliance_explains_and_does_not_poll(self):
+        self.assertTrue(self.report['allianceExplained'])
+        self.assertTrue(self.report['allianceNoRequests'])
+
+    def test_the_challenge_button_opens_the_rivals_tab(self):
+        self.assertTrue(self.report['closed'])
+        self.assertTrue(self.report['rivalsOpen'])
+        self.assertEqual(self.report['rivalForms'], ['2'])  # not the own clan, not the busy one
+        self.assertTrue(self.report['challengeSent'])
+
 
 if __name__ == '__main__':
     unittest.main()

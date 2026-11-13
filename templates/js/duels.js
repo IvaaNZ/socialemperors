@@ -20,6 +20,7 @@
     let launchTimer = null;
     let pendingStart = null;  // a battle this page should take the player to
     let launchedDuel = null;
+    let retired = false;  // this game tab stood aside and closed its game (retireGame)
     const gameContainer = document.getElementById("game-player");
     // Clans (SE_CLANS=on): tags next to the names and the rivals of an active clan challenge.
     const clanElement = document.getElementById("clan-duels");
@@ -40,17 +41,83 @@
             if (data.type === "launched" && gameContainer && launchedDuel !== data.id) {
                 standingAside.add(data.id);  // another game tab of this browser opened the arena
                 pendingStart = null;
+                retireGame();
             }
             if (data.type === "taking-over" && gameContainer) {
                 standingAside.add(data.id);
                 if (launchedDuel !== data.id) {
                     stopLaunch();
                     showNotice(texts.going_to_game, texts.game_in_other_tab, [button(texts.close, hideNotice)]);
+                    retireGame();
                 }
             }
         });
     }
     const visible = () => document.visibilityState === "visible";
+
+    // Which page of this browser opens a battle. BroadcastChannel messages arrive late, so
+    // two game tabs could both open the arena, and a portal page could open a second game.
+    // Pages leave marks in localStorage instead (read at once by every tab of the site):
+    //  * a game page keeps "se-game-page" fresh while it is open (removed when it closes):
+    //    a portal page then never opens a second copy of the game;
+    //  * a game page claims a battle ("se-duel-launch") before opening it and keeps the
+    //    claim fresh during the battle; another game page that finds it stands aside.
+    // Without localStorage (private mode, blocked storage) the messages alone decide.
+    const pageId = Math.random().toString(36).slice(2) + Date.now().toString(36);
+    const storage = (() => {
+        try {
+            const store = window.localStorage;
+            store.setItem("se-duels-test", "1");
+            store.removeItem("se-duels-test");
+            return store;
+        } catch (error) {
+            return null;
+        }
+    })();
+    const GAME_KEY = "se-game-page";
+    const LAUNCH_KEY = "se-duel-launch";
+    const FRESH_MS = 75000;  // hidden tabs may run their timers only once a minute
+    function readMark(key) {
+        try { return JSON.parse(storage.getItem(key)); } catch (error) { return null; }
+    }
+    function writeMark(key, value) {
+        try { storage.setItem(key, JSON.stringify(value)); } catch (error) { /* storage full or blocked */ }
+    }
+    function dropMark(key) {
+        const mark = storage && readMark(key);
+        if (mark && mark.page === pageId) {
+            try { storage.removeItem(key); } catch (error) { /* blocked */ }
+        }
+    }
+    const fresh = (mark) => Boolean(mark && mark.page !== pageId && Date.now() - mark.at < FRESH_MS);
+    function otherGamePage() {
+        return Boolean(storage) && fresh(readMark(GAME_KEY));
+    }
+    if (gameContainer && storage) {
+        const beat = () => {
+            if (retired) return;
+            writeMark(GAME_KEY, { page: pageId, at: Date.now() });
+            if (launchedDuel !== null) {
+                const claim = readMark(LAUNCH_KEY);
+                if (claim && claim.page === pageId) writeMark(LAUNCH_KEY, { duel: claim.duel, page: pageId, at: Date.now() });
+            }
+        };
+        beat();
+        setInterval(beat, 2000);
+        window.addEventListener("pagehide", () => { dropMark(GAME_KEY); dropMark(LAUNCH_KEY); });
+    }
+    // Calls then(true) when this page may open the battle, then(false) when another one has it.
+    function claimBattle(id, then) {
+        if (!storage) { then(true); return; }
+        const current = readMark(LAUNCH_KEY);
+        if (current && current.duel === id && fresh(current)) { then(false); return; }
+        writeMark(LAUNCH_KEY, { duel: id, page: pageId, at: Date.now() });
+        // Two pages that wrote at the same moment: the last write wins, for both of them.
+        setTimeout(() => {
+            const winner = readMark(LAUNCH_KEY);
+            then(Boolean(winner && winner.duel === id && winner.page === pageId));
+        }, 300 + Math.floor(Math.random() * 300));
+    }
 
     const fill = (text, values) => text.replace(/\{(\w+)\}/g, (match, key) => (key in values ? values[key] : match));
     // Same grouping as the portal's game_number filter: 6.925 (es, pt-BR) and 6,925 (en), always.
@@ -65,6 +132,32 @@
         element.textContent = label;
         element.addEventListener("click", onClick);
         return element;
+    }
+
+    // A game tab that stood aside for the battle closes its game: two copies of the same
+    // village would both send orders (the older one from an outdated state) and double the
+    // memory the game takes. The player can open it again here with one click.
+    function retireGame() {
+        if (!gameContainer || retired) return;
+        retired = true;
+        const box = document.createElement("div");
+        box.className = "duel-game-retired";
+        const text = document.createElement("p");
+        text.textContent = texts.game_closed_here;
+        box.append(text, button(texts.reopen_game_here, () => window.location.reload(), true));
+        if (gameContainer.dataset) gameContainer.dataset.retired = "true";  // game.js does not start it later either
+        gameContainer.replaceChildren(box);  // removing the player stops the game
+        if (storage) dropMark(GAME_KEY);  // no game here any more
+    }
+
+    // On the game page the clan notices open the in-game clan window instead of leaving the game.
+    function openClan(url, tab) {
+        if (typeof window.seOpenClan === "function") {
+            hideNotice();
+            window.seOpenClan(tab);
+        } else {
+            window.location.href = url;
+        }
     }
 
     function hideNotice() {
@@ -118,6 +211,7 @@
         const attempt = () => {
             if (standingAside.has(message.id)) {
                 showNotice(fill(texts.starting, { name: message.other.name }), texts.game_in_other_tab, [button(texts.close, hideNotice)]);
+                retireGame();
                 return;
             }
             const player = gameContainer && gameContainer.firstElementChild;
@@ -141,6 +235,11 @@
     }
 
     function goToGame(message) {
+        if (otherGamePage()) {  // the game is already open in another tab: it opens the arena
+            pendingStart = null;
+            showNotice(fill(texts.starting, { name: message.other.name }), texts.game_in_other_tab, [button(texts.close, hideNotice)]);
+            return;
+        }
         if (pages) pages.postMessage({ type: "taking-over", id: message.id });
         showNotice(fill(texts.starting, { name: message.other.name }), texts.going_to_game, [button(texts.close, hideNotice)]);
         setTimeout(() => { window.location.href = config.playUrl; }, 1200);
@@ -155,7 +254,15 @@
         launchedDuel = message.id;  // a second call (visibility change, reconnection) does nothing
         showNotice(fill(texts.starting, { name: message.other.name }), fill(texts.arena_help, { name: message.other.name }),
             [button(texts.close, hideNotice)]);
-        launchBattle(message);
+        claimBattle(message.id, (mine) => {
+            if (mine) {
+                launchBattle(message);
+                return;
+            }
+            standingAside.add(message.id);  // another game tab of this browser has this battle
+            showNotice(fill(texts.starting, { name: message.other.name }), texts.game_in_other_tab, [button(texts.close, hideNotice)]);
+            retireGame();
+        });
     }
 
     // The page the player is looking at takes them to the arena: a portal page
@@ -295,7 +402,7 @@
             const clanName = "[" + message.clan.tag + "] " + message.clan.name;
             showNotice(fill(texts.clan_challenge, { name: clanName }),
                 fill(texts.clan_challenge_detail, { count: message.best_of, minutes: message.minutes }), [
-                    button(texts.clan_challenge_open, () => { window.location.href = message.url; }, true),
+                    button(texts.clan_challenge_open, () => openClan(message.url, "challenges"), true),
                     button(texts.close, hideNotice),
                 ]);
             break;
@@ -303,7 +410,7 @@
         case "clan_alliance": {
             const clanName = "[" + message.clan.tag + "] " + message.clan.name;
             showNotice(fill(texts.clan_alliance, { name: clanName }), "", [
-                button(texts.clan_alliance_open, () => { window.location.href = message.url; }, true),
+                button(texts.clan_alliance_open, () => openClan(message.url, "clan"), true),
                 button(texts.close, hideNotice),
             ]);
             break;
@@ -311,7 +418,7 @@
         case "clan_challenge_answer": {
             const clanName = "[" + message.clan.tag + "] " + message.clan.name;
             showNotice(fill(message.accepted ? texts.clan_challenge_accepted : texts.clan_challenge_declined, { name: clanName }), "", [
-                button(texts.clan_challenge_open, () => { window.location.href = message.url; }, true),
+                button(texts.clan_challenge_open, () => openClan(message.url, "challenges"), true),
                 button(texts.close, hideNotice),
             ]);
             break;

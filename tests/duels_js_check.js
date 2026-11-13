@@ -6,7 +6,9 @@ const path = require("path");
 const vm = require("vm");
 
 const source = fs.readFileSync(path.join(__dirname, "..", "templates", "js", "duels.js"), "utf8");
-const mode = process.argv[2] || "game";  // "game" (play page), "aside" (a second game tab) or "portal"
+// "game" (play page), "aside" (a second game tab), "portal", "portal-game-open" (a portal page while a game tab
+// of this browser is open) or "claimed" (a game tab whose battle another game tab already claimed)
+const mode = process.argv[2] || "game";
 // Every text key the server sends (duels_web.duel_texts), as "[key]" plus the placeholders.
 const webSource = fs.readFileSync(path.join(__dirname, "..", "duels_web.py"), "utf8");
 const texts = {};
@@ -31,12 +33,12 @@ const elements = {
     "duel-online": element("duel-online"),
     "clan-duels": { textContent: JSON.stringify({ tags: { "2": "BET" }, rivals: [2] }) },
 };
-if (mode === "game" || mode === "aside") {
+if (mode === "game" || mode === "aside" || mode === "claimed") {
     const container = element("game-player");
     container.firstElementChild = { startDuel: (...args) => { report.startDuel.push(args); return true; } };
     elements["game-player"] = container;
 }
-const report = { errors: [], sent: [], startDuel: [], notices: [], navigated: null, broadcasts: [] };
+const report = { errors: [], sent: [], startDuel: [], notices: [], navigated: null, broadcasts: [], openedClan: [] };
 let socket = null;
 class FakeSocket {
     constructor(url) { this.url = url; this.readyState = 1; this.listeners = {}; socket = this; }
@@ -66,6 +68,19 @@ const context = {
     },
 };
 context.window = context;
+context.addEventListener = () => {};
+if (mode === "portal-game-open" || mode === "claimed") {  // marks left by another tab of this browser
+    const store = {};
+    if (mode === "portal-game-open") store["se-game-page"] = JSON.stringify({ page: "other", at: Date.now() });
+    if (mode === "claimed") store["se-duel-launch"] = JSON.stringify({ duel: 9, page: "other", at: Date.now() });
+    context.localStorage = {
+        getItem: (key) => (key in store ? store[key] : null),
+        setItem: (key, value) => { store[key] = String(value); },
+        removeItem: (key) => { delete store[key]; },
+    };
+    report.store = store;
+}
+if (mode !== "portal") context.seOpenClan = (tab) => { report.openedClan.push(tab); };  // the game page's clan window
 vm.createContext(context);
 vm.runInContext(source.replace("try { onMessage(JSON.parse(event.data)); } catch (error) { /* ignore malformed messages */ }",
     "try { onMessage(JSON.parse(event.data)); } catch (error) { __report.errors.push(String(error && error.stack || error)); }"),
@@ -87,6 +102,10 @@ const side = (id, name, extra) => ({ id, name, power: 1000, troops: 3, level: 30
     report.onlineRival = Boolean(first && first.children[0] && first.children[0].children.some((child) => child && child.className === "duels-rival"));
     deliver({ type: "clan_challenge", id: 4, best_of: 5, minutes: 10, clan: { tag: "ALF", name: "Alfa" }, url: "/clans/2" });
     deliver({ type: "clan_challenge_answer", id: 4, accepted: true, clan: { tag: "BET", name: "Beta" }, url: "/clans/1" });
+    actions.children[0].listeners.click();  // "Ver reto"
+    deliver({ type: "clan_alliance", id: 5, clan: { tag: "GAM", name: "Gama" }, url: "/clans/1" });
+    actions.children[0].listeners.click();  // "Ver alianza"
+    report.navigatedByClan = report.navigated;
     deliver({ type: "challenge_received", id: 7, other: { id: 2, name: "Beto" }, expires_in: 30 });
     deliver({ type: "challenge_sent", id: 8, other: { id: 2, name: "Beto" }, expires_in: 30 });
     deliver({ type: "challenge_closed", id: 8, reason: "declined", by: { id: 2, name: "Beto" } });
@@ -106,6 +125,8 @@ const side = (id, name, extra) => ({ id, name, power: 1000, troops: 3, level: 30
             review_reason: status === "review" ? "power" : status === "void" ? "no_reports" : null,
             challenger: side(1, "Ana"), defender: side(2, "Beto", { report: "missing", percent: null, seconds: null }) });
     }
+    const container = elements["game-player"];
+    report.gameRetired = Boolean(container && container.children.length && container.children[0].className === "duel-game-retired");
     console.log(JSON.stringify(report));
     process.exit(0);
 })();

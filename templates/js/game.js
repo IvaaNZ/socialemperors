@@ -279,6 +279,12 @@
     }, 45000);
 
     async function startPlayer() {
+        // A tab that stood aside for a duel (duels.js) closed its game before it started: keep it closed.
+        if (container.dataset.retired === "true") {
+            clearTimeout(loadingTimer);
+            overlay.hidden = true;
+            return;
+        }
         try {
             const ruffle = window.RufflePlayer.newest();
             player = ruffle.createPlayer();

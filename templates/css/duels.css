@@ -29,3 +29,5 @@
 .duels-table .numeric { text-align: right; font-variant-numeric: tabular-nums; }
 .duels-rules ul { padding-left: 20px; }
 @media (max-width: 600px) { .duels-main { padding: 0 16px; } }
+.duel-game-retired { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 12px; padding: 16px; background: #2b3a1c; color: #f6f1e3; text-align: center; }
+.duel-game-retired p { margin: 0; max-width: 32em; }

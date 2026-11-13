@@ -314,6 +314,10 @@ class ClanWebTests(unittest.TestCase):
         self.assertTrue(self.action(beto, 'accept_alliance', alliance_id=str(alliance['id']))[0]['ok'])
         self.assertNotIn('Retar a este clan', self.page(ana, f'/clans/{beta}'))  # allies: no challenge form
         self.assertIn('Retar a este clan', self.page(ana, f'/clans/{gama}'))
+        # The "Retar clan" tab's list: own clan, ally and busy clans are marked.
+        listed = {c['tag']: c for c in self.api(ana, '/clans/api/clans?q=portal')['clans']}
+        self.assertEqual((listed['AFP']['own'], listed['BTP']['allied'], listed['GMP']['allied'], listed['GMP']['busy']),
+                         (True, True, False, False))
         self.action(ana, 'end_alliance', alliance_id=str(alliance['id']))
         # Rivals of an open challenge cannot ally.
         self.assertTrue(self.action(ana, 'challenge', clan_id=str(gama), best_of='3')[0]['ok'])
@@ -321,6 +325,13 @@ class ClanWebTests(unittest.TestCase):
         result, _ = self.action(ana, 'propose_alliance', clan_id=str(gama))
         self.assertEqual((result['ok'], result['message']),
                          (False, 'Hay un reto pendiente o en curso entre los dos clanes: termínenlo antes de aliarse.'))
+        listed = {c['tag']: c for c in self.api(beto, '/clans/api/clans?q=portal')['clans']}
+        self.assertEqual((listed['AFP']['busy'], listed['GMP']['busy'], listed['BTP']['busy'], listed['AFP']['allied']),
+                         (True, True, False, False))
+        # The in-game window carries the new texts.
+        texts = json.loads(re.search(r'<script id="clan-overlay-config" type="application/json">(.*?)</script>',
+                                     self.page(ana, '/play.html')).group(1))['texts']
+        self.assertEqual((texts['tab_rivals'], texts['rival_busy']), ('Retar clan', 'En un reto'))
 
     def test_the_window_api_needs_an_approved_player(self):
         anonymous = server.app.test_client()

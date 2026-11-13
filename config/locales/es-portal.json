@@ -654,7 +654,6 @@
   "Nível mínimo": "Nivel mínimo",
   "Nível {level}+": "Nivel {level}+",
   "O anúncio pode ter até 500 caracteres.": "El anuncio puede tener hasta 500 caracteres.",
-  "Para desafiar outro clã, busque-o e abra a ficha dele.": "Para retar a otro clan, búscalo y abre su ficha.",
   "Passar a liderança para {name}? Você vira membro comum.": "¿Pasar el mando a {name}? Tú pasas a ser miembro común.",
   "Poder {power}": "Poder {power}",
   "Português": "Portugués",
@@ -705,5 +704,18 @@
   "Aliança recusada.": "Alianza rechazada.",
   "A aliança terminou.": "La alianza terminó.",
   "Ver aliança": "Ver alianza",
-  "Há um desafio pendente ou em andamento entre os dois clãs: termine-o antes de se aliarem.": "Hay un reto pendiente o en curso entre los dos clanes: termínenlo antes de aliarse."
+  "Há um desafio pendente ou em andamento entre os dois clãs: termine-o antes de se aliarem.": "Hay un reto pendiente o en curso entre los dos clanes: termínenlo antes de aliarse.",
+  "Desafiar clã": "Retar clan",
+  "Escolha um clã e o melhor de quantos duelos. O Guild Master dele tem {minutes} min para aceitar.": "Elige un clan y a cuántos duelos es el reto. Su Guild Master tiene {minutes} min para aceptar.",
+  "Só o Guild Master pode desafiar outro clã.": "Solo el Guild Master puede retar a otro clan.",
+  "O seu clã já tem um desafio pendente ou em andamento. Veja em Desafios.": "Tu clan ya tiene un reto pendiente o en curso. Míralo en Retos.",
+  "Em desafio": "En un reto",
+  "Não há outros clãs para desafiar.": "No hay otros clanes para retar.",
+  "Ver desafios": "Ver retos",
+  "O seu clã não tem uma aliança ativa. O chat da aliança é compartilhado pelos dois clãs aliados.": "Tu clan no tiene una alianza activa. El chat de la alianza lo comparten los dos clanes aliados.",
+  "A aliança com {name} ainda não foi aceita. O chat abre quando for aceita.": "La alianza con {name} todavía no fue aceptada. El chat se abre cuando la acepten.",
+  "Para propor uma aliança, o Guild Master busca outro clã e abre a ficha dele.": "Para proponer una alianza, el Guild Master busca otro clan y abre su ficha.",
+  "O jogo foi fechado nesta aba porque a batalha abriu em outra aba.": "El juego se cerró en esta pestaña porque la batalla se abrió en otra.",
+  "Abrir o jogo aqui": "Abrir el juego aquí",
+  "Para desafiar outro clã, use a aba Desafiar clã ou o botão do mesmo nome no jogo.": "Para retar a otro clan, usa la pestaña Retar clan o el botón del mismo nombre en el juego."
 }

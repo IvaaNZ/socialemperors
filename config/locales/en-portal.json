@@ -644,7 +644,6 @@
   "Nível mínimo": "Minimum level",
   "Nível {level}+": "Level {level}+",
   "O anúncio pode ter até 500 caracteres.": "The announcement can be up to 500 characters.",
-  "Para desafiar outro clã, busque-o e abra a ficha dele.": "To challenge another clan, find it and open its card.",
   "Passar a liderança para {name}? Você vira membro comum.": "Hand the lead to {name}? You become a plain member.",
   "Poder {power}": "Power {power}",
   "Português": "Portuguese",
@@ -695,5 +694,18 @@
   "Aliança recusada.": "Alliance declined.",
   "A aliança terminou.": "The alliance ended.",
   "Ver aliança": "See alliance",
-  "Há um desafio pendente ou em andamento entre os dois clãs: termine-o antes de se aliarem.": "There is a pending or ongoing challenge between the two clans: finish it before allying."
+  "Há um desafio pendente ou em andamento entre os dois clãs: termine-o antes de se aliarem.": "There is a pending or ongoing challenge between the two clans: finish it before allying.",
+  "Desafiar clã": "Challenge a clan",
+  "Escolha um clã e o melhor de quantos duelos. O Guild Master dele tem {minutes} min para aceitar.": "Pick a clan and how many duels (best of). Its Guild Master has {minutes} min to accept.",
+  "Só o Guild Master pode desafiar outro clã.": "Only the Guild Master can challenge another clan.",
+  "O seu clã já tem um desafio pendente ou em andamento. Veja em Desafios.": "Your clan already has a pending or ongoing challenge. See Challenges.",
+  "Em desafio": "In a challenge",
+  "Não há outros clãs para desafiar.": "There are no other clans to challenge.",
+  "Ver desafios": "See challenges",
+  "O seu clã não tem uma aliança ativa. O chat da aliança é compartilhado pelos dois clãs aliados.": "Your clan has no active alliance. The alliance chat is shared by the two allied clans.",
+  "A aliança com {name} ainda não foi aceita. O chat abre quando for aceita.": "The alliance with {name} has not been accepted yet. The chat opens once it is.",
+  "Para propor uma aliança, o Guild Master busca outro clã e abre a ficha dele.": "To propose an alliance, the Guild Master finds another clan and opens its card.",
+  "O jogo foi fechado nesta aba porque a batalha abriu em outra aba.": "The game was closed in this tab because the battle opened in another one.",
+  "Abrir o jogo aqui": "Open the game here",
+  "Para desafiar outro clã, use a aba Desafiar clã ou o botão do mesmo nome no jogo.": "To challenge another clan, use the Challenge a clan tab or the button of the same name in the game."
 }

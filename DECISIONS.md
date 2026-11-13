@@ -155,3 +155,20 @@ Probado: reglas con reloj simulado (canales privados, largo y ritmo, quién borr
 - Al tocarlo, el juego llama a `window.seOpenClan()` (ExternalInterface) y la página abre o cierra la ventana del clan. Por eso `allowScriptAccess` se enciende también con los clanes encendidos. Las dos partes nuevas del juego están dentro de su propio try/catch: un error no puede romper la interfaz.
 - La imagen (el mismo escudo verde con la palabra debajo) está en `templates/img/clan_button_<idioma>.png` ("Clan" en español e inglés, "Clã" en portugués); se dibuja de nuevo con `tools/make_clan_button.py`.
 - Se quitó el escudo HTML que flotaba sobre el juego (también se veía durante la carga).
+
+## "Retar clan", chat de la alianza y duelos entre pestañas
+
+- **Botón "Retar clan" en el juego:** un segundo ícono (escudo rojo con espadas cruzadas) junto a "Clan", en el mismo panel del juego. El panel ubica sus íconos uno debajo del otro, a 100 px; "Retar clan" dibuja su imagen un lugar más arriba y a la izquierda, así queda al lado de "Clan" y no tapa el "+" del zoom. El panel pasa de 2 a 3 íconos visibles (la única instrucción original que cambia, del mismo tamaño), para que el cofre del lunes no oculte ninguno. Al tocarlo se abre la ventana en la pestaña nueva **Retar clan**.
+- **Pestaña "Retar clan"** (para miembros de un clan): lista los otros clanes con buscador. El propio clan no aparece; el aliado se marca "Aliado" y los clanes que ya tienen un reto se marcan "En un reto". El Guild Master elige al mejor de 3, 5 o 7 y reta desde la misma fila; los demás ven "Solo el Guild Master puede retar a otro clan". Si el clan ya tiene un reto, se avisa y hay un botón para ver los retos. La pestaña "Retos" sin reto lleva a esta pestaña.
+- **Chat de la alianza siempre visible:** el canal "Alianza" aparece siempre en el chat. Sin alianza explica cómo formar una (y no consulta al servidor); con una propuesta pendiente dice que el chat se abre cuando la acepten; con la alianza activa muestra "Alianza [ETQ]" y el chat compartido.
+- **Al tocar un ícono del juego** se quita su cartel de ayuda (antes quedaba "Clan" en pantalla, porque la ventana se abre encima y el juego no ve salir el mouse).
+- **Avisos de clan dentro del juego:** "Ver reto" y "Ver alianza" abren la ventana del clan en el juego (pestañas Retos y Mi clan) en lugar de llevar al portal y sacar al jugador del juego. En el portal siguen abriendo la página del clan.
+- **Una sola copia del juego por batalla:** con dos pestañas de juego abiertas, o una de juego y la de Duelos, a veces las dos abrían la misma batalla, porque cada una decidía sola y los mensajes entre pestañas llegan tarde. Ahora cada pestaña de juego deja en `localStorage` una marca de "juego abierto" que renueva cada 2 s y borra al cerrarse. La página de Duelos no abre otro juego si esa marca está vigente (75 s, porque las pestañas en segundo plano pueden correr sus relojes una vez por minuto). Para abrir una batalla, la pestaña de juego la **reclama** y espera un instante: si otra la reclamó, se hace a un lado. Además, la pestaña que se hace a un lado **cierra su juego** y muestra "El juego se cerró en esta pestaña porque la batalla se abrió en otra", con el botón "Abrir el juego aquí". Así no quedan dos copias de la misma aldea mandando órdenes, y no se agota la memoria gráfica (con tres juegos abiertos, una pestaña perdió el WebGL). Sin `localStorage` se usa el sistema anterior.
+
+Probado de punta a punta en el navegador, con una copia de los datos y dos jugadores en el mismo navegador (127.0.0.1 y localhost):
+- se creó un clan sin que se vaciaran los campos;
+- se mandó un reto con el botón del juego y se aceptó;
+- se jugó un duelo real en la arena: los dos recibieron el mismo resultado, se actualizó el ranking y el reto sumó la victoria;
+- se probaron la rendición, la alianza y el chat de la alianza en los dos sentidos;
+- "Ver reto" se abrió dentro del juego;
+- con dos pestañas de juego, solo una abrió la batalla y la otra cerró su juego.
