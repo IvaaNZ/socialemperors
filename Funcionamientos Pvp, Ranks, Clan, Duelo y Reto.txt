@@ -1,0 +1,220 @@
+FUNCIONAMIENTO: PvP, RANKS, CLANES, DUELOS Y RETOS
+Servidor privado de Social Empires, bloque E (puntos 20 a 22)
+=============================================================
+
+Hay tres formas de enfrentarse a otros jugadores:
+
+  1. PvP normal: los SAQUEOS (página "Rivales y saqueos").
+  2. Los DUELOS en vivo, que pueden ser AMISTOSOS o DE RANKING (página "Duelos").
+  3. Los RETOS ENTRE CLANES, que se juegan con duelos (ventana "Clan" del juego).
+
+Ninguna de las tres hace perder tropas. En los saqueos sí se pierden recursos;
+en los duelos y los retos no se pierde nada de la aldea.
+
+
+-------------------------------------------------------------
+1. LA FUERZA DE UN EJÉRCITO (la usan saqueos y duelos)
+-------------------------------------------------------------
+
+Cada tropa vale:  10 x ataque  +  5 x defensa  +  vida
+
+Correcciones de balance (punto 20):
+  - Unidades kamikaze (explotan una vez): el ataque cuenta x1, no x10.
+  - Máquinas de asedio, como el Ariete Orco o la Catapulta Élfica Imperial:
+    el ataque cuenta x5, es decir, la mitad.
+  - Ariete Orco: bajó a ataque 150 y vida 3.000 (antes 500 y 5.000).
+
+Cuentan solo las tropas de combate de la raza de la aldea principal, sueltas
+o guardadas en edificios. Los trabajadores y los curanderos no cuentan.
+
+
+-------------------------------------------------------------
+2. PvP NORMAL: SAQUEOS
+-------------------------------------------------------------
+
+Se resuelven en el servidor al instante, sin batalla jugada.
+
+Quién gana:
+  - Fuerza de ataque: la suma de las tropas de combate del atacante.
+  - Fuerza de defensa: la suma de las tropas del defensor, más sus
+    estructuras de defensa (murallas, torres...).
+  - Gana el ataque solo si es MAYOR que la defensa. Con un empate, gana la
+    defensa.
+
+Botín:
+  - Si el atacante gana, se lleva el 20 % de cada recurso del defensor (oro,
+    madera, comida y piedra).
+  - Si pierde, no se lleva nada.
+  - Ninguno de los dos pierde tropas.
+
+Requisitos y esperas:
+  - Los dos tienen que haber terminado el tutorial, y el atacante necesita
+    al menos 1 tropa de combate.
+  - Rango de nivel: la diferencia entre los dos puede ser de hasta 3 niveles,
+    o de hasta la mitad del nivel del atacante si eso es más.
+  - Después de atacar, el atacante espera 15 minutos para atacar otra vez.
+  - Una aldea saqueada con éxito queda protegida 1 hora.
+  - A la misma aldea se la puede atacar una vez cada 6 horas.
+
+Los saqueos no tienen ranking: solo mueven recursos.
+
+
+-------------------------------------------------------------
+3. DUELOS EN VIVO (página "Duelos")
+-------------------------------------------------------------
+
+Cómo se reta:
+  - Se reta a un jugador CONECTADO, es decir, con el juego o el portal
+    abierto.
+  - Tiene 30 segundos para aceptar o rechazar; si no contesta, el reto
+    expira. El que retó puede cancelarlo.
+  - Cada jugador tiene un solo reto o duelo a la vez, y puede mandar como
+    máximo 5 retos por minuto.
+  - Si alguno se desconecta más de 5 segundos, el reto se cancela.
+  - Los dos necesitan el tutorial terminado y al menos 1 tropa de combate.
+
+La batalla:
+  - Al aceptar, los DOS jugadores entran a la arena de torneo del juego.
+  - Cada uno comanda SU ejército contra el ejército del otro, que maneja la IA
+    del juego. Los dos ejércitos atacan solos.
+  - Cada ejército está formado por las 20 tropas más fuertes de la aldea
+    (el máximo del modo torneo), sin las unidades prohibidas en torneos.
+  - Se pelea con COPIAS: las tropas de la aldea no mueren de verdad.
+  - Si el juego está abierto en varias pestañas, la batalla se abre en una
+    sola, y las demás cierran su juego.
+
+Quién gana:
+  - Gana el que destruye el MAYOR PORCENTAJE del ejército rival.
+  - Con el mismo porcentaje, gana el que terminó MÁS RÁPIDO; si el porcentaje
+    y el tiempo son iguales, es empate.
+  - Una batalla de menos de 20 segundos no vale.
+  - Cada jugador tiene 10 minutos desde que empieza el duelo para terminar su
+    batalla.
+  - Si solo uno de los dos termina a tiempo con un resultado válido, gana ese.
+    Si ninguno lo hace, el duelo se anula.
+  - Si el resultado es muy improbable (el ganador tenía menos de un tercio de
+    la fuerza del perdedor), el duelo queda EN REVISIÓN: no cuenta hasta que
+    un administrador lo valide o lo anule (Administración > Duelos).
+  - Si el servidor se reinicia en medio de una batalla, el duelo se anula.
+
+Los dos jugadores reciben el mismo resultado, con el porcentaje y el tiempo de
+cada uno. Los valores de 20 s, 10 min y 1/3 se pueden cambiar con
+SE_DUEL_MIN_SECONDS, SE_DUEL_DEADLINE_SECONDS y SE_DUEL_POWER_RATIO.
+
+
+-------------------------------------------------------------
+4. DUELO AMISTOSO Y DUELO DE RANKING (el "Rank" del PvP)
+-------------------------------------------------------------
+
+  - DE RANKING (ranked): cuando las aldeas principales de los DOS jugadores son
+    de nivel 25 o más. Cambia los puntos de ranking.
+  - AMISTOSO: cuando alguno de los dos está por debajo del nivel 25. Se juega
+    igual, pero no cambia los puntos.
+
+Los puntos de ranking usan el sistema Elo:
+  - Todos empiezan con 1.000 puntos.
+  - Ganarle a alguien con más puntos da más; ganarle a alguien con menos da
+    poco. Perder resta lo mismo que gana el otro.
+  - El cambio máximo por duelo es de 32 puntos; con dos rivales parejos, unos
+    16.
+  - Un empate mueve pocos puntos, hacia el que tenía menos.
+  - Los duelos anulados o en revisión no cambian puntos. Un duelo en revisión
+    los cambia si un administrador lo valida.
+
+La página "Duelos" muestra el ranking (los 20 mejores, con victorias, derrotas
+y empates), tu fuerza, tus tropas que cuentan y tus últimos duelos.
+
+
+-------------------------------------------------------------
+5. CLANES
+-------------------------------------------------------------
+
+Se manejan desde el botón "Clan" del juego (arriba a la derecha, donde estaba
+"Más logros") o desde la página "Clanes" del portal.
+
+Miembros y rangos:
+  - Máximo 70 miembros: 1 Guild Master y hasta 3 Assist.
+  - Guild Master: hace todo. Edita el clan (emblema, lema, anuncio y forma de
+    ingreso), nombra y quita Assist, pasa el mando, expulsa, reta a otros
+    clanes, hace alianzas y puede disolver el clan. Para irse, primero pasa el
+    mando; si está solo, irse disuelve el clan.
+  - Assist: acepta o rechaza solicitudes y expulsa a miembros comunes.
+  - Miembro: puede irse del clan.
+
+Ingreso:
+  - Clan "Con solicitud" (el normal): el jugador pide entrar y un Guild Master
+    o un Assist acepta.
+  - Clan "Abierto": se entra al instante.
+  - En los dos casos la aldea principal necesita el nivel mínimo del clan.
+  - Cada jugador puede tener hasta 3 solicitudes abiertas, que duran 7 días.
+  - Quien sale de un clan o es expulsado espera 1 hora para entrar a otro o
+    crear uno. Si el clan se disuelve, no hay espera.
+  - Para crear un clan hay que tener el tutorial terminado.
+
+Chat (pestaña "Chat"):
+  - Canal "Clan" para los miembros, y canal "Alianza", que comparten los dos
+    clanes aliados.
+  - Mensajes de hasta 300 caracteres, uno cada 2 segundos por jugador.
+  - Se guardan los últimos 200 por canal. Nadie puede borrar mensajes.
+
+Alianza:
+  - Cada clan puede tener UNA sola alianza, contando las propuestas
+    pendientes.
+  - El Guild Master la propone desde la ficha de otro clan, y el Guild Master
+    del otro clan la acepta o la rechaza.
+  - Los aliados NO pueden retarse entre sí, y dos clanes con un reto pendiente
+    o en curso no pueden aliarse.
+  - Cualquiera de los dos Guild Master puede romperla. Si un clan se disuelve,
+    la alianza termina.
+
+
+-------------------------------------------------------------
+6. RETOS ENTRE CLANES
+-------------------------------------------------------------
+
+Cómo se reta:
+  - El Guild Master reta a otro clan desde la pestaña "Retar clan" de la
+    ventana del clan (o desde la ficha del clan).
+  - Elige al mejor de 3, 5 o 7 duelos.
+  - El Guild Master del otro clan tiene 10 MINUTOS para aceptar o rechazar;
+    si no contesta, el reto expira. Mientras espera, el que retó puede
+    cancelarlo.
+  - Cada clan tiene un solo reto pendiente o en curso a la vez. Al terminar,
+    puede retar de nuevo, al mismo clan o a otro, sin espera.
+
+Cómo se juega:
+  - Los miembros de los dos clanes se retan en DUELOS normales (página
+    "Duelos"), donde los rivales del reto aparecen marcados como "Clan rival".
+  - Cada duelo TERMINADO entre un miembro de cada clan suma una victoria al
+    clan del ganador. No cuentan los empates, los duelos anulados ni los que
+    están en revisión (estos cuentan si el administrador los valida).
+  - Solo cuentan los jugadores que estaban en cada clan cuando se aceptó el
+    reto.
+  - Cuentan los duelos amistosos y los de ranking.
+  - Gana el clan que llega primero a la mayoría: 2 victorias al mejor de 3,
+    3 al mejor de 5 y 4 al mejor de 7.
+
+Otras formas de terminar:
+  - Rendirse: cualquiera de los dos Guild Master puede rendirse, y gana el
+    otro clan.
+  - Si un clan se disuelve durante el reto, lo pierde.
+
+Ranking de clanes (pestaña "Clasificación"):
+  - Ordenado por retos ganados; luego por duelos ganados dentro de los retos y
+    por menos retos perdidos.
+
+
+-------------------------------------------------------------
+7. RESUMEN RÁPIDO
+-------------------------------------------------------------
+
+                        SAQUEO (PvP normal)   DUELO amistoso      DUELO de ranking    RETO de clan
+  Se juega              no (lo calcula el     sí, en la arena     sí, en la arena     con duelos
+                        servidor)
+  Quién gana            mayor fuerza          mayor % destruido   mayor % destruido   mayoría de duelos
+  Se pierde             recursos (20 %)       nada                nada                nada
+  Puntos de ranking     no                    no                  sí (Elo)            ranking de clanes
+  Requisito             tutorial, rango de    tutorial y 1 tropa  los dos nivel 25+   ser Guild Master
+                        nivel
+  Esperas               15 min / 6 h /        30 s para aceptar   30 s para aceptar   10 min para aceptar
+                        1 h de protección
