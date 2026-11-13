@@ -349,6 +349,99 @@ class _Builder:
         return qname
 
 
+def _reachable(ops):
+    """The instructions run in order, following unconditional jumps (the obfuscation hops over dead code)."""
+    by_offset = {op[0]: index for index, op in enumerate(ops)}
+    out, index, seen = [], 0, set()
+    while index < len(ops) and index not in seen:
+        seen.add(index)
+        if ops[index][1] == 'jump':
+            index = by_offset.get(int(str(ops[index][2]).lstrip('->')), len(ops))
+            continue
+        out.append(ops[index])
+        index += 1
+    return out
+
+
+def _signed(op):
+    if op[1] == 'pushbyte':
+        value = int(op[2])
+        return value - 256 if value > 127 else value
+    if op[1] in ('pushshort', 'pushint') and str(op[2]).lstrip('-').isdigit():
+        return int(op[2])
+    return None
+
+
+def _pool_int(raw):
+    value = shift = 0
+    for byte in raw:
+        value |= (byte & 0x7F) << shift
+        shift += 7
+        if not byte & 0x80:
+            break
+    return value - (1 << 32) if value >= 1 << 31 else value
+
+
+def automatic_ability_units(abc):
+    """Unit ids whose special-unit class has at least one ability with unlimited uses (cast by itself).
+
+    IsoEngine.CreateIsoElement picks the class by unit id (Constants.ID_UNIT_*). An ability is built with
+    `new SpecialUnitAttack(id, numAttacks, ...)` or with SpecialUnitAttackCreator, whose numAttacks keeps
+    its default (-1) unless withNumAttacks sets it. A class also has its parents' abilities.
+    """
+    names = {abc.multiname_name(inst['name']): index for index, inst in enumerate(abc.instances)}
+    parent = {abc.multiname_name(inst['name']): abc.multiname_name(inst['super']) if inst['super'] else None
+              for inst in abc.instances}
+
+    def creator_default():
+        for trait in abc.instances[names['SpecialUnitAttackCreator']]['traits']:
+            if abc.multiname_name(trait['name']) == 'numAttacks' and len(trait['data']) > 3 and trait['data'][3] == 0x03:
+                return _pool_int(abc.ints[trait['data'][2] - 1])
+        return 0
+
+    default = creator_default()
+
+    def unlimited(cls):
+        while cls in names and cls != 'IsoSpecialUnit':
+            ops = _reachable(disassemble(abc, abc.body_of(abc.instances[names[cls]]['iinit'])['code']))
+            for k, op in enumerate(ops):
+                callee = str(op[2]).split(' ')[0]
+                if op[1] == 'findpropstrict' and callee == 'SpecialUnitAttack':
+                    values = [_signed(x) for x in ops[k + 1:k + 3]]
+                    if values[1:] == [-1]:
+                        return True
+                elif op[1] == 'constructprop' and callee == 'SpecialUnitAttackCreator':
+                    uses = default
+                    for j in range(k + 1, len(ops)):
+                        name = str(ops[j][2]).split(' ')[0]
+                        if ops[j][1].startswith('callprop') and name == 'withNumAttacks':
+                            uses = _signed(ops[j - 1])
+                        if ops[j][1] == 'callpropvoid' or (ops[j][1].startswith('call') and name == 'create'):
+                            break
+                    if uses == -1:
+                        return True
+            cls = parent.get(cls)
+        return False
+
+    constants = {}
+    for trait in abc.classes[names['Constants']][1]:
+        data = trait['data']
+        if trait['kind'] & 0x0F in (0, 6) and len(data) > 3 and data[2] and data[3] == 0x03:
+            constants[abc.multiname_name(trait['name'])] = _pool_int(abc.ints[data[2] - 1])
+    engine = names['IsoEngine']
+    create = next(t for t in abc.instances[engine]['traits'] + abc.classes[engine][1]
+                  if abc.multiname_name(t['name']) == 'CreateIsoElement')
+    units, pending = set(), []
+    for op in disassemble(abc, abc.body_of(create['data'][1])['code']):
+        if op[1] == 'getproperty' and str(op[2]).startswith('ID_') and str(op[2]) in constants:
+            pending.append(constants[str(op[2])])
+        elif op[1] == 'constructprop':
+            if unlimited(str(op[2]).split(' ')[0]):
+                units.update(pending)
+            pending = []
+    return sorted(units)
+
+
 def add_unit_abilities_to_abc(abc, language='es', debug=False):
     texts = TEXTS.get(language, TEXTS['es'])
     if any(abc.multiname_name(t['name']) == '__abilityTick' for t in abc.instances[abc.class_index('IsoSpecialUnit')]['traits']):

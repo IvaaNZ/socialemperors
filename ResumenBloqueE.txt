@@ -157,7 +157,10 @@ Las habilidades de usos ilimitados se lanzan solas en combate (unidades del
 jugador y enemigas); las de usos limitados siguen a mano. Las invocaciones
 tienen un límite de 1 viva; el botón queda rojo con "Límite 1/1" mientras
 la invocación vive. Al pasar el mouse, cada habilidad muestra su
-descripción, con "Límite X/1" en las invocaciones. Detalle en DECISIONS.md.
+descripción, con "Límite X/1" en las invocaciones. Con habilidades, una
+unidad que las lanza sola cuenta un 25 % más en la fuerza del duelo, y la
+página usa la forma de dibujo WebGL propia de Ruffle, que no se cae con los
+efectos de las habilidades. Detalle en DECISIONS.md.
 
 
 PUNTOS QUE SIGUEN

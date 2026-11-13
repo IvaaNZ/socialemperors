@@ -166,6 +166,21 @@ class AccessTests(unittest.TestCase):
                 self.assertIn(f'src="{prefix}/js/game.js"', page.text)
                 self.assertNotIn('http://', configuration['baseUrl'])
 
+    def test_ruffle_draws_with_its_own_webgl_only_with_abilities_on(self):
+        self.create_player(status='approved')
+        self.login()
+
+        def configuration():
+            page = self.client.get('/play.html')
+            return json.loads(re.search(r'<script id="game-config" type="application/json">(.*?)</script>',
+                                        page.text, re.S).group(1))
+
+        self.assertFalse(configuration()['webglRenderer'])
+        with patch.object(server, 'ABILITIES_ENABLED', True):
+            self.assertTrue(configuration()['webglRenderer'])
+        script = Path('templates/js/game.js').read_text(encoding='utf-8')
+        self.assertIn('if (config.webglRenderer) window.RufflePlayer.config.preferredRenderer = "webgl";', script)
+
     def test_language_defaults_to_spanish_and_rejects_unknown_values(self):
         with patch.dict(os.environ, {}, clear=False):
             os.environ.pop('SOCIAL_EMPIRES_LANGUAGE', None)

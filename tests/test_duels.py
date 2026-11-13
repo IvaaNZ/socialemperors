@@ -517,6 +517,17 @@ class ArmyProfileTests(unittest.TestCase):
         save['maps'][0]['items'] = [[30, 5, 5, 0, 0, 0, [SPEARMAN, SPEARMAN]]]
         self.assertEqual(army_profile(save)['troops'], 2)
 
+    def test_units_casting_by_themselves_count_more_only_with_abilities_on(self):
+        vulcano = 781  # Hefesto: 10 x 46 attack + 5 x 1 defense + 1600 life
+        save = self.village([vulcano, SPEARMAN])
+        with patch.dict('os.environ', {'SE_ABILITIES': 'off'}):
+            self.assertEqual(army_profile(save)['power'], 2065 + 125)
+        with patch.dict('os.environ', {'SE_ABILITIES': 'on'}):
+            self.assertEqual(duels.ABILITY_POWER_BONUS, 0.25)
+            self.assertEqual(army_profile(save)['power'], round(2065 * 1.25) + 125)  # the spearman has no ability
+            with patch('duels.ability_units', return_value=frozenset()):  # no list: nothing changes
+                self.assertEqual(army_profile(save)['power'], 2065 + 125)
+
     def test_units_not_allowed_in_tournaments_stay_out(self):
         save = self.village([SPEARMAN, SWORDSMAN])
         with patch('duels._not_allowed_units', return_value={SWORDSMAN}):

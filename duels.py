@@ -29,7 +29,9 @@ enemy army it destroyed; the server times the battle with its own clock.
     army is weaker than SUSPICIOUS_POWER_RATIO times the loser's) does not
     count for the ranking and waits for an administrator's review.
 
-Strength is the sum of balance.pvp_unit_power over the battle army. Duels
+Strength is the sum of balance.pvp_unit_power over the battle army; with
+SE_ABILITIES=on a unit whose abilities cast by themselves counts
+ABILITY_POWER_BONUS more (duel_unit_power). Duels
 between two players whose main village is level RANKED_MIN_LEVEL or more
 change their Elo rating (start ELO_START, factor ELO_K); the others are
 friendly. Villages are never modified by a duel: the arena fights with
@@ -44,6 +46,7 @@ from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 import itertools
+import json
 import math
 import os
 import sqlite3
@@ -66,6 +69,7 @@ def _setting(name, default):
 BATTLE_MIN_SECONDS = _setting('SE_DUEL_MIN_SECONDS', 20)          # shorter battles are rejected
 BATTLE_DEADLINE_SECONDS = _setting('SE_DUEL_DEADLINE_SECONDS', 600)  # time to report, from the launch
 SUSPICIOUS_POWER_RATIO = _setting('SE_DUEL_POWER_RATIO', 1 / 3)   # winner weaker than this x loser: review
+ABILITY_POWER_BONUS = _setting('SE_DUEL_ABILITY_BONUS', 0.25)    # SE_ABILITIES=on: a unit casting by itself counts +25 %
 
 CHALLENGE_SECONDS = 30
 RECONNECT_GRACE = 5
@@ -110,6 +114,34 @@ def _not_allowed_units():
     return {_number(value, -1) for value in values} if isinstance(values, list) else set()
 
 
+ABILITY_UNITS_FILE = Path(__file__).resolve().parent / 'config' / 'duels' / 'ability_units.json'
+_ability_units = None
+
+
+def abilities_enabled():
+    return os.environ.get('SE_ABILITIES', 'off').strip().lower() in ('on', '1', 'true', 'yes')
+
+
+def ability_units():
+    """Unit ids whose abilities cast by themselves (tools/make_ability_units.py); empty if the file is missing."""
+    global _ability_units
+    if _ability_units is None:
+        try:
+            ids = json.loads(ABILITY_UNITS_FILE.read_text(encoding='utf-8'))['units']
+            _ability_units = frozenset(_number(unit_id, -1) for unit_id in ids)
+        except (OSError, ValueError, KeyError, TypeError):
+            _ability_units = frozenset()
+    return _ability_units
+
+
+def duel_unit_power(unit):
+    """Duel strength of a unit: its raid strength, plus ABILITY_POWER_BONUS when its abilities cast by themselves."""
+    power = pvp_unit_power(unit)
+    if abilities_enabled() and _number(unit.get('id'), -1) in ability_units():
+        return round(power * (1 + ABILITY_POWER_BONUS))
+    return power
+
+
 def army_profile(save, limit=ARMY_LIMIT):
     """The village's duel army (read-only): strongest units, strength, level, readiness."""
     from pvp import _combatant, _item, _main_map
@@ -121,7 +153,7 @@ def army_profile(save, limit=ARMY_LIMIT):
     def add(unit_id):
         unit = _item(unit_id)
         if unit and _combatant(unit, race) and _number(unit.get('id'), -1) not in excluded:
-            army.append((pvp_unit_power(unit), _number(unit['id'])))
+            army.append((duel_unit_power(unit), _number(unit['id'])))
 
     for placed in town.get('items', []):
         if not isinstance(placed, list) or not placed:

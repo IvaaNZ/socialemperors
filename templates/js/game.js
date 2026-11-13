@@ -264,6 +264,9 @@
 
     window.RufflePlayer = window.RufflePlayer || {};
     window.RufflePlayer.config = { publicPath: runtimePath, polyfills: false, favorFlash: false };
+    // SE_ABILITIES=on: Ruffle's wgpu-over-WebGL renderer (its usual pick, even with WebGPU present) crashes
+    // drawing the ability effects' colour filters (freeze, poison, stone); its own WebGL renderer does not.
+    if (config.webglRenderer) window.RufflePlayer.config.preferredRenderer = "webgl";
     const script = document.createElement("script");
     script.src = `${runtimePath}ruffle.js`;
     script.addEventListener("error", () => {

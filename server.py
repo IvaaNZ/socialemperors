@@ -670,7 +670,8 @@ def play():
         last_login = village_session(USERID)['playerInfo'].get('last_logged_in', -1)
         if not isinstance(last_login, int) or last_login < 0:
             last_login = server_time
-        return render_template("play.html", script_texts=game_script_texts(), save_info=save_info(USERID), serverTime=server_time, last_logged_in=last_login, friendsInfo=fb_friends_str(USERID), version=version_name, GAMEVERSION=GAME_VERSION, raid_revision=village_revision(USERID), game_user_key=game_session_key(USERID))
+        return render_template("play.html", script_texts=game_script_texts(), save_info=save_info(USERID), serverTime=server_time, last_logged_in=last_login, friendsInfo=fb_friends_str(USERID), version=version_name, GAMEVERSION=GAME_VERSION, raid_revision=village_revision(USERID), game_user_key=game_session_key(USERID),
+                               webgl_renderer=ABILITIES_ENABLED)
 
 
 @app.route('/village', methods=['GET', 'POST'])

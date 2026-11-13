@@ -9,7 +9,8 @@ import unittest
 from unittest.mock import patch
 
 from swf_abc import AbcError, OPCODES, Reader, disassemble
-from swf_unit_abilities import KINDS, MAX_SUMMONS, SUMMON, TEXTS, ability_table, add_unit_abilities, classify
+from swf_unit_abilities import (KINDS, MAX_SUMMONS, SUMMON, TEXTS, ability_table, add_unit_abilities,
+                                automatic_ability_units, classify)
 from test_swf_duel_bridge import abc_of
 
 _boot_directory = tempfile.TemporaryDirectory(prefix='socialemperors-tests-')
@@ -89,6 +90,16 @@ class UnitAbilitiesTests(unittest.TestCase):
         cls.debug = add_unit_abilities(cls.original, language='es', debug=True)
         cls.before, _ = abc_of(cls.original)
         cls.abc, cls.raw = abc_of(cls.patched)
+
+    def test_the_duel_list_of_automatic_units_matches_the_movie(self):
+        import json
+        saved = json.loads((Path(__file__).resolve().parent.parent / 'config' / 'duels' / 'ability_units.json')
+                           .read_text(encoding='utf-8'))
+        units = automatic_ability_units(self.before)
+        self.assertEqual(saved, {'movie': server.GAME_VERSION, 'units': units})  # tools/make_ability_units.py
+        self.assertGreater(len(units), 150)
+        self.assertTrue({615, 765, 781, 847} <= set(units))  # mummy, Hades, Vulcano and its dragon
+        self.assertNotIn(1, units)  # a plain soldier
 
     def test_the_movie_rebuilds_byte_for_byte(self):
         self.assertEqual(self.abc.serialize(), self.raw)

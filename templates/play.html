@@ -19,6 +19,7 @@
         'raidRevision': raid_revision | default(''),
         'eventsUrl': url_for('village_events'),
         'texts': script_texts | default({}),
+        'webglRenderer': webgl_renderer | default(false),
     } | tojson }}</script>
     <script src="{{ url_for('javascript', path='game.js') }}" defer></script>
 </head>

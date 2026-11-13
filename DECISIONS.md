@@ -210,6 +210,14 @@ Pedido del dueño: que las habilidades de las unidades se lancen solas, que las 
 
 Probado en el navegador con una copia de los datos: en un duelo real las habilidades se lanzaron solas (bolas de fuego, lluvia de fuego, torbellino, lluvia mortal); en la aldea, el Dragón Vulcano mostró las descripciones de sus 4 habilidades, el huevo invocó una unidad (población 27 → 28), la descripción pasó a "Límite 1/1", al terminar la recarga el huevo quedó rojo con "Límite 1/1" y otro clic no invocó nada.
 
+### Habilidades en la fuerza del duelo, y Ruffle sin caídas
+
+Medición previa con la copia de los datos (Tuki 19.395 de fuerza contra Tuki2 27.900): el más fuerte ganó los 16 duelos. Sin habilidades, Tuki destruyó en promedio el 46 % del ejército rival; con habilidades, entre el 19 y el 33 %. La fórmula de fuerza no les daba ningún valor.
+
+- **Fuerza** (decisión del dueño: +25 %): con `SE_ABILITIES=on`, cada unidad cuyas habilidades se lanzan solas cuenta un 25 % más en la fuerza del duelo (`duels.duel_unit_power`; se cambia con `SE_DUEL_ABILITY_BONUS`). Vale para elegir las 20 tropas del duelo, para el control de duelo improbable y para la fuerza de los miembros de un clan. Apagado, la fuerza es la de siempre.
+- **Qué unidades:** solo la película del juego lo dice (la clase de cada unidad en `IsoEngine.CreateIsoElement` y sus habilidades con usos ilimitados). `tools/make_ability_units.py` lo lee con `swf_unit_abilities.automatic_ability_units` y lo guarda en `config/duels/ability_units.json` (162 unidades), así el servidor no lee la película para armar un ejército. Una prueba verifica que el archivo coincide con la película.
+- **Ruffle se caía** ("Algo salió mal") al dibujar el filtro de color de los efectos de las habilidades (congelar, envenenar, piedra, rayos) con su forma de dibujo "wgpu-webgl", que es la que elige incluso con WebGPU disponible. Con las habilidades automáticas esos efectos aparecen mucho más, y en las pruebas se cayó uno de los dos juegos en cada tanda. Con `SE_ABILITIES=on` la página le pide a Ruffle su forma de dibujo WebGL propia (`preferredRenderer: "webgl"`). Probado: 4 duelos con habilidades sin caídas en el mismo navegador. Apagado, la página no cambia.
+
 ## Panel de administración: dar y quitar unidades, completar y reiniciar misiones
 
 Decisión del dueño (revisión del punto 19): el panel de cada aldea, además de mostrar el ejército y las misiones, puede cambiarlos.
