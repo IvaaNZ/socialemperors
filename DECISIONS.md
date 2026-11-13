@@ -238,3 +238,13 @@ Decisiones del dueño (revisión del punto 19):
 - La página de Cuentas abre en "Todas" y muestra los filtros Activas y Bloqueadas; "Pendientes" aparece solo si hay alguna.
 
 Probado en el navegador con una copia de los datos: una cuenta nueva entró al juego sin aprobación, se la bloqueó con motivo (se cerró su sesión abierta y al entrar vio el motivo) y se la desbloqueó.
+
+## Música y sonido del juego: la elección se mantiene (`SE_SOUND_FIX`, encendido por defecto)
+
+Pedido del dueño: "lo desactivé pero sigue activándose solo el sonido".
+
+- **Causa:** el juego guarda música y efectos en su almacenamiento local (`settings.data.music`, `settings.data.sfx`) pero nunca llama a `flush()`. Flash lo escribía al cerrar la página; Ruffle no. Después de recargar (o en la próxima visita) el juego volvía a sonar.
+- **Segundo error:** al volver a prender la música, el botón arranca la música antes de marcarla como encendida, y el juego no la reproduce mientras figure apagada: quedaba en silencio hasta cambiar de mapa.
+- **Arreglo** (`swf_sound_settings.py`): los botones de música y de sonido guardan la elección en el momento (`flush()` dentro de su propio try/catch), y el de música la marca encendida antes de arrancarla. No cambia ninguna instrucción original. Es un arreglo pedido, por eso está encendido por defecto; `SE_SOUND_FIX=off` sirve el juego como antes.
+- Probado en el navegador con la copia de los datos: apagar la música, recargar y sigue apagada; apagar y prender los efectos; volver a prender la música. Cada cambio queda guardado al instante.
+

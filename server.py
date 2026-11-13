@@ -807,6 +807,9 @@ def localized_game_movie(language=None):
     patched = patch_tutorial(patch_private_economy(localize_swf(original, language=language)))
     # Bytecode strings change last: the audited patches above pin the ABC checksum.
     translated = add_range_overlay(localize_abc_strings(patched, language), all_in_tournament=DUELS_ENABLED)
+    if SOUND_FIX_ENABLED:  # the game's music and sound buttons keep their choice after a reload
+        from swf_sound_settings import fix_sound_settings
+        translated = fix_sound_settings(translated)
     if DUELS_ENABLED:  # lets the duel page open the tournament arena
         from swf_duel_bridge import add_duel_bridge
         translated = add_duel_bridge(translated)
@@ -995,6 +998,7 @@ CLANS_ENABLED = os.environ.get('SE_CLANS', 'off').strip().lower() in ('on', '1',
 AUTO_APPROVE = os.environ.get('SE_AUTO_APPROVE', 'on').strip().lower() in ('on', '1', 'true', 'yes')
 # Unit abilities (swf_unit_abilities.py): automatic, one summon at most, tooltips. Off: the movie is unchanged.
 ABILITIES_ENABLED = os.environ.get('SE_ABILITIES', 'off').strip().lower() in ('on', '1', 'true', 'yes')
+SOUND_FIX_ENABLED = os.environ.get('SE_SOUND_FIX', 'on').strip().lower() in ('on', '1', 'true', 'yes')
 app.jinja_env.globals['clans_enabled'] = CLANS_ENABLED
 if CLANS_ENABLED:
     from clans_web import install_clans
