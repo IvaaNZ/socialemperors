@@ -28,8 +28,11 @@ def ops(abc, method_index):
 class SoundSettingsTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        clear = getattr(server.localized_game_movie, 'cache_clear', lambda: None)  # another test may have built it
+        clear()
         with patch.object(server, 'SOUND_FIX_ENABLED', False), contextlib.redirect_stdout(io.StringIO()):
             cls.original, _ = server.localized_game_movie('es')
+        clear()  # later tests build the movie with the fix again
         cls.patched = fix_sound_settings(cls.original)
         cls.before, _ = abc_of(cls.original)
         cls.abc, cls.raw = abc_of(cls.patched)
