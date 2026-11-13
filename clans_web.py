@@ -16,6 +16,8 @@ from clans import (ANNOUNCEMENT_LENGTH, CHALLENGE_ANSWER_SECONDS, CHALLENGE_SIZE
 from portal_i18n import translate as _
 from duels import utc_label
 
+MAX_ID = 2 ** 63 - 1  # largest SQLite integer: bigger "ids" are rejected, never sent to the database
+
 # Error codes -> Portuguese source text (translated when the flash message is shown).
 ERRORS = {
     'already_in_clan': 'Você já está em um clã.',
@@ -53,6 +55,23 @@ ERRORS = {
     'chat_too_fast': 'Espere um instante antes de enviar outra mensagem.',
     'challenge_between': 'Há um desafio pendente ou em andamento entre os dois clãs: termine-o antes de se aliarem.',
 }
+
+
+def log_labels():
+    """What each clan_log action reads as after the actor's name (Portuguese source), for every action
+    ClanStore logs: an action missing here would show its internal code."""
+    return {
+        'create': _('criou o clã'), 'join': _('entrou no clã'), 'accept': _('aceitou'), 'reject': _('recusou o pedido de'),
+        'kick': _('removeu'), 'promote': _('nomeou Assist a'), 'demote': _('tirou o cargo de Assist de'),
+        'transfer': _('passou a liderança para'), 'edit': _('editou o clã'), 'leave': _('saiu do clã'),
+        'dissolve': _('dissolveu o clã'), 'challenge': _('desafiou'), 'accept_challenge': _('aceitou o desafio de'),
+        'decline': _('recusou o desafio de'), 'surrender': _('rendeu o clã no desafio'),
+        'propose_alliance': _('propôs uma aliança a'), 'accept_alliance': _('aceitou a aliança de'),
+        'decline_alliance': _('recusou a aliança de'), 'end_alliance': _('encerrou a aliança'),
+    }
+
+
+LOG_DETAIL_ACTIONS = ('challenge', 'accept_challenge', 'decline', 'propose_alliance', 'accept_alliance', 'decline_alliance')
 
 
 def overlay_texts():
@@ -207,7 +226,8 @@ def install_clans(app, accounts, village_lock, all_saves_userid, village_session
 
     @app.context_processor
     def clan_context():
-        context = {'clan_limits': {'members': MAX_MEMBERS, 'assists': MAX_ASSISTS, 'requests': MAX_OPEN_REQUESTS,
+        context = {'clan_log_labels': log_labels(), 'clan_log_detail': LOG_DETAIL_ACTIONS,
+                   'clan_limits': {'members': MAX_MEMBERS, 'assists': MAX_ASSISTS, 'requests': MAX_OPEN_REQUESTS,
                                    'name': NAME_LENGTH, 'tag': TAG_LENGTH, 'description': DESCRIPTION_LENGTH,
                                    'request_days': REQUEST_SECONDS // 86400, 'rejoin_minutes': REJOIN_SECONDS // 60,
                                    'sizes': CHALLENGE_SIZES, 'answer_minutes': CHALLENGE_ANSWER_SECONDS // 60}}
@@ -572,6 +592,7 @@ def install_clans(app, accounts, village_lock, all_saves_userid, village_session
             after = int(request.args.get('after', 0) or 0)
         except ValueError:
             after = 0
+        after = min(max(after, 0), MAX_ID)
         try:
             rows = store.messages(account['id'], request.args.get('channel', 'clan'), after=after)
         except ClanError as error:
@@ -590,9 +611,12 @@ def install_clans(app, accounts, village_lock, all_saves_userid, village_session
 
         def number(field):
             try:
-                return int(form.get(field, ''))
+                value = int(form.get(field, ''))
             except ValueError:
                 raise ClanError('forbidden') from None
+            if not 0 < value <= MAX_ID:  # ids are positive SQLite integers
+                raise ClanError('gone')
+            return value
 
         def create():
             if not tutorial_complete(account):

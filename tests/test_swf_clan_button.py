@@ -35,8 +35,8 @@ class ClanButtonTests(unittest.TestCase):
     def setUpClass(cls):
         with contextlib.redirect_stdout(io.StringIO()):
             cls.original, _ = server.localized_game_movie('es')  # clans off: no button
-        cls.patched = add_clan_button(cls.original, tooltip='Clan', image_url='/img/clan_button_es.png',
-                                      challenge_tooltip='Retar clan', challenge_image_url='/img/clan_challenge_button_es.png')
+        cls.patched = add_clan_button(cls.original, image_url='/img/clan_button_es.png',
+                                      challenge_image_url='/img/clan_challenge_button_es.png')
         cls.before, _ = abc_of(cls.original)
         cls.abc, cls.raw = abc_of(cls.patched)
 
@@ -66,8 +66,10 @@ class ClanButtonTests(unittest.TestCase):
     def test_both_buttons_are_icons_of_the_game_panel(self):
         method = self.abc.method_of('GuiManager', ADD_METHOD)
         code = ops(self.abc, method)
-        for text in ("'/img/clan_button_es.png'", "'Clan'", "'/img/clan_challenge_button_es.png'", "'Retar clan'"):
+        for text in ("'/img/clan_button_es.png'", "'/img/clan_challenge_button_es.png'"):
             self.assertIn(('pushstring', text), code)
+        # no tooltips: the panel drew the one of "Clan" over "Retar clan" (a click there went to "Clan")
+        self.assertEqual(code.count(('pushnull', '')), 2)
         calls = [operands for name, operands in code if name in ('constructprop', 'callpropvoid')]
         self.assertEqual(calls, ['Sprite 0', 'Loader 0', 'URLRequest 1', 'load 1', 'addChild 1', 'addIcon 3'] * 2)
         handlers = [operands for name, operands in code if name == 'getproperty' and operands.startswith('__clan')]
@@ -80,7 +82,7 @@ class ClanButtonTests(unittest.TestCase):
             code = ops(self.abc, method)
             pushed = [operands for op, operands in code if op == 'pushstring']
             self.assertEqual(pushed, ["'rollOut'", f"'{CALLBACK}'"] + [f"'{text}'" for text in extra])
-            self.assertIn(('callpropvoid', 'dispatchEvent 1'), code)  # the tooltip goes away on click
+            self.assertIn(('callpropvoid', 'dispatchEvent 1'), code)  # the hover ends on click
             self.assertIn(('callpropvoid', f'call {1 + len(extra)}'), code)
             self.assertIn(('getproperty', 'available'), code)
             self.assertEqual(len(self.abc.methods[method]['param_types']), 1)  # the click event

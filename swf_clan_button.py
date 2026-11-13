@@ -6,18 +6,21 @@ player is in the empire, never on the loading screen. That is where the
 Facebook "more achievements" hand used to appear. This edit adds:
 
   * GuiManager.__addClanButton(): two icons added to that panel with
-    IconPanel.addIcon(icon, click, tooltip), so the game shows their
-    tooltips and lines them up with its other icons (the Monday chest, for
+    IconPanel.addIcon(icon, click, null), so the game lines them up with its
+    other icons (the Monday chest, for
     example). Each icon is a Sprite holding a Loader with its art
     (templates/img/clan_button_<language>.png and
     clan_challenge_button_<language>.png, served by the site; drawn by
     tools/make_clan_button.py). The panel stacks icons ICON_SIZE apart; the
     second one draws its art one slot up and to the left, so "Retar clan"
     sits beside "Clan" instead of over the zoom bar. Inside its own
-    try/catch: it can never break the interface;
+    try/catch: it can never break the interface. No tooltip: the art already
+    says "Clan" / "Retar clan", and the panel draws a tooltip to the left of
+    its icon, where it covered "Retar clan" (a click there went to "Clan") and
+    put the tooltip of "Retar clan" one slot below, out of sight;
   * GuiManager.__clanClick(event) and __clanChallengeClick(event): first a
     "rollOut" on the clicked icon (the window opens over the game, which would
-    otherwise keep the icon's tooltip on screen), then
+    otherwise keep the icon enlarged by the hover), then
     ExternalInterface.call('seOpenClan'[, 'rivals']) when ExternalInterface
     is available; the page (templates/js/clan_overlay.js) opens the clan
     window, on the "Retar clan" tab for the second button. Also inside
@@ -91,8 +94,7 @@ def _signed_short(value):
     return value & 0xFFFF if value < 0 else value
 
 
-def add_clan_button_to_abc(abc, tooltip, image_url=CLAN_BUTTON_URL, challenge_tooltip='Retar clan',
-                           challenge_image_url=CHALLENGE_BUTTON_URL):
+def add_clan_button_to_abc(abc, image_url=CLAN_BUTTON_URL, challenge_image_url=CHALLENGE_BUTTON_URL):
     gui = abc.instances[abc.class_index('GuiManager')]
     if any(abc.multiname_name(t['name']) == ADD_METHOD for t in gui['traits']):
         raise AbcError('The clan button is already present')
@@ -100,8 +102,7 @@ def add_clan_button_to_abc(abc, tooltip, image_url=CLAN_BUTTON_URL, challenge_to
     create = abc.method_of('GuiManager', 'createViralButtons')
     panel = used_multiname(abc, create, 'getproperty', '_viralButtonPanel')
     add_icon = used_multiname(abc, create, 'callpropvoid', 'addIcon')
-    s = {text: abc.add_string(text) for text in (image_url, challenge_image_url, CALLBACK, CHALLENGE_TAB, tooltip, challenge_tooltip,
-                                                 'rollOut')}
+    s = {text: abc.add_string(text) for text in (image_url, challenge_image_url, CALLBACK, CHALLENGE_TAB, 'rollOut')}
     reference = abc.body_of(create)
 
     def method(name, params, code, labels, max_stack, local_count):
@@ -133,7 +134,7 @@ def add_clan_button_to_abc(abc, tooltip, image_url=CLAN_BUTTON_URL, challenge_to
         code, labels = assemble([
             ('getlocal0',), ('pushscope',),
             ('label:', 'try'),
-            # The window opens over the game, which never sees the mouse leave the icon: hide its tooltip now.
+            # The window opens over the game, which never sees the mouse leave the icon: end its hover now.
             ('getlocal1',), ('getproperty', n['currentTarget']), ('findpropstrict', n['MouseEvent']), ('pushstring', s['rollOut']),
             ('constructprop', n['MouseEvent'], 1), ('callpropvoid', n['dispatchEvent'], 1),
             ('getlex', n['ExternalInterface']), ('getproperty', n['available']), ('iffalse', 'done'),
@@ -144,7 +145,7 @@ def add_clan_button_to_abc(abc, tooltip, image_url=CLAN_BUTTON_URL, challenge_to
     clan_click = click(CLICK_METHOD, [])
     challenge_click = click(CHALLENGE_CLICK_METHOD, [CHALLENGE_TAB])
 
-    def icon(url, x, y, handler, text):
+    def icon(url, x, y, handler):
         """Push nothing; leaves the icon added to the panel (locals 1 and 2 are scratch)."""
         return [
             ('findpropstrict', n['Sprite']), ('constructprop', n['Sprite'], 0), ('coerce_a',), ('setlocal1',),
@@ -155,13 +156,13 @@ def add_clan_button_to_abc(abc, tooltip, image_url=CLAN_BUTTON_URL, challenge_to
             ('constructprop', n['URLRequest'], 1), ('callpropvoid', n['load'], 1),
             ('getlocal1',), ('getlocal2',), ('callpropvoid', n['addChild'], 1),
             ('getlocal0',), ('getproperty', panel), ('getlocal1',), ('getlocal0',), ('getproperty', handler),
-            ('pushstring', s[text]), ('callpropvoid', add_icon, 3),
+            ('pushnull',), ('callpropvoid', add_icon, 3),  # no tooltip
         ]
 
     # GuiManager.__addClanButton(): both icons in the game's panel.
     code, labels = assemble([('getlocal0',), ('pushscope',), ('label:', 'try')]
-                            + icon(image_url, ART_X, ART_Y, clan_click, tooltip)
-                            + icon(challenge_image_url, CHALLENGE_ART_X, CHALLENGE_ART_Y, challenge_click, challenge_tooltip)
+                            + icon(image_url, ART_X, ART_Y, clan_click)
+                            + icon(challenge_image_url, CHALLENGE_ART_X, CHALLENGE_ART_Y, challenge_click)
                             + guarded_end)
     add_name = method(ADD_METHOD, 0, code, labels, 5, 3)
 
@@ -189,8 +190,7 @@ def add_clan_button_to_abc(abc, tooltip, image_url=CLAN_BUTTON_URL, challenge_to
     return abc
 
 
-def add_clan_button(data, tooltip='Clan', image_url=CLAN_BUTTON_URL, challenge_tooltip='Retar clan',
-                    challenge_image_url=CHALLENGE_BUTTON_URL):
+def add_clan_button(data, image_url=CLAN_BUTTON_URL, challenge_image_url=CHALLENGE_BUTTON_URL):
     """Return the movie with the clan buttons added to its DoABC block."""
     from swf_localization import decode_swf, encode_tag, iter_tags
     body, header_length = decode_swf(data)
@@ -201,8 +201,7 @@ def add_clan_button(data, tooltip='Clan', image_url=CLAN_BUTTON_URL, challenge_t
             count += 1
             offset = payload.index(b'\0', 4) + 1
             abc = Abc(payload[offset:])
-            payload = payload[:offset] + add_clan_button_to_abc(abc, tooltip, image_url, challenge_tooltip,
-                                                                challenge_image_url).serialize()
+            payload = payload[:offset] + add_clan_button_to_abc(abc, image_url, challenge_image_url).serialize()
         tags.append(encode_tag(code, payload, long_length))
     if count != 1:
         raise AbcError('Expected exactly one DoABC tag')

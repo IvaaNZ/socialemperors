@@ -224,6 +224,7 @@
             } catch (error) { /* the movie is still loading */ }
             if (opened) {
                 pendingStart = null;
+                if (typeof window.seCloseClan === "function") window.seCloseClan();  // nothing over the battle
                 if (pages) pages.postMessage({ type: "launched", id: message.id });
                 launchTimer = setTimeout(hideNotice, 6000);
                 return;

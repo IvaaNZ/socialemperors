@@ -49,6 +49,7 @@ class DuelScriptTests(unittest.TestCase):
         self.assertEqual(report['openedClan'], ['challenges', 'clan'])
         self.assertIsNone(report['navigatedByClan'])
         self.assertFalse(report['gameRetired'])  # the tab that opened the arena keeps its game
+        self.assertEqual(report['closedClan'], 1)  # the clan window closes when the arena opens
 
     def test_a_second_game_tab_stands_aside(self):
         report = self.run_page('aside')

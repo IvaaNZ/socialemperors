@@ -172,3 +172,18 @@ Probado de punta a punta en el navegador, con una copia de los datos y dos jugad
 - se probaron la rendición, la alianza y el chat de la alianza en los dos sentidos;
 - "Ver reto" se abrió dentro del juego;
 - con dos pestañas de juego, solo una abrió la batalla y la otra cerró su juego.
+
+## Segunda revisión de clanes y duelos
+
+Fallas encontradas y corregidas:
+- **Números gigantes como identificador** (en la API de la ventana, en el chat y en las direcciones del portal) daban error 500. Ahora se rechazan: la API responde que el elemento no existe, el chat los acota y una dirección con un número fuera de rango da 404. Lo encontró una revisión automática que recorre todas las páginas y acciones con valores raros.
+- **Íconos del juego sin cartel de ayuda:** el panel dibujaba el cartel de "Clan" a su izquierda, justo encima de "Retar clan"; un clic ahí iba a "Clan" y cerraba la ventana. El de "Retar clan" salía un casillero más abajo, fuera de la vista. Los nombres ya están en las imágenes, así que los íconos van sin cartel.
+- **Mensaje sin traducir:** al expulsar a un miembro se veía "Membro removido do clã." en portugués. Se tradujo, y una prueba nueva revisa que toda frase de clanes y duelos tenga traducción al español y al inglés.
+- **Registro de actividad:** faltaban etiquetas para entrar a un clan abierto, las alianzas y, en la página de admin, los retos; se habrían visto como códigos ("join"). Ahora hay una sola lista para las dos páginas, con una prueba que exige una etiqueta por cada acción registrada. "Cambió la descripción" pasó a "editó el clan", porque la edición incluye emblema, anuncio e ingreso.
+- **Página del clan en el portal:** ahora muestra el anuncio y las condiciones de ingreso (abierto o con solicitud, nivel mínimo, idioma), como la ventana del juego.
+- **"Venció" ambiguo:** los vencimientos dicen "expiró" ("El reto expiró.", también en el formulario y en el saqueo vencido).
+- **Ventana del clan desactualizada en otra pestaña:** al volver a la pestaña se recargan los datos (una pestaña oculta corre su actualización de 20 s muy de vez en cuando; un jugador expulsado seguía viéndose en el clan).
+- **Confirmaciones:** al pedir una confirmación se borra el mensaje de la acción anterior.
+- **Duelo con la ventana del clan abierta:** la ventana se cierra al entrar a la arena, para que no tape la batalla.
+
+Probado en el navegador con una copia de los datos y los dos roles: nombrar y quitar Assist, pasar el mando, editar el clan (anuncio con HTML, que se muestra como texto, en varias líneas), expulsar, la espera para volver a entrar, "Retar clan" sin clan, y duelos cancelados, rechazados y vencidos.

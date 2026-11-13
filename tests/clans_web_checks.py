@@ -297,7 +297,12 @@ class ClanWebTests(unittest.TestCase):
         ana, beto, caro = self.player(), self.player(), self.player()
         clan_id = self.make_clan(ana, 'Portal Abierto', 'POA')
         self.action(ana, 'settings', emblem='1', description='', announcement='', recruit_open='1', min_level='99', language='all')
-        self.assertIn('Entrar al clan', self.page(beto, f'/clans/{clan_id}'))
+        page = self.page(beto, f'/clans/{clan_id}')
+        self.assertIn('Entrar al clan', page)
+        self.assertIn('Abierto · Nivel 99+ · Todos los idiomas', page)  # recruitment, as in the game window
+        self.action(ana, 'settings', emblem='1', description='', announcement='<b>Hola</b>' + chr(10) + 'clan', recruit_open='1', min_level='99',
+                    language='all')
+        self.assertIn('&lt;b&gt;Hola&lt;/b&gt;' + chr(10) + 'clan', self.page(beto, f'/clans/{clan_id}'))  # the announcement, escaped
         self.post(beto, f'/clans/{clan_id}/request', action='join')  # the minimum level applies in the portal too
         self.assertIsNone(self.role(beto))
         self.assertEqual(self.clans.requests_for(clan_id), [])

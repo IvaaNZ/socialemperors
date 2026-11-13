@@ -57,6 +57,14 @@ host = os.environ.get('HOST', '127.0.0.1')
 port = int(os.environ.get('PORT', '5050'))
 
 app = Flask(__name__, template_folder=TEMPLATES_DIR)
+
+
+@app.url_value_preprocessor
+def reject_huge_ids(endpoint, values):
+    """An <int:...> in an address larger than any stored id is a page that does not exist (not a 500)."""
+    for value in (values or {}).values():
+        if isinstance(value, int) and not isinstance(value, bool) and abs(value) > 2 ** 63 - 1:
+            abort(404)
 data_dir = Path(os.environ.get('SOCIAL_EMPIRES_DATA_DIR', 'instance')).resolve()
 data_dir.mkdir(parents=True, exist_ok=True)
 
@@ -730,17 +738,14 @@ def localized_game_movie(language=None):
         from swf_duel_bridge import add_duel_bridge
         translated = add_duel_bridge(translated)
     if CLANS_ENABLED:  # the "Clan" button in the game's icon panel, once inside the empire
-        from portal_i18n import load_portal_catalog, normalize_locale
+        from portal_i18n import normalize_locale
         from swf_clan_button import add_clan_button
         locale = normalize_locale(language)
-        catalog = load_portal_catalog(locale)[0]
 
         def art(prefix):
             name = f'{prefix}_{locale}.png'
             return '/img/' + (name if (Path(TEMPLATES_DIR) / 'img' / name).exists() else f'{prefix}_es.png')
-        translated = add_clan_button(translated, tooltip=catalog.get('Clã', 'Clã'), image_url=art('clan_button'),
-                                     challenge_tooltip=catalog.get('Desafiar clã', 'Desafiar clã'),
-                                     challenge_image_url=art('clan_challenge_button'))
+        translated = add_clan_button(translated, image_url=art('clan_button'), challenge_image_url=art('clan_challenge_button'))
     return translated, hashlib.sha256(translated).hexdigest()
 
 ## GAME DYNAMIC

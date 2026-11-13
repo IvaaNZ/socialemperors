@@ -585,6 +585,7 @@
     }
 
     function askConfirm(text, onYes) {
+        showMessage("", true);  // the previous action's message does not belong to this question
         pendingConfirm = onYes;
         confirmBox.querySelector("p").textContent = text;
         confirmBox.querySelector(".clanx-actions").innerHTML = button(T.accept, "confirm_yes", {}, "red") + button(T.cancel, "confirm_no", {}, "brown");
@@ -610,6 +611,8 @@
     }
 
     // Called by the game (ExternalInterface): later, so the game's click handler returns first.
+    // The duel script closes the window when the arena opens (it would cover the battle).
+    window.seCloseClan = () => { if (!panel.hidden) close(); };
     // seOpenClan() opens or closes the window; seOpenClan("rivals") ("Retar clan") opens it on that tab.
     window.seOpenClan = (wanted) => {
         setTimeout(() => {
@@ -626,6 +629,11 @@
         }, 0);
     };
     document.addEventListener("keydown", (event) => { if (event.key === "Escape" && !panel.hidden) close(); });
+    // A hidden tab runs its timers rarely: when the player comes back, show the clan as it is now
+    // (removed from the clan, a new challenge, an alliance...).
+    document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible" && !panel.hidden && !editing && tab !== "create") load();
+    });
     panel.addEventListener("click", (event) => {
         if (event.target === panel) { close(); return; }
         const tabButton = event.target.closest("[data-tab]");

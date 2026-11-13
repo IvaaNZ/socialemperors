@@ -3,14 +3,22 @@
 {% block head %}<link rel="stylesheet" href="{{ url_for('css', path='clans.css') }}">{% endblock %}
 {% block main_class %}clans-main{% endblock %}
 {% set role_labels = {'master': _('Guild Master'), 'assist': _('Assist'), 'member': _('Membro')} %}
-{% set log_labels = {'create': _('criou o clã'), 'accept': _('aceitou'), 'reject': _('recusou o pedido de'), 'kick': _('removeu'), 'promote': _('nomeou Assist a'), 'demote': _('tirou o cargo de Assist de'), 'transfer': _('passou a liderança para'), 'edit': _('mudou a descrição'), 'leave': _('saiu do clã'), 'dissolve': _('dissolveu o clã'), 'challenge': _('desafiou'), 'accept_challenge': _('aceitou o desafio de'), 'decline': _('recusou o desafio de'), 'surrender': _('rendeu o clã no desafio')} %}
+{% set log_labels = clan_log_labels %}
 {% block content %}
 <p class="clans-back"><a href="{{ url_for('clans_page') }}">← {{ _('Todos os clãs') }}</a></p>
 <div class="clans-heading">
     <h1><span class="clan-tag">[{{ clan.tag }}]</span> {{ clan.name }}</h1>
     {% if clan.description %}<p>{{ clan.description }}</p>{% endif %}
     <p class="clans-meta">{{ _('{count} de {max} membros', count=clan.members | length, max=clan_limits.members) }} · {{ _('Assist: {count} de {max}', count=assist_count, max=clan_limits.assists) }}{% if ally %} · {{ _('Aliado: {name}', name='[' ~ ally.ally_tag ~ '] ' ~ ally.ally_name) }}{% endif %}</p>
+    {% set language_labels = {'all': _('Todos os idiomas'), 'es': _('Espanhol'), 'pt-BR': _('Português'), 'en': _('Inglês')} %}
+    <p class="clans-meta"><strong>{{ _('Recrutamento') }}:</strong> {{ _('Aberto') if clan.recruit_open else _('Com pedido') }} · {{ _('Nível {level}+', level=clan.recruit_min_level) }} · {{ language_labels.get(clan.recruit_language, clan.recruit_language) }}</p>
 </div>
+{% if clan.announcement %}
+<section class="clan-announcement" aria-labelledby="announcement-title">
+    <h2 id="announcement-title">{{ _('Anúncio') }}</h2>
+    <p>{{ clan.announcement }}</p>
+</section>
+{% endif %}
 
 {% if not role %}
 <section aria-labelledby="join-title">
@@ -172,7 +180,7 @@
     <h2 id="log-title">{{ _('Atividade recente') }}</h2>
     {% if log %}
     <ul class="clans-log">
-        {% for entry in log %}<li><strong>{{ entry.actor_name or '?' }}</strong> {{ log_labels.get(entry.action, entry.action) }}{% if entry.target_name %} <strong>{{ entry.target_name }}</strong>{% endif %}{% if entry.detail and entry.action in ('challenge', 'accept_challenge', 'decline') %} <strong>{{ entry.detail }}</strong>{% endif %} <span class="clans-meta">· {{ entry.created_label }}</span></li>{% endfor %}
+        {% for entry in log %}<li><strong>{{ entry.actor_name or '?' }}</strong> {{ log_labels.get(entry.action, entry.action) }}{% if entry.target_name %} <strong>{{ entry.target_name }}</strong>{% endif %}{% if entry.detail and entry.action in clan_log_detail %} <strong>{{ entry.detail }}</strong>{% endif %} <span class="clans-meta">· {{ entry.created_label }}</span></li>{% endfor %}
     </ul>
     {% endif %}
 </section>

@@ -707,5 +707,12 @@
   "Para propor uma aliança, o Guild Master busca outro clã e abre a ficha dele.": "To propose an alliance, the Guild Master finds another clan and opens its card.",
   "O jogo foi fechado nesta aba porque a batalha abriu em outra aba.": "The game was closed in this tab because the battle opened in another one.",
   "Abrir o jogo aqui": "Open the game here",
-  "Para desafiar outro clã, use a aba Desafiar clã ou o botão do mesmo nome no jogo.": "To challenge another clan, use the Challenge a clan tab or the button of the same name in the game."
+  "Para desafiar outro clã, use a aba Desafiar clã ou o botão do mesmo nome no jogo.": "To challenge another clan, use the Challenge a clan tab or the button of the same name in the game.",
+  "Membro removido do clã.": "Member removed from the clan.",
+  "entrou no clã": "joined the clan",
+  "editou o clã": "edited the clan",
+  "propôs uma aliança a": "proposed an alliance to",
+  "aceitou a aliança de": "accepted the alliance of",
+  "recusou a aliança de": "declined the alliance of",
+  "encerrou a aliança": "ended the alliance"
 }

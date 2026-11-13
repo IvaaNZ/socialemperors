@@ -2,7 +2,7 @@
 {% block title %}{{ _('Clãs') }} · Social Empires{% endblock %}
 {% block head %}<link rel="stylesheet" href="{{ url_for('css', path='management.css') }}">{% endblock %}
 {% block main_class %}management-main{% endblock %}
-{% set log_labels = {'create': _('criou o clã'), 'accept': _('aceitou'), 'reject': _('recusou o pedido de'), 'kick': _('removeu'), 'promote': _('nomeou Assist a'), 'demote': _('tirou o cargo de Assist de'), 'transfer': _('passou a liderança para'), 'edit': _('mudou a descrição'), 'leave': _('saiu do clã'), 'dissolve': _('dissolveu o clã')} %}
+{% set log_labels = clan_log_labels %}
 {% block content %}
 <div class="management-heading">
     <div><h1>{{ _('Clãs') }}</h1><p>{{ _('Veja os clãs do servidor e dissolva um se for preciso (por exemplo, por um nome ofensivo).') }}</p></div>

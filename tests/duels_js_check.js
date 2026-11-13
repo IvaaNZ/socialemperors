@@ -80,7 +80,10 @@ if (mode === "portal-game-open" || mode === "claimed") {  // marks left by anoth
     };
     report.store = store;
 }
-if (mode !== "portal") context.seOpenClan = (tab) => { report.openedClan.push(tab); };  // the game page's clan window
+if (mode !== "portal") {  // the game page's clan window
+    context.seOpenClan = (tab) => { report.openedClan.push(tab); };
+    context.seCloseClan = () => { report.closedClan = (report.closedClan || 0) + 1; };
+}
 vm.createContext(context);
 vm.runInContext(source.replace("try { onMessage(JSON.parse(event.data)); } catch (error) { /* ignore malformed messages */ }",
     "try { onMessage(JSON.parse(event.data)); } catch (error) { __report.errors.push(String(error && error.stack || error)); }"),
