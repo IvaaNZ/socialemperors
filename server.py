@@ -737,6 +737,11 @@ def localized_game_movie(language=None):
     if DUELS_ENABLED:  # lets the duel page open the tournament arena
         from swf_duel_bridge import add_duel_bridge
         translated = add_duel_bridge(translated)
+    if ABILITIES_ENABLED:  # automatic unit abilities, one summon at most and ability tooltips
+        from localization import normalize_locale as ability_locale
+        from swf_unit_abilities import add_unit_abilities
+        translated = add_unit_abilities(translated, language=ability_locale(language),
+                                        debug=os.environ.get('SE_ABILITIES_DEBUG', '').lower() in ('on', '1', 'true', 'yes'))
     if CLANS_ENABLED:  # the "Clan" button in the game's icon panel, once inside the empire
         from portal_i18n import normalize_locale
         from swf_clan_button import add_clan_button
@@ -757,6 +762,8 @@ def track_game_status_response():
     user_id = request.values['user_id']
 
     app.logger.info('Client status for player %s: %s', user_id, status[:100])
+    if os.environ.get('SE_ABILITIES_DEBUG', '').lower() in ('on', '1', 'true', 'yes'):  # see what the game reports while testing
+        print(f' [client status] {user_id}: {status[:300]}')
     return ("", 200)
 
 @app.route("/dynamic.flash1.dev.socialpoint.es/appsfb/socialempiresdev/srvempires/get_game_config.php", methods=['GET','POST'])
@@ -911,6 +918,8 @@ def create_admin(name, email, password, village_id):
 DUELS_ENABLED = os.environ.get('SE_DUELS', 'off').strip().lower() in ('on', '1', 'true', 'yes')
 app.jinja_env.globals['duels_enabled'] = DUELS_ENABLED
 CLANS_ENABLED = os.environ.get('SE_CLANS', 'off').strip().lower() in ('on', '1', 'true', 'yes')
+# Unit abilities (swf_unit_abilities.py): automatic, one summon at most, tooltips. Off: the movie is unchanged.
+ABILITIES_ENABLED = os.environ.get('SE_ABILITIES', 'off').strip().lower() in ('on', '1', 'true', 'yes')
 app.jinja_env.globals['clans_enabled'] = CLANS_ENABLED
 if CLANS_ENABLED:
     from clans_web import install_clans
