@@ -205,3 +205,14 @@ Pedido del dueño: que las habilidades de las unidades se lancen solas, que las 
 - Limitaciones: algunas unidades tienen su propia forma de invocar (unas 20); si no pasan por las rutinas comunes, una sola invocación podría crear más de una unidad, aunque igual no se puede volver a invocar mientras quede una viva. El efecto `p.miniFireball2.swf` no está entre los archivos del juego (404); ya faltaba antes, pero ahora se nota más porque la bola de fuego se lanza sola.
 
 Probado en el navegador con una copia de los datos: en un duelo real las habilidades se lanzaron solas (bolas de fuego, lluvia de fuego, torbellino, lluvia mortal); en la aldea, el Dragón Vulcano mostró las descripciones de sus 4 habilidades, el huevo invocó una unidad (población 27 → 28), la descripción pasó a "Límite 1/1", al terminar la recarga el huevo quedó rojo con "Límite 1/1" y otro clic no invocó nada.
+
+## Panel de administración: dar y quitar unidades, completar y reiniciar misiones
+
+Decisión del dueño (revisión del punto 19): el panel de cada aldea, además de mostrar el ejército y las misiones, puede cambiarlos.
+
+- **Dar unidades:** cualquier unidad que el juego vende (con precio en oro o en dinero; 750 de 771), de 1 a 100 por cambio. Van al almacén del jugador ("Regalos"), igual que los regalos del juego, y el jugador las coloca con "Usar".
+- **Quitar unidades:** de las que tiene la aldea, de 1 a 100 por cambio. Salen primero del almacén, después del mapa y por último de dentro de los edificios.
+- **Misiones:** "Completar" marca la misión como hecha y deja la recompensa para que el jugador la cobre en el juego; "Reiniciar" borra la misión y su recompensa cobrada, para que se pueda volver a hacer.
+- Cada cambio pide motivo, queda en el historial con el antes y el después (cantidad total de esa unidad, o el estado de la misión) y usa el mismo diario que la edición de recursos: se guarda la partida completa antes de escribirla, y si algo falla a mitad, se recupera. El jugador con el juego abierto ve el aviso para recargar.
+
+Probado en el navegador con una copia de los datos: se dieron 2 Dragón Vulcano (2 → 4), se quitó 1 (4 → 3), se completó "Entrena un aldeano", y en el juego de Tuki2 el almacén mostró los 3 dragones y uno se colocó en la aldea.

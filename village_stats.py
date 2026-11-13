@@ -26,7 +26,7 @@ def _number(value):
 
 
 @lru_cache(maxsize=None)
-def _catalog(language):
+def catalog(language):
     config = get_game_config(language)
     items = {}
     for item in config.get('items', []):
@@ -54,7 +54,7 @@ def _unit_kind(item):
 
 def unit_stats(save, language='en'):
     """Units of one village by type, with where they are and their totals."""
-    items, _ = _catalog(language)
+    items, _ = catalog(language)
     on_map, sheltered, stored = Counter(), Counter(), Counter()
 
     def unit(item_id):
@@ -105,7 +105,7 @@ def _mission_ids(values):
 
 def mission_stats(save, language='en'):
     """Completed, rewarded and pending missions of one village."""
-    _, missions = _catalog(language)
+    _, missions = catalog(language)
     private = save.get('privateState', {})
     completed = _mission_ids(private.get('completedMissions'))
     rewarded = set(_mission_ids(private.get('rewardedMissions')))

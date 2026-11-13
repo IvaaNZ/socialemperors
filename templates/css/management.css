@@ -86,3 +86,12 @@
 /* Administração > Duelos (SE_DUELS=on) */
 .duel-resolved { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; }
 .duel-resolved li { overflow-wrap: anywhere; }
+
+/* Administração > Vilas: dar e retirar unidades, alterar missões */
+.management-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 20px; margin-top: 24px; }
+.management-subform { max-width: none; margin-top: 24px; padding: 18px; border: 1px solid #d5dce8; border-radius: 6px; background: var(--surface); }
+.management-actions .management-subform { margin-top: 0; }
+.management-subform .stats-subtitle { margin-top: 0; }
+.management-subform .form-field + .form-field { margin-top: 12px; }
+.management-subform .form-actions { margin-top: 16px; }
+.management-subform .field-hint { display: block; margin: 4px 0 14px; }

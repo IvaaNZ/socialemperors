@@ -28,7 +28,7 @@ from get_game_config import get_game_config, patch_game_config
 print (" [+] Loading players...")
 from get_player_info import get_player_info, get_neighbor_info
 from sessions import load_saved_villages, all_saves_userid, save_info, new_village, fb_friends_str, session as village_session
-from village_stats import summary as stats_summary, village_stats
+from village_stats import catalog as stats_catalog, summary as stats_summary, village_stats
 load_saved_villages()
 
 print (" [+] Loading server...")
@@ -44,7 +44,8 @@ from portal_i18n import set_portal_language, portal_language, translate as _, tr
 from swf_localization import localize_swf
 from village_names import rename_village, normalize_legacy_village_name, VillageNameError, MAX_VILLAGE_NAME_LENGTH
 from pvp import RaidService, RaidError
-from admin_villages import AdminVillageService, AdminVillageError, AdminVillageConflict, EDITABLE_FIELDS, RESOURCE_LIMIT, CASH_LIMIT
+from admin_villages import (AdminVillageService, AdminVillageError, AdminVillageConflict, EDITABLE_FIELDS, RESOURCE_LIMIT, CASH_LIMIT,
+                            UNITS_PER_CHANGE, giveable_units, mission_state)
 from economy import EconomyService, EconomyError
 from swf_abc_strings import localize_abc_strings
 from swf_range_overlay import add_range_overlay
@@ -493,8 +494,12 @@ def admin_villages():
     return render_template('admin_villages.html', villages=entries, overview=overview)
 
 
+MISSION_STATE_LABELS = {'open': 'Pendente', 'completed': 'Concluída (recompensa a receber)', 'rewarded': 'Concluída e recebida'}
+
+
 def administrative_history(userid):
     administrators = {account['id']: account['name'] for account in accounts().list_accounts()}
+    items, missions = stats_catalog(game_language())
     labels = {'name': _('Nome'), 'coins': _('Ouro'), 'wood': _('Madeira'), 'food': _('Comida'),
               'stone': _('Pedra'), 'cash': _('Dinheiro'), 'level': _('Nível'), 'xp': _('Experiência'),
               'tutorial_complete': _('Tutorial')}
@@ -502,6 +507,17 @@ def administrative_history(userid):
     for entry in village_admin().history(userid):
         changes = []
         for field in entry['changed_fields']:
+            if field == 'units':  # units given or removed: the unit's total before and after
+                unit = items.get(entry['after']['unit'], {})
+                changes.append({'label': _('Unidades: {name}', name=unit.get('name') or entry['after']['unit']),
+                                'before': game_number(entry['before']['total']), 'after': game_number(entry['after']['total'])})
+                continue
+            if field == 'mission':
+                title = missions.get(entry['after']['mission'], str(entry['after']['mission']))
+                changes.append({'label': _('Missão: {name}', name=title),
+                                'before': _(MISSION_STATE_LABELS[entry['before']['state']]),
+                                'after': _(MISSION_STATE_LABELS[entry['after']['state']])})
+                continue
             values = []
             for snapshot in (entry['before'], entry['after']):
                 value = snapshot['resources'][field] if field in ('coins', 'wood', 'food', 'stone') else snapshot[field]
@@ -553,11 +569,56 @@ def admin_village(account_id):
                 flash('Vila atualizada. O jogador verá um aviso para recarregar o jogo.' if result['changed_fields'] else 'A vila já estava com esses valores.', 'success')
                 return redirect(url_for('admin_village', account_id=account_id), code=303)
         history = administrative_history(account['village_id'])
-        stats = village_stats(village_session(account['village_id']), game_language())
+        save = village_session(account['village_id'])
+        stats = village_stats(save, game_language())
+        items, mission_names = stats_catalog(game_language())
+        unit_choices = sorted(({'id': unit_id, 'name': items[unit_id].get('name') or str(unit_id)} for unit_id in giveable_units()),
+                              key=lambda unit: (unit['name'].casefold(), unit['id']))
+        mission_choices = [{'id': mission_id, 'name': name, 'state': mission_state(save, mission_id)}
+                           for mission_id, name in mission_names.items()]
     return render_template('admin_village.html', account=account, village=village, values=values, stats=stats,
                            error=error, conflict=conflict, expected_revision=expected_revision, history=history,
+                           unit_choices=unit_choices, mission_choices=mission_choices, units_per_change=UNITS_PER_CHANGE,
+                           mission_state_labels=MISSION_STATE_LABELS,
                            limits={'resource_max': RESOURCE_LIMIT, 'cash_max': CASH_LIMIT,
                                    'name_max_length': MAX_VILLAGE_NAME_LENGTH, 'max_level': village['max_level']}), response_status
+
+
+def administrative_change(account_id, change):
+    """Run one unit or mission change for the account's village and go back to its page."""
+    require_admin()
+    validate_csrf()
+    account = accounts().get(account_id)
+    if not account or not account['village_id']:
+        abort(404, description='Esta conta ainda não possui uma vila vinculada.')
+    with village_lock:
+        recover_raids()
+        if account['village_id'] not in all_saves_userid():
+            abort(503, description='O save desta vila não foi encontrado. Restaure o arquivo de backup antes de editar.')
+        try:
+            change(account['village_id'])
+        except AdminVillageError as exc:
+            flash(str(exc), 'error')
+        except (OSError, sqlite3.Error):
+            app.logger.exception('A alteração administrativa aguarda recuperação.')
+            abort(503, description='Não foi possível concluir a alteração agora. Atualize a página para recuperar a gravação antes de tentar novamente.')
+        else:
+            flash('Vila atualizada. O jogador verá um aviso para recarregar o jogo.', 'success')
+    return redirect(url_for('admin_village', account_id=account_id) + request.form.get('anchor', ''), code=303)
+
+
+@app.post('/admin/villages/<int:account_id>/units')
+def admin_village_units(account_id):
+    return administrative_change(account_id, lambda userid: village_admin().change_units(
+        userid, request.form.get('unit_id', ''), request.form.get('count', ''), request.form.get('action', ''),
+        g.account['id'], request.form.get('reason', '')))
+
+
+@app.post('/admin/villages/<int:account_id>/missions')
+def admin_village_missions(account_id):
+    return administrative_change(account_id, lambda userid: village_admin().change_mission(
+        userid, request.form.get('mission_id', ''), request.form.get('action', ''), g.account['id'],
+        request.form.get('reason', '')))
 
 
 @app.get('/treasury')

@@ -90,6 +90,54 @@
         </tbody>
     </table>
     {% else %}<p class="management-empty">{{ _('Esta vila ainda não tem unidades.') }}</p>{% endif %}
+    <div class="management-actions">
+        <form class="management-form management-subform" action="{{ url_for('admin_village_units', account_id=account.id) }}" method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="action" value="give">
+            <input type="hidden" name="anchor" value="#army-title">
+            <h3 class="stats-subtitle">{{ _('Dar unidades') }}</h3>
+            <p class="field-hint">{{ _('As unidades vão para o armazém do jogador. Só as unidades vendidas no jogo.') }}</p>
+            <div class="form-field">
+                <label for="give-unit">{{ _('Unidade') }}</label>
+                <select id="give-unit" name="unit_id" required>
+                    {% for unit in unit_choices %}<option value="{{ unit.id }}">{{ unit.name }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="form-field">
+                <label for="give-count">{{ _('Quantidade') }}</label>
+                <input id="give-count" name="count" type="number" min="1" max="{{ units_per_change }}" step="1" value="1" required inputmode="numeric">
+            </div>
+            <div class="form-field">
+                <label for="give-reason">{{ _('Motivo da alteração') }}</label>
+                <input id="give-reason" name="reason" minlength="3" maxlength="200" required autocomplete="off">
+            </div>
+            <div class="form-actions"><button class="button button-primary" type="submit">{{ _('Dar unidades') }}</button></div>
+        </form>
+        {% if stats.units.units %}
+        <form class="management-form management-subform" action="{{ url_for('admin_village_units', account_id=account.id) }}" method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="action" value="remove">
+            <input type="hidden" name="anchor" value="#army-title">
+            <h3 class="stats-subtitle">{{ _('Retirar unidades') }}</h3>
+            <p class="field-hint">{{ _('Saem primeiro do armazém, depois do mapa e por último de dentro dos edifícios.') }}</p>
+            <div class="form-field">
+                <label for="remove-unit">{{ _('Unidade') }}</label>
+                <select id="remove-unit" name="unit_id" required>
+                    {% for unit in stats.units.units %}<option value="{{ unit.id }}">{{ unit.name }} ({{ unit.total | game_number }})</option>{% endfor %}
+                </select>
+            </div>
+            <div class="form-field">
+                <label for="remove-count">{{ _('Quantidade') }}</label>
+                <input id="remove-count" name="count" type="number" min="1" max="{{ units_per_change }}" step="1" value="1" required inputmode="numeric">
+            </div>
+            <div class="form-field">
+                <label for="remove-reason">{{ _('Motivo da alteração') }}</label>
+                <input id="remove-reason" name="reason" minlength="3" maxlength="200" required autocomplete="off">
+            </div>
+            <div class="form-actions"><button class="button button-secondary" type="submit">{{ _('Retirar unidades') }}</button></div>
+        </form>
+        {% endif %}
+    </div>
 </section>
 <section class="management-section" aria-labelledby="missions-title">
     <h2 id="missions-title">{{ _('Missões') }}</h2>
@@ -109,6 +157,30 @@
             {% else %}<p class="stats-note">{{ _('Nenhuma missão concluída ainda.') }}</p>{% endif %}
         </div>
     </div>
+    <form class="management-form management-subform" action="{{ url_for('admin_village_missions', account_id=account.id) }}" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="anchor" value="#missions-title">
+        <h3 class="stats-subtitle">{{ _('Alterar uma missão') }}</h3>
+        <p class="field-hint">{{ _('Concluir deixa a recompensa para o jogador receber no jogo. Reiniciar apaga a missão e a recompensa.') }}</p>
+        <div class="form-field">
+            <label for="mission-id">{{ _('Missão') }}</label>
+            <select id="mission-id" name="mission_id" required>
+                {% for mission in mission_choices %}<option value="{{ mission.id }}">{{ mission.name }} · {{ _(mission_state_labels[mission.state]) }}</option>{% endfor %}
+            </select>
+        </div>
+        <div class="form-field">
+            <label for="mission-action">{{ _('Ação') }}</label>
+            <select id="mission-action" name="action">
+                <option value="complete">{{ _('Concluir') }}</option>
+                <option value="reset">{{ _('Reiniciar') }}</option>
+            </select>
+        </div>
+        <div class="form-field">
+            <label for="mission-reason">{{ _('Motivo da alteração') }}</label>
+            <input id="mission-reason" name="reason" minlength="3" maxlength="200" required autocomplete="off">
+        </div>
+        <div class="form-actions"><button class="button button-primary" type="submit">{{ _('Aplicar à missão') }}</button></div>
+    </form>
 </section>
 <section class="management-section" aria-labelledby="history-title">
     <h2 id="history-title">{{ _('Histórico de alterações administrativas') }}</h2>

@@ -28,6 +28,8 @@ RESOURCE_LIMIT = 1_000_000_000
 CASH_LIMIT = 1_000_000
 EDITABLE_FIELDS = frozenset(('name', *RESOURCE_KEYS, 'cash', 'level', 'tutorial_complete'))
 HISTORY_LIMIT = 20
+UNITS_PER_CHANGE = 100        # units given or removed in one administrative change
+MISSION_ACTIONS = ('complete', 'reset')
 
 
 class AdminVillageError(ValueError):
@@ -99,6 +101,97 @@ def _revision(save):
     }
     encoded = json.dumps(payload, sort_keys=True, ensure_ascii=False, separators=(',', ':'))
     return hashlib.sha256(encoded.encode('utf-8')).hexdigest()
+
+
+def _items_by_id():
+    items = {}
+    for item in get_game_config().get('items', []):
+        try:
+            items[int(item.get('id'))] = item
+        except (TypeError, ValueError):
+            continue
+    return items
+
+
+def _price(item, field):
+    try:
+        return float(item.get(field) or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
+def giveable_unit(item):
+    """A unit the game sells (gold or cash price): the ones an administrator may hand out."""
+    return bool(item) and item.get('type') == 'u' and (_price(item, 'cost') > 0 or _price(item, 'cost_unit_cash') > 0)
+
+
+def giveable_units():
+    """Unit ids an administrator may give, in the game config's order."""
+    return [item_id for item_id, item in _items_by_id().items() if giveable_unit(item)]
+
+
+def _gifts(save):
+    private = save.setdefault('privateState', {})
+    gifts = private.get('gifts')
+    if not isinstance(gifts, list):
+        gifts = private['gifts'] = []
+    return gifts
+
+
+def _trim_gifts(gifts):
+    while gifts and gifts[-1] == 0:  # the game keeps no trailing zeros
+        gifts.pop()
+
+
+def unit_count(save, unit_id):
+    """How many of one unit the village has: on every map, inside buildings and in the warehouse."""
+    total = 0
+    for game_map in save.get('maps', []):
+        for placed in game_map.get('items', []) if isinstance(game_map, dict) else []:
+            if isinstance(placed, list) and placed:
+                total += placed[0] == unit_id
+                if len(placed) > 6 and isinstance(placed[6], list):
+                    total += sum(1 for inside in placed[6] if inside == unit_id)
+    gifts = save.get('privateState', {}).get('gifts')
+    if isinstance(gifts, list) and unit_id < len(gifts) and isinstance(gifts[unit_id], int) and gifts[unit_id] > 0:
+        total += gifts[unit_id]
+    return total
+
+
+def _remove_units(save, unit_id, count):
+    """Remove units: from the warehouse first, then from the maps, then from inside buildings."""
+    gifts = _gifts(save)
+    if unit_id < len(gifts) and isinstance(gifts[unit_id], int) and gifts[unit_id] > 0:
+        taken = min(gifts[unit_id], count)
+        gifts[unit_id] -= taken
+        count -= taken
+        _trim_gifts(gifts)
+    for game_map in save.get('maps', []):
+        if count and isinstance(game_map, dict) and isinstance(game_map.get('items'), list):
+            kept = []
+            for placed in game_map['items']:
+                if count and isinstance(placed, list) and placed and placed[0] == unit_id:
+                    count -= 1
+                    continue
+                kept.append(placed)
+            game_map['items'] = kept
+    for game_map in save.get('maps', []):
+        for placed in game_map.get('items', []) if isinstance(game_map, dict) else []:
+            if count and isinstance(placed, list) and len(placed) > 6 and isinstance(placed[6], list):
+                while count and unit_id in placed[6]:
+                    placed[6].remove(unit_id)
+                    count -= 1
+    return count
+
+
+def mission_state(save, mission_id):
+    """'open', 'completed' (reward waiting in the game) or 'rewarded'."""
+    private = save.get('privateState', {})
+    if mission_id in (private.get('rewardedMissions') or []):
+        return 'rewarded'
+    if mission_id in (private.get('completedMissions') or []):
+        return 'completed'
+    return 'open'
 
 
 def _sync_saves_directory():
@@ -284,6 +377,10 @@ class AdminVillageService:
                               if key in RESOURCE_KEYS else before_public[key] != after_public[key])]
         if not changed_fields:
             return {**self.get(userid), 'operation_id': None, 'changed_fields': []}
+        return self._commit(userid, after, admin_account_id, reason, before_public, after_public, changed_fields)
+
+    def _commit(self, userid, after, admin_account_id, reason, before_public, after_public, changed_fields):
+        """Journal the complete AFTER save, then write it (recovery replays the journal)."""
         operation_id = uuid.uuid4().hex
         with self._connection() as connection:
             connection.execute('''INSERT INTO admin_village_changes
@@ -297,3 +394,69 @@ class AdminVillageService:
             row = connection.execute('SELECT * FROM admin_village_changes WHERE id = ?', (operation_id,)).fetchone()
         self._apply(row)
         return {**self.get(userid), 'operation_id': operation_id, 'changed_fields': changed_fields}
+
+    def _start(self, userid, admin_account_id, reason):
+        self.recover_pending()
+        save = self._save(userid)
+        return save, _integer(admin_account_id, 'administrador', 1, 2 ** 63 - 1), _reason(reason)
+
+    def change_units(self, userid, unit_id, count, action, admin_account_id, reason):
+        """Give units (to the warehouse) or remove them; the history keeps the unit's total before and after."""
+        save, admin_account_id, reason = self._start(userid, admin_account_id, reason)
+        if action not in ('give', 'remove'):
+            raise AdminVillageError('Ação inválida.')
+        unit_id = _integer(unit_id, 'unidade', 0, 10 ** 9)
+        count = _integer(count, 'quantidade', 1, UNITS_PER_CHANGE)
+        item = _items_by_id().get(unit_id)
+        if not item or item.get('type') != 'u':
+            raise AdminVillageError('Unidade não encontrada.')
+        before_total = unit_count(save, unit_id)
+        after = deepcopy(save)
+        if action == 'give':
+            if not giveable_unit(item):
+                raise AdminVillageError('Esta unidade não está à venda no jogo e não pode ser entregue.')
+            gifts = _gifts(after)
+            while len(gifts) <= unit_id:
+                gifts.append(0)
+            current = gifts[unit_id] if isinstance(gifts[unit_id], int) and gifts[unit_id] > 0 else 0
+            gifts[unit_id] = current + count
+        else:
+            if count > before_total:
+                raise AdminVillageError('A vila não tem tantas unidades desse tipo para retirar.')
+            _remove_units(after, unit_id, count)
+        before_public = {'unit': unit_id, 'total': before_total}
+        after_public = {'unit': unit_id, 'total': unit_count(after, unit_id)}
+        return self._commit(userid, after, admin_account_id, reason, before_public, after_public, ['units'])
+
+    def change_mission(self, userid, mission_id, action, admin_account_id, reason):
+        """Complete a mission (its reward waits for the player in the game) or reset it, reward included."""
+        save, admin_account_id, reason = self._start(userid, admin_account_id, reason)
+        if action not in MISSION_ACTIONS:
+            raise AdminVillageError('Ação inválida.')
+        mission_id = _integer(mission_id, 'missão', 0, 10 ** 9)
+        known = set()
+        for mission in get_game_config().get('missions', []):
+            try:
+                known.add(int(mission.get('id')))
+            except (TypeError, ValueError):
+                continue
+        if mission_id not in known:
+            raise AdminVillageError('Missão não encontrada.')
+        state = mission_state(save, mission_id)
+        if action == 'complete' and state != 'open':
+            raise AdminVillageError('Esta missão já está concluída.')
+        if action == 'reset' and state == 'open':
+            raise AdminVillageError('Esta missão ainda não foi concluída.')
+        after = deepcopy(save)
+        private = after.setdefault('privateState', {})
+        for key in ('completedMissions', 'rewardedMissions'):
+            if not isinstance(private.get(key), list):
+                private[key] = []
+        if action == 'complete':
+            private['completedMissions'].append(mission_id)
+        else:
+            for key in ('completedMissions', 'rewardedMissions'):
+                private[key] = [value for value in private[key] if value != mission_id]
+        before_public = {'mission': mission_id, 'state': state}
+        after_public = {'mission': mission_id, 'state': mission_state(after, mission_id)}
+        return self._commit(userid, after, admin_account_id, reason, before_public, after_public, ['mission'])
