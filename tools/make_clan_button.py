@@ -20,6 +20,9 @@ sys.path.insert(0, str(ROOT / 'tests'))
 from test_clan_overlay_browser import BROWSER  # noqa: E402
 
 LABELS = {'es': 'Clan', 'en': 'Clan', 'pt-BR': 'Clã'}
+WIDTH, HEIGHT = 60, 72  # the shield (48 x 55) with the word under it
+
+
 def shield_svg():
     out = subprocess.run(['node', '-e', "process.stdout.write(require('./templates/js/clan_overlay.js').emblemSvg(3, 48))"],
                          cwd=ROOT, capture_output=True, text=True, encoding='utf-8', check=True).stdout

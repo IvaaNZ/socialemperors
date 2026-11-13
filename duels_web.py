@@ -36,7 +36,7 @@ from flask import Response, abort, flash, g, redirect, render_template, request,
 from flask_sock import ConnectionClosed, Sock
 
 from auth import validate_csrf
-from duels import (ARENA_MAP_ID, ARENA_TOURNAMENT_TYPE, ARMY_LIMIT, BATTLE_DEADLINE_SECONDS, BATTLE_MIN_SECONDS, CHALLENGE_SECONDS,
+from duels import (challenge_seconds, ARENA_MAP_ID, ARENA_TOURNAMENT_TYPE, ARMY_LIMIT, BATTLE_DEADLINE_SECONDS, BATTLE_MIN_SECONDS, CHALLENGE_SECONDS,
                    RANKED_MIN_LEVEL, SIDES, SUSPICIOUS_POWER_RATIO, DuelError, DuelHub, DuelStore, army_profile,
                    start_sweeper, utc_label)
 from portal_i18n import translate as _
@@ -170,14 +170,14 @@ def install_duels(app, accounts, village_lock, all_saves_userid, village_session
     store = DuelStore(data_dir / 'duels.sqlite3')
     arena = load_arena()
 
-    def profile(account_id):
+    def profile(account_id, team=None):
         account = accounts().get(account_id)
         if not account or account['status'] != 'approved' or not account['village_id']:
             return None
         with village_lock:
             if account['village_id'] not in all_saves_userid():
                 return None
-            result = army_profile(village_session(account['village_id']))
+            result = army_profile(village_session(account['village_id']), team=team)
         result['name'] = account['name']
         return result
 
@@ -330,7 +330,7 @@ def install_duels(app, accounts, village_lock, all_saves_userid, village_session
                             'created_label': utc_label(duel['created_at'])})
         return render_template('duels.html', me=mine, my_rating=store.rating(account['id']), ranking=ranking,
                                history=history, ranked_level=RANKED_MIN_LEVEL, army_limit=ARMY_LIMIT,
-                               challenge_seconds=CHALLENGE_SECONDS, min_seconds=int(BATTLE_MIN_SECONDS),
+                               challenge_seconds=challenge_seconds(), min_seconds=int(BATTLE_MIN_SECONDS),
                                deadline_minutes=max(1, round(BATTLE_DEADLINE_SECONDS / 60)))
 
     def require_admin():

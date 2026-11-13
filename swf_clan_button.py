@@ -75,14 +75,22 @@ def _signed_short(value):
 
 
 def add_clan_button_to_abc(abc, image_url=CLAN_BUTTON_URL):
+    return add_panel_button_to_abc(abc, image_url, CALLBACK, ADD_METHOD, CLICK_METHOD)
+
+
+def add_panel_button_to_abc(abc, image_url, callback, add_method, click_method):
+    """An icon in the game's right panel that calls ExternalInterface `callback` on a click (the clan and PvP buttons).
+
+    Each button's call goes right before createViralButtons' final returnvoid: a button added later sits below.
+    """
     gui = abc.instances[abc.class_index('GuiManager')]
-    if any(abc.multiname_name(t['name']) == ADD_METHOD for t in gui['traits']):
-        raise AbcError('The clan button is already present')
+    if any(abc.multiname_name(t['name']) == add_method for t in gui['traits']):
+        raise AbcError(f'{add_method} is already present')
     n = {name: _qname(abc, name, package) for name, package in NAMES.items()}
     create = abc.method_of('GuiManager', 'createViralButtons')
     panel = used_multiname(abc, create, 'getproperty', '_viralButtonPanel')
     add_icon = used_multiname(abc, create, 'callpropvoid', 'addIcon')
-    s = {text: abc.add_string(text) for text in (image_url, CALLBACK, 'rollOut')}
+    s = {text: abc.add_string(text) for text in (image_url, callback, 'rollOut')}
     reference = abc.body_of(create)
 
     def method(name, params, code, labels, max_stack, local_count):
@@ -108,7 +116,7 @@ def add_clan_button_to_abc(abc, image_url=CLAN_BUTTON_URL):
         ('returnvoid',),
     ]
 
-    # GuiManager.__clanClick(event): ask the page to open the clan window.
+    # GuiManager.<click_method>(event): ask the page to open its window.
     code, labels = assemble([
         ('getlocal0',), ('pushscope',),
         ('label:', 'try'),
@@ -116,11 +124,11 @@ def add_clan_button_to_abc(abc, image_url=CLAN_BUTTON_URL):
         ('getlocal1',), ('getproperty', n['currentTarget']), ('findpropstrict', n['MouseEvent']), ('pushstring', s['rollOut']),
         ('constructprop', n['MouseEvent'], 1), ('callpropvoid', n['dispatchEvent'], 1),
         ('getlex', n['ExternalInterface']), ('getproperty', n['available']), ('iffalse', 'done'),
-        ('getlex', n['ExternalInterface']), ('pushstring', s[CALLBACK]), ('callpropvoid', n['call'], 1),
+        ('getlex', n['ExternalInterface']), ('pushstring', s[callback]), ('callpropvoid', n['call'], 1),
     ] + guarded_end)
-    clan_click = method(CLICK_METHOD, 1, code, labels, 3, 2)
+    clan_click = method(click_method, 1, code, labels, 3, 2)
 
-    # GuiManager.__addClanButton(): the icon (a Sprite with the loaded art) in the game's panel.
+    # GuiManager.<add_method>(): the icon (a Sprite with the loaded art) in the game's panel.
     code, labels = assemble([
         ('getlocal0',), ('pushscope',),
         ('label:', 'try'),
@@ -134,7 +142,7 @@ def add_clan_button_to_abc(abc, image_url=CLAN_BUTTON_URL):
         ('getlocal0',), ('getproperty', panel), ('getlocal1',), ('getlocal0',), ('getproperty', clan_click),
         ('pushnull',), ('callpropvoid', add_icon, 3),  # no tooltip
     ] + guarded_end)
-    add_name = method(ADD_METHOD, 0, code, labels, 5, 3)
+    add_name = method(add_method, 0, code, labels, 5, 3)
 
     # createViralButtons: the call right before its final returnvoid.
     body = abc.body_of(create)

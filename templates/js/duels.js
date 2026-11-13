@@ -124,6 +124,9 @@
     const separator = (document.documentElement.lang || "es") === "en" ? "," : ".";
     const number = (value) => String(Math.trunc(Number(value) || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, separator);
     const send = (message) => { if (socket && socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify(message)); };
+    // The in-game PvP window (pvp_overlay.js, SE_PVP=on) lists the players online and challenges through here.
+    let online = [];
+    window.seDuels = { online: () => online, me: () => me, send };
 
     function button(label, onClick, primary) {
         const element = document.createElement("button");
@@ -225,6 +228,7 @@
             if (opened) {
                 pendingStart = null;
                 if (typeof window.seCloseClan === "function") window.seCloseClan();  // nothing over the battle
+                if (typeof window.seClosePvp === "function") window.seClosePvp();
                 if (pages) pages.postMessage({ type: "launched", id: message.id });
                 launchTimer = setTimeout(hideNotice, 6000);
                 return;
@@ -300,9 +304,11 @@
         countdown = setInterval(render, 1000);
     }
 
-    function renderOnline(online) {
+    function renderOnline(players) {
+        online = players;
+        if (typeof Event === "function" && typeof window.dispatchEvent === "function") window.dispatchEvent(new Event("se-duels-online"));
         if (!onlineList) return;
-        const others = online.filter((player) => player.id !== me);
+        const others = players.filter((player) => player.id !== me);
         if (!others.length) {
             const empty = document.createElement("li");
             empty.className = "duels-empty";
@@ -359,6 +365,23 @@
         send({ type: "seen", id: result.id });  // the server stops sending it again
     }
 
+    // SE_PVP=on, in the game: the answer comes with the team chosen in the game's team window.
+    // Closed without choosing: the challenge stays open. Not in the village: the strongest troops fight.
+    async function accept(id) {
+        if (typeof window.sePickTeam !== "function") {
+            send({ type: "respond", id, accept: true });
+            return;
+        }
+        const notice = document.getElementById("duel-notice");
+        if (notice) notice.hidden = true;
+        const team = await window.sePickTeam();
+        if (team === null || (Array.isArray(team) && !team.length)) {
+            if (notice && pending === id) notice.hidden = false;
+            return;
+        }
+        send(Array.isArray(team) ? { type: "respond", id, accept: true, army: team } : { type: "respond", id, accept: true });
+    }
+
     function onMessage(message) {
         switch (message.type) {
         case "hello":
@@ -371,7 +394,7 @@
         case "challenge_received":
             pending = message.id;
             showNotice(fill(texts.received, { name: message.other.name }), "", [
-                button(texts.accept, () => send({ type: "respond", id: message.id, accept: true }), true),
+                button(texts.accept, () => accept(message.id), true),
                 button(texts.decline, () => { send({ type: "respond", id: message.id, accept: false }); hideNotice(); }),
             ]);
             startCountdown(message.expires_in);

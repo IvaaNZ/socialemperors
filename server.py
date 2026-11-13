@@ -827,6 +827,12 @@ def localized_game_movie(language=None):
             name = f'{prefix}_{locale}.png'
             return '/img/' + (name if (Path(TEMPLATES_DIR) / 'img' / name).exists() else f'{prefix}_es.png')
         translated = add_clan_button(translated, image_url=art('clan_button'))
+    if PVP_ENABLED:  # the "PvP" button (below "Clan") and the game's team selection for raids and duels
+        from portal_i18n import normalize_locale as pvp_locale
+        from swf_pvp import add_pvp
+        name = f'pvp_button_{pvp_locale(language)}.png'
+        translated = add_pvp(translated, image_url='/img/' + (name if (Path(TEMPLATES_DIR) / 'img' / name).exists()
+                                                              else 'pvp_button_es.png'))
     return translated, hashlib.sha256(translated).hexdigest()
 
 ## GAME DYNAMIC
@@ -998,11 +1004,16 @@ CLANS_ENABLED = os.environ.get('SE_CLANS', 'off').strip().lower() in ('on', '1',
 AUTO_APPROVE = os.environ.get('SE_AUTO_APPROVE', 'on').strip().lower() in ('on', '1', 'true', 'yes')
 # Unit abilities (swf_unit_abilities.py): automatic, one summon at most, tooltips. Off: the movie is unchanged.
 ABILITIES_ENABLED = os.environ.get('SE_ABILITIES', 'off').strip().lower() in ('on', '1', 'true', 'yes')
+PVP_ENABLED = os.environ.get('SE_PVP', 'off').strip().lower() in ('on', '1', 'true', 'yes')
 SOUND_FIX_ENABLED = os.environ.get('SE_SOUND_FIX', 'on').strip().lower() in ('on', '1', 'true', 'yes')
 app.jinja_env.globals['clans_enabled'] = CLANS_ENABLED
 if CLANS_ENABLED:
     from clans_web import install_clans
     install_clans(app, accounts, village_lock, all_saves_userid, village_session, data_dir)
+if PVP_ENABLED:  # the in-game PvP window (rivals, raids, duels) and raids with a chosen team
+    from pvp import TEAM_LIMIT
+    from pvp_web import install_pvp
+    install_pvp(app, accounts, village_lock, recover_raids, raids, eligible_village_ids, raid_tokens, TEAM_LIMIT)
 if DUELS_ENABLED:
     from duels_web import install_duels
     install_duels(app, accounts, village_lock, all_saves_userid, village_session, data_dir, game_number,

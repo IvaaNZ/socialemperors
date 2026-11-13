@@ -1,0 +1,5 @@
+{# In-game PvP window (SE_PVP=on only): the window that the game's "PvP" button opens. Same look as the clan window. #}
+<link rel="stylesheet" href="{{ url_for('css', path='clan_overlay.css') }}">
+<link rel="stylesheet" href="{{ url_for('css', path='pvp_overlay.css') }}">
+<script id="pvp-overlay-config" type="application/json">{{ dict(pvp_overlay, csrf=csrf_token()) | tojson }}</script>
+<script src="{{ url_for('javascript', path='pvp_overlay.js') }}" defer></script>

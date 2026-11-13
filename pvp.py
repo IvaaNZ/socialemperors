@@ -38,6 +38,43 @@ POWER_DESCRIPTION = (
 )
 
 
+TEAM_LIMIT = 20  # the game's team selection window has 20 slots (and the duel arena places 20 per side)
+
+
+def team_selection_enabled():
+    """SE_PVP=on: raids and duels fight with the team chosen in the game (or the strongest TEAM_LIMIT units)."""
+    return os.environ.get('SE_PVP', 'off').strip().lower() in ('on', '1', 'true', 'yes')
+
+
+def pick_army(available, team, strength, limit=TEAM_LIMIT):
+    """The unit ids that fight, from `available` (one id per unit the village has).
+
+    `team` None: the `limit` strongest (by `strength(unit_id)`). Otherwise the ids chosen in the game's team
+    window (0 = an empty slot), each kept only while the village still has one more of it, up to `limit`.
+    """
+    if team is None:
+        return sorted(available, key=lambda unit_id: (-strength(unit_id), unit_id))[:limit]
+    left = {}
+    for unit_id in available:
+        left[unit_id] = left.get(unit_id, 0) + 1
+    chosen = []
+    for unit_id in team:
+        if left.get(unit_id, 0) > 0 and len(chosen) < limit:
+            left[unit_id] -= 1
+            chosen.append(unit_id)
+    return chosen
+
+
+def parse_team(value):
+    """A team sent by a page: None, or a list of up to TEAM_LIMIT unit ids (0 for empty slots dropped)."""
+    if value is None:
+        return None
+    if (not isinstance(value, list) or len(value) > TEAM_LIMIT
+            or not all(isinstance(unit, int) and not isinstance(unit, bool) and 0 <= unit < 1_000_000 for unit in value)):
+        raise ValueError('invalid team')
+    return [unit for unit in value if unit]
+
+
 class RaidError(ValueError):
     """A rejected raid that the player can correct or retry later."""
 
@@ -113,6 +150,7 @@ def _public_village(userid, save):
     defense_structures = 0
     combatants = 0
     defenses = 0
+    units = []
     for placed in town.get('items', []):
         if not isinstance(placed, list) or not placed:
             continue
@@ -122,6 +160,7 @@ def _public_village(userid, save):
         if _combatant(item, race):
             combatants += 1
             attack_power += _power(item)
+            units.append(_number(item.get('id'), -1))
         elif (item.get('type') == 'b' and item.get('race') == race
               and str(item.get('category_id')) == '2'):
             defenses += 1
@@ -133,6 +172,7 @@ def _public_village(userid, save):
                 if unit and _combatant(unit, race):
                     combatants += 1
                     attack_power += _power(unit)
+                    units.append(_number(unit.get('id'), -1))
     names = save['playerInfo'].get('map_names', [])
     name = str(names[index]) if index < len(names) else translate('Meu Império')
     return {
@@ -141,7 +181,26 @@ def _public_village(userid, save):
         'combatants': combatants, 'troop_count': combatants, 'defenses': defenses,
         'resources': {key: _resource(town.get(key, 0)) for key in RESOURCE_KEYS},
         'tutorial_complete': _number(save['playerInfo'].get('completed_tutorial')) == 1,
+        'units': units,
     }
+
+
+def _unit_power(unit_id):
+    item = _item(unit_id)
+    return _power(item) if item else 0
+
+
+def _attack_with(village, team):
+    """SE_PVP=on: the raid attack is the chosen team (or the strongest TEAM_LIMIT troops), not the whole army."""
+    if not team_selection_enabled():
+        return village
+    army = pick_army(village['units'], team, _unit_power)
+    if team is not None and not army:
+        raise RaidError('Escolha pelo menos uma tropa da sua vila para atacar.')
+    village['attack_power'] = sum(_unit_power(unit_id) for unit_id in army)
+    village['troop_count'] = len(army)
+    village['army'] = army
+    return village
 
 
 class RaidService:
@@ -268,7 +327,7 @@ class RaidService:
             raise RaidError('Sua conta não está habilitada para participar dos saques.')
         now = int(time.time())
         results = self._applied()
-        own = _public_village(userid, session(userid))
+        own = _attack_with(_public_village(userid, session(userid)), None)
         own['attack_available_at'], own['protected_until'] = self._timers(userid, results)
         rivals = []
         ranking = []
@@ -309,7 +368,7 @@ class RaidService:
             },
         }
 
-    def raid(self, attacker_id, defender_id, eligible_userids, request_id, now=None):
+    def raid(self, attacker_id, defender_id, eligible_userids, request_id, now=None, team=None):
         self.recover_pending()
         attacker_id, defender_id = str(attacker_id), str(defender_id)
         if not isinstance(request_id, str) or not re.fullmatch(r'[A-Za-z0-9_-]{16,128}', request_id):
@@ -327,7 +386,8 @@ class RaidService:
             return json.loads(previous['result_json'])
         now = int(time.time()) if now is None else _number(now)
         attacker_save, defender_save = session(attacker_id), session(defender_id)
-        own, rival = _public_village(attacker_id, attacker_save), _public_village(defender_id, defender_save)
+        own = _attack_with(_public_village(attacker_id, attacker_save), team)
+        rival = _public_village(defender_id, defender_save)
         allowed, reason, _ = self._permission(own, rival, self._applied(), now)
         if not allowed:
             raise RaidError(reason)
@@ -346,6 +406,8 @@ class RaidService:
             'won': won, 'loot': loot, 'total_loot': sum(loot.values()),
             'loot_percent': RAID_LOOT_PERCENT,
         }
+        if 'army' in own:  # SE_PVP=on: the troops that attacked
+            result['attacker_troops'] = len(own['army'])
         with self._connection() as connection:
             connection.execute('''INSERT INTO raids
                 (id, attacker_id, defender_id, request_id, created_at, status, result_json, attacker_after_json, defender_after_json)

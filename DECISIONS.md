@@ -248,3 +248,18 @@ Pedido del dueño: "lo desactivé pero sigue activándose solo el sonido".
 - **Arreglo** (`swf_sound_settings.py`): los botones de música y de sonido guardan la elección en el momento (`flush()` dentro de su propio try/catch), y el de música la marca encendida antes de arrancarla. No cambia ninguna instrucción original. Es un arreglo pedido, por eso está encendido por defecto; `SE_SOUND_FIX=off` sirve el juego como antes.
 - Probado en el navegador con la copia de los datos: apagar la música, recargar y sigue apagada; apagar y prender los efectos; volver a prender la música. Cada cambio queda guardado al instante.
 
+## Botón PvP y elección de tropas en saqueos y duelos (`SE_PVP=on`)
+
+Pedido del dueño: que en Rivales, Saqueos y Duelos cada jugador elija sus unidades, como en la ventana de equipo del juego, y un botón "PvP" debajo de "Clan". Decisiones del dueño: la elección en la **ventana del propio juego**; en los saqueos **solo cuentan las tropas elegidas** (hasta 20; siguen sin batalla); el botón abre una **ventana dentro del juego**.
+
+- **Botón PvP** (`swf_pvp.py`): un ícono del juego en el panel de la derecha, debajo de "Clan" (escudo rojo con dos espadas, `tools/make_pvp_button.py`). Al tocarlo, la página abre la ventana PvP (`templates/js/pvp_overlay.js`), con el mismo aspecto que la del clan y tres pestañas: **Rivales** (las aldeas que se pueden atacar, su defensa y el saqueo posible), **Saqueos** (el historial) y **Duelos** (jugadores conectados para retar, la puntuación y los últimos duelos). Abajo, un enlace a la página completa.
+- **Elegir tropas:** al tocar "Atacar" o "Retar", la ventana PvP se aparta y se abre la ventana "Elige tu equipo" del juego (la que usan las aventuras antes de zarpar), con 20 casillas. El juego la llena solo en sus propios modos; se usa el de torneo, que además deja afuera las unidades que la arena no admite, y se vuelve a mostrar su botón de cerrar (ese modo lo oculta). Cerrarla sin elegir cancela. La ventana recuerda el último equipo: el juego lo manda con su comando `set_attack_team`, que ahora el servidor guarda (`privateState.teams.tournament`).
+- **Saqueos:** la fuerza de ataque es la de las tropas elegidas, si la aldea las tiene (cada una tantas veces como la tenga), hasta 20. Sin elección (por ejemplo desde la página del portal) atacan las 20 más fuertes, para que elegir no sea peor que no elegir. La defensa no cambia.
+- **Duelos:** quien reta elige antes de enviar el reto, y quien lo acepta dentro del juego elige al aceptar. Esas tropas son las que van a la arena y las que cuentan para la fuerza. Como elegir lleva tiempo, el reto dura **90 s** en vez de 30. Quien acepta desde la página del portal, o fuera de su aldea, va con las 20 más fuertes. Un equipo vacío o mal formado se rechaza y el reto sigue abierto.
+- Apagado (`SE_PVP` sin poner), nada cambia: ni la película, ni las rutas, ni la fuerza de los saqueos, ni el tiempo de los retos.
+- Se arregló de paso `tools/make_clan_button.py`, que usaba `WIDTH` y `HEIGHT` sin definirlos.
+
+Probado en el navegador con la copia de los datos: el ícono aparece debajo de "Clan"; la ventana muestra los rivales; un saqueo con 3 tropas elegidas atacó con la fuerza de esas 3 (8.875) y la ventana volvió en Saqueos con el resultado; la ventana de equipo recordó esas 3 tropas al retar; Tuki retó a Tuki2, que al aceptar eligió 2 tropas, y el duelo arrancó con 3 contra 2.
+
+Limitación conocida: el botón "+" del zoom del juego tapa parte de la palabra "PvP" debajo del ícono.
+

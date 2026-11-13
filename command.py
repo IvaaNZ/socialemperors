@@ -1,4 +1,5 @@
 import json
+import os
 
 from sessions import session, save_session
 from get_game_config import get_game_config, get_level_from_xp, get_name_from_item_id, get_attribute_from_mission_id, get_xp_from_level, get_attribute_from_item_id, get_item_from_subcat_functional
@@ -32,6 +33,27 @@ def command(USERID, data):
         args = comm["args"]
         do_command(USERID, cmd, args)
     save_session(USERID) # Save session
+
+TEAM_SLOTS = 20  # the game's team selection window
+
+
+def pvp_teams_enabled():
+    return os.environ.get('SE_PVP', 'off').strip().lower() in ('on', '1', 'true', 'yes')
+
+
+def attack_team(args):
+    """The team of a set_attack_team command (["tournament", "[id, ...]"]): up to 20 unit ids, 0 for an empty slot."""
+    if not isinstance(args, list) or len(args) != 2 or args[0] != 'tournament' or not isinstance(args[1], str):
+        return None
+    try:
+        team = json.loads(args[1])
+    except ValueError:
+        return None
+    if (not isinstance(team, list) or len(team) > TEAM_SLOTS
+            or not all(isinstance(unit, int) and not isinstance(unit, bool) and 0 <= unit < 1_000_000 for unit in team)):
+        return None
+    return team
+
 
 def do_command(USERID, cmd, args):
     save = session(USERID)
@@ -511,6 +533,15 @@ def do_command(USERID, cmd, args):
         type_name = get_strategy_type(strategy_type)
         save["privateState"]["strategy"] = strategy_type
         print(f"Set defense strategy type to {type_name}")
+
+    elif cmd == Constant.CMD_SET_ATTACK_TEAM and pvp_teams_enabled():
+        # SE_PVP=on: the game's team selection (raids and duels) remembers the last team it sent.
+        team = attack_team(args)
+        if team is None:
+            print("Ignored an invalid team")
+        else:
+            save["privateState"].setdefault("teams", {})[args[0]] = team
+            print(f"Saved the {args[0]} team ({sum(1 for unit in team if unit)} units)")
 
     elif cmd == Constant.CMD_START_QUEST:
         quest_id = args[0]

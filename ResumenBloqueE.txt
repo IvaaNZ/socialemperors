@@ -163,6 +163,15 @@ página usa la forma de dibujo WebGL propia de Ruffle, que no se cae con los
 efectos de las habilidades. Detalle en DECISIONS.md.
 
 
+PEDIDO EXTRA. BOTÓN PVP Y ELECCIÓN DE TROPAS (SE_PVP=on)
+--------------------------------------------------------
+Un botón "PvP" debajo de "Clan" abre una ventana dentro del juego con
+Rivales, Saqueos y Duelos. Al atacar o retar se elige el equipo (hasta 20
+tropas) en la ventana "Elige tu equipo" del juego, que recuerda el último.
+En los saqueos solo cuentan las elegidas; en los duelos van a la arena.
+El reto dura 90 s para dar tiempo a elegir. Detalle en DECISIONS.md.
+
+
 PUNTOS QUE SIGUEN
 -----------------
   23. Clima y ciclo día/noche ........................................... 0 %

@@ -72,6 +72,7 @@ SUSPICIOUS_POWER_RATIO = _setting('SE_DUEL_POWER_RATIO', 1 / 3)   # winner weake
 ABILITY_POWER_BONUS = _setting('SE_DUEL_ABILITY_BONUS', 0.25)    # SE_ABILITIES=on: a unit casting by itself counts +25 %
 
 CHALLENGE_SECONDS = 30
+CHALLENGE_SECONDS_WITH_TEAM = 90  # SE_PVP=on: the answer includes choosing a team in the game
 RECONNECT_GRACE = 5
 RATE_LIMIT = 5
 RATE_WINDOW = 60
@@ -142,9 +143,9 @@ def duel_unit_power(unit):
     return power
 
 
-def army_profile(save, limit=ARMY_LIMIT):
-    """The village's duel army (read-only): strongest units, strength, level, readiness."""
-    from pvp import _combatant, _item, _main_map
+def army_profile(save, limit=ARMY_LIMIT, team=None):
+    """The village's duel army (read-only): the chosen team or the strongest units, strength, level, readiness."""
+    from pvp import _combatant, _item, _main_map, pick_army
     _, town = _main_map(save)
     race = town.get('race', 'h')
     excluded = _not_allowed_units()
@@ -153,7 +154,7 @@ def army_profile(save, limit=ARMY_LIMIT):
     def add(unit_id):
         unit = _item(unit_id)
         if unit and _combatant(unit, race) and _number(unit.get('id'), -1) not in excluded:
-            army.append((duel_unit_power(unit), _number(unit['id'])))
+            army.append(_number(unit['id']))
 
     for placed in town.get('items', []):
         if not isinstance(placed, list) or not placed:
@@ -163,12 +164,14 @@ def army_profile(save, limit=ARMY_LIMIT):
         if item and item.get('type') == 'b' and len(placed) > 6 and isinstance(placed[6], list):
             for unit_id in placed[6]:  # troops sheltered in a building
                 add(unit_id)
-    army.sort(key=lambda entry: (-entry[0], entry[1]))
-    chosen = army[:limit]
+    def strength(unit_id):
+        return duel_unit_power(_item(unit_id))
+
+    chosen = pick_army(army, team, strength, limit)
     return {
-        'power': sum(power for power, _ in chosen),
+        'power': sum(strength(unit_id) for unit_id in chosen),
         'troops': len(chosen),
-        'units': [unit_id for _, unit_id in chosen],
+        'units': chosen,
         'level': max(1, _number(town.get('level'), 1)),
         'tutorial_complete': _number(save.get('playerInfo', {}).get('completed_tutorial')) == 1,
     }
@@ -503,7 +506,11 @@ class DuelHub:
     def _pending_for(self, account_id):
         return next((c for c in self.challenges.values() if account_id in (c['from'], c['to'])), None)
 
-    def challenge(self, from_id, to_id):
+    def _profile(self, account_id, team=None):
+        """The player's duel army: the team chosen in the game (SE_PVP=on), else the strongest units."""
+        return self.profile(account_id) if team is None else self.profile(account_id, team)
+
+    def challenge(self, from_id, to_id, team=None):
         with self.lock:
             now = self.clock()
             if from_id == to_id:
@@ -517,7 +524,7 @@ class DuelHub:
             recent = [t for t in self.sent_times.get(from_id, []) if now - t < RATE_WINDOW]
             if len(recent) >= RATE_LIMIT:
                 raise DuelError('rate_limited')
-            mine, theirs = self.profile(from_id), self.profile(to_id)
+            mine, theirs = self._profile(from_id, team), self.profile(to_id)
             if not mine or not mine['tutorial_complete']:
                 raise DuelError('tutorial')
             if not mine['troops']:
@@ -527,7 +534,7 @@ class DuelHub:
             recent.append(now)
             self.sent_times[from_id] = recent
             challenge = {'id': next(self._ids), 'from': from_id, 'to': to_id, 'created_at': now,
-                         'expires_at': now + CHALLENGE_SECONDS}
+                         'expires_at': now + challenge_seconds(), 'teams': {from_id: team}}
             self.challenges[challenge['id']] = challenge
             self._send(from_id, self._challenge_message(challenge, from_id))
             self._send(to_id, self._challenge_message(challenge, to_id))
@@ -543,7 +550,7 @@ class DuelHub:
             self._send(account_id, message)
         self._broadcast_presence()
 
-    def respond(self, account_id, challenge_id, accept):
+    def respond(self, account_id, challenge_id, accept, team=None):
         with self.lock:
             challenge = self.challenges.get(challenge_id)
             if not challenge or challenge['to'] != account_id:
@@ -551,6 +558,11 @@ class DuelHub:
             if not accept:
                 self._close(challenge, 'declined', by=account_id)
                 return None
+            if team is not None:
+                mine = self._profile(account_id, team)
+                if not mine or not mine['troops']:
+                    raise DuelError('no_troops')
+            challenge.setdefault('teams', {})[account_id] = team
             return self._launch(challenge)
 
     def cancel(self, account_id, challenge_id):
@@ -571,7 +583,8 @@ class DuelHub:
     def _launch(self, challenge):
         """Both players enter the arena: create the duel and send each one both armies."""
         challenger, defender = challenge['from'], challenge['to']
-        mine, theirs = self.profile(challenger), self.profile(defender)
+        teams = challenge.get('teams', {})
+        mine, theirs = self._profile(challenger, teams.get(challenger)), self._profile(defender, teams.get(defender))
         if not mine or not theirs or not mine['troops'] or not theirs['troops']:
             self._close(challenge, 'cancelled')
             return None
@@ -738,9 +751,9 @@ class DuelHub:
                 raise DuelError('invalid')
             kind = message.get('type')
             if kind == 'challenge':
-                self.challenge(account_id, _number(message.get('to'), -1))
+                self.challenge(account_id, _number(message.get('to'), -1), _team(message.get('army')))
             elif kind == 'respond':
-                self.respond(account_id, _number(message.get('id'), -1), bool(message.get('accept')))
+                self.respond(account_id, _number(message.get('id'), -1), bool(message.get('accept')), _team(message.get('army')))
             elif kind == 'cancel':
                 self.cancel(account_id, _number(message.get('id'), -1))
             elif kind == 'seen':
@@ -750,6 +763,23 @@ class DuelHub:
         except DuelError as error:
             with self.lock:
                 self._send(account_id, {'type': 'error', 'code': error.code})
+
+
+def _team(value):
+    """The team a page sent with a challenge or an answer (SE_PVP=on), or None."""
+    from pvp import parse_team, team_selection_enabled
+    if value is None or not team_selection_enabled():
+        return None
+    try:
+        return parse_team(value)
+    except ValueError:
+        raise DuelError('invalid') from None
+
+
+def challenge_seconds():
+    """Time to answer a challenge: longer with SE_PVP=on, where the answer includes choosing a team."""
+    from pvp import team_selection_enabled
+    return CHALLENGE_SECONDS_WITH_TEAM if team_selection_enabled() else CHALLENGE_SECONDS
 
 
 def start_sweeper(hub, interval=1.0):

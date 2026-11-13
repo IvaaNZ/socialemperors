@@ -315,7 +315,8 @@
                 backgroundColor: "#669C2C",
                 // Only with duels or clans on: the duel page opens the tournament arena (Base.__startDuel)
                 // and the game's "Clan" button opens the clan window (window.seOpenClan).
-                allowScriptAccess: Boolean(document.getElementById("duel-config") || document.getElementById("clan-overlay-config")),
+                allowScriptAccess: Boolean(document.getElementById("duel-config") || document.getElementById("clan-overlay-config")
+                    || document.getElementById("pvp-overlay-config")),
                 allowFullscreen: true,
                 splashScreen: false,
                 quality: "16x16",
