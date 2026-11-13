@@ -4,8 +4,7 @@ Asked by the owner: white lettering is hard to read over light art, and in the
 team selection window a unit whose last copy was chosen ("x0") stayed on the
 list. The game only greys such a thumbnail out with a colour filter
 (ThumbUnit.deactivate tweens a colorMatrixFilter), which Ruffle's WebGL
-renderer (used with SE_ABILITIES=on) does not draw. This edit adds, without
-changing any original instruction:
+renderer does not draw. This edit adds:
 
   * ThumbUnit.deactivate / activate: the thumbnail is hidden (visible =
     false) when it runs out and shown again when a chosen copy goes back;
@@ -16,18 +15,26 @@ changing any original instruction:
     of the game's own outlined labels. Inside its own try/catch;
   * Base.__registerOutline(), called first in Base.init: adds that listener
     when the stage is there.
+  * IsoInteractiveElement.highlight: hovering an item shows its name card
+    (InfoPopup) except for defense structures (category_id 2: castles, walls,
+    towers), which only showed a life bar. The one byte of that comparison
+    becomes -1, a category no item has: every item shows its name. This is
+    the only original instruction changed (its operand), inside the game's
+    own try/catch.
 """
 
 import struct
 import zlib
 
-from swf_abc import Abc, AbcError, u30
+from swf_abc import Abc, AbcError, disassemble, u30
 from swf_duel_bridge import DO_ABC, assemble, prepend, used_multiname
 from swf_range_overlay import OPCODE_BY_NAME, _add_int, _qname
 
 OUTLINE_METHOD = '__outlineText'
 REGISTER_METHOD = '__registerOutline'
 WHITE = 0xFFFFFF
+DEFENSE_CATEGORY = 2  # castles, walls, towers: the game showed them no name card
+NO_CATEGORY = 0xFF  # pushbyte -1
 OUTLINE = {'color': 0x000000, 'alpha': 1, 'blur': 2, 'strength': 8}
 
 NAMES = {
@@ -90,6 +97,18 @@ def make_text_readable_in_abc(abc):
     body = abc.body_of(abc.method_of('Base', 'init'))
     prepend(body, bytes([OPCODE_BY_NAME['getlocal0'], OPCODE_BY_NAME['callpropvoid']]) + u30(register) + u30(0))
     body['max_stack'] = max(body['max_stack'], 1)
+
+    # IsoInteractiveElement.highlight: the name card (InfoPopup) for every item, defense structures included.
+    body = abc.body_of(abc.method_of('IsoInteractiveElement', 'highlight'))
+    ops = disassemble(abc, body['code'])
+    spots = [ops[k + 1][0] for k in range(len(ops) - 2)
+             if ops[k][1] == 'getproperty' and str(ops[k][2]) == 'category_id'
+             and ops[k + 1][1] == 'pushbyte' and str(ops[k + 1][2]) == str(DEFENSE_CATEGORY) and ops[k + 2][1] == 'equals']
+    if len(spots) != 1:
+        raise AbcError('Expected one defense category check in IsoInteractiveElement.highlight')
+    code = bytearray(body['code'])
+    code[spots[0] + 1] = NO_CATEGORY  # pushbyte operand: no item has category -1
+    body['code'] = bytes(code)
 
     # ThumbUnit: hidden while none is left to choose.
     for name, shown in (('deactivate', False), ('activate', True)):

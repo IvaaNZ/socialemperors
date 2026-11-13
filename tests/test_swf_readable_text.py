@@ -57,6 +57,17 @@ class ReadableTextTests(unittest.TestCase):
         for method in (OUTLINE_METHOD, REGISTER_METHOD):
             self.assertEqual(len(self.abc.body_of(self.abc.method_of('Base', method))['exceptions']), 1)
 
+    def test_defense_structures_show_their_name_card_too(self):
+        def check(abc):
+            ops = disassemble(abc, abc.body_of(abc.method_of('IsoInteractiveElement', 'highlight'))['code'])
+            return [str(ops[k + 1][2]) for k in range(len(ops) - 1)
+                    if ops[k][1] == 'getproperty' and str(ops[k][2]) == 'category_id' and ops[k + 1][1] == 'pushbyte']
+        self.assertEqual(check(self.before), ['2'])  # the game left castles, walls and towers without a name card
+        self.assertEqual(check(self.abc), ['255'])   # -1: a category no item has
+        before = self.before.body_of(self.before.method_of('IsoInteractiveElement', 'highlight'))['code']
+        after = self.abc.body_of(self.abc.method_of('IsoInteractiveElement', 'highlight'))['code']
+        self.assertEqual((len(before), sum(a != b for a, b in zip(before, after))), (len(after), 1))  # one byte
+
     def test_a_spent_unit_hides_and_comes_back(self):
         self.assertEqual(self.ops('ThumbUnit', 'deactivate')[:3], [('getlocal0', ''), ('pushfalse', ''), ('setproperty', 'visible')])
         self.assertEqual(self.ops('ThumbUnit', 'activate')[:3], [('getlocal0', ''), ('pushtrue', ''), ('setproperty', 'visible')])

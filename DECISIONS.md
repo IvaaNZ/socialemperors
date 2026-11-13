@@ -284,3 +284,11 @@ Pedido del dueño: algunas palabras no se distinguían y aparecían puntos verde
 - **Ahora:** la página usa la forma de dibujo que elige Ruffle y, con las habilidades encendidas, calidad `high`. Sin habilidades, todo igual que antes (`16x16`). Se cambia con `SE_RUFFLE_RENDERER` (`webgpu`, `wgpu-webgl`, `webgl`, `canvas`; sin poner, la elige Ruffle) y `SE_RUFFLE_QUALITY` (`low`, `medium`, `high`, `best`, `8x8`, `16x16`...). Si el juego volviera a cerrarse en alguna computadora, `SE_RUFFLE_RENDERER=webgl` vuelve a la forma anterior.
 - Probado en el navegador con la copia de los datos: 4 duelos con habilidades sin caídas; el resaltado del molino se ve parejo, sin puntos; "CONSTRUIR", "Campamento enemigo", "Elegir área" y los carteles de las unidades con borde negro.
 
+## Nombre al pasar el puntero también en castillos, murallas y torres (`SE_READABLE_UI`)
+
+Pedido del dueño: algunas estructuras no mostraban su nombre al pasar el puntero, en su imperio, en los de otros y en las misiones.
+
+- **Causa:** el juego original arma la tarjeta con el nombre (`InfoPopup`, en `IsoInteractiveElement.highlight`) para todo, **salvo** las estructuras de defensa (categoría 2: castillos, murallas, torres), que solo mostraban la barra de vida.
+- **Arreglo** (`swf_readable_text.py`): esa comparación usa ahora una categoría que ningún ítem tiene (-1), así que todas las estructuras muestran su nombre. Es un solo byte (el operando de la comparación), dentro del try/catch propio del juego; es el único cambio a una instrucción original de este parche.
+- Probado en el navegador: "Torre V" y "Castillo III" muestran su nombre. Con la cámara muy cerca, la tarjeta de una estructura grande cerca del borde inferior puede quedar debajo de la barra de abajo del juego (el juego la ubica al pie de la estructura).
+
