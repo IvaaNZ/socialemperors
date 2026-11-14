@@ -1,0 +1,45 @@
+CORRECCIONES / FIXEOS PENDIENTES
+Órdenes que el juego envía y el servidor ignora: lo que hacen se pierde al recargar.
+Cada grupo se arregla, se prueba dentro del juego (copia de los datos) y se marca [HECHO].
+
+1. Almacén de unidades
+   Guardar tropas en el almacén de unidades, sacarlas y comprar más espacio.
+   (add_unit_warehouse, place_warehoused_item, buy_warehouse_capacity_new)
+
+2. Muelle y zepelín (edificios sociales)
+   Terminar el edificio con ayuda de amigos o pagando.
+   (finish_si, buy_si_help)
+
+3. Clima
+   Desbloquear y aplicar un clima a la aldea.
+   (unlock_skin, set_skin)
+
+4. Colecciones
+   Canjear una colección completa y cobrar el premio de las colecciones de tropas.
+   (finish_collection, unit_collection_completed, activate)
+
+5. Misiones del mapa y tesoros
+   Progreso de misiones con jefes, tesoros, ayudas de recolección y recursos de aliados.
+   (set_quest_var, collect_treasure, perform_city_quest, accept_collect_help, set_resource_allies)
+
+6. Exploración y ataques
+   Atacar y espiar en el mapa del mundo, resultados, packs de ataques y territorios.
+   (attack_player, end_attack, spy, clean_attacks, buy_attacks_pack, buy_spyings_pack,
+    pvp_buy_territory, modify/reset_position_universe, reset_island_change, apply_rewards_ranking)
+
+7. Supervivencia
+   Empezar y terminar una partida, comprar vidas y mapas.
+   (survival_start, survival_end, survival_buy_life, survival_buy_map)
+
+8. Máquina del tiempo
+   Comprar y usar viajes en el tiempo.
+   (time_machine_buy, time_machine_use, add_items_store)
+
+9. Torneos
+   Cobrar y devolver los recursos de inscripción.
+   (tournament_substract_resources, tournament_refund_resources)
+
+10. Varios
+   Bono de regreso, estatua de oro, asedio pesado, huevo de fénix, venta desde edificios,
+   razas/islas, packs de ofertas, templo de Bahamut, contrataciones de dragones,
+   ayudas entre vecinos, avisos ya vistos.
