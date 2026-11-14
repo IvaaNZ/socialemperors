@@ -49,5 +49,5 @@ YA ARREGLADO Y PROBADO EN EL JUEGO
 - Almacén: guardar, vender y volver a colocar en la misma sesión.
 - Mercado: compra y venta guardadas; "Intercambios restantes hoy" mostraba NaN (ahora 20 por período).
 - Hechizos y maná; mejorar edificios (ya funcionaba).
-- Resucitar héroes: daba error y el héroe se perdía.
+- Resucitar héroes: daba error y el héroe se perdía (arreglado; falta probarlo jugando).
 - Efecto p.miniFireball2 faltante (error 404): se usa otra bola de fuego.
