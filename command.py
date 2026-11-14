@@ -9,8 +9,8 @@ from monday_bonus import MondayBonusError, claim_monday_bonus
 from village_names import set_village_name
 from tutorial import record_tutorial_step
 from darts import DARTS_COMMANDS, DEFAULT_DART_COST, apply_darts_command, daily_darts_enabled
-from village_commands import (VILLAGE_COMMANDS, VillageCommandError, apply_village_command, grant_level_mana,
-                              village_commands_enabled)
+from village_commands import (VILLAGE_COMMANDS, VillageCommandError, apply_village_command, buy_unit_with_cash,
+                              grant_level_mana, village_commands_enabled)
 
 def get_strategy_type(id):
     if id == 8:
@@ -23,6 +23,10 @@ def get_strategy_type(id):
         return "Aggressive"
     return "Unknown Strategy"
 
+# Items the game put in the storage in the command batch being applied, by village (store_add_items).
+_STORED_IN_BATCH = {}
+
+
 def command(USERID, data):
     timestamp = data["ts"]
     first_number = data["first_number"]
@@ -31,10 +35,12 @@ def command(USERID, data):
     publishActions = data["publishActions"]
     commands = data["commands"]
     
+    _STORED_IN_BATCH[USERID] = []
     for i, comm in enumerate(commands):
         cmd = comm["cmd"]
         args = comm["args"]
         do_command(USERID, cmd, args)
+    _STORED_IN_BATCH.pop(USERID, None)
     save_session(USERID) # Save session
 
 TEAM_SLOTS = 20  # the game's team selection window
@@ -608,9 +614,22 @@ def do_command(USERID, cmd, args):
         collectible_id = args[1]
         # TODO
 
-    elif cmd in DARTS_COMMANDS and daily_darts_enabled():
+    elif cmd == Constant.CMD_BUY_UNIT_WITH_CASH and village_commands_enabled():
+        stored = _STORED_IN_BATCH.get(USERID, [])
+        already_stored = int(args[0]) in stored
+        if already_stored:
+            stored.remove(int(args[0]))
+        try:
+            print("Unit with cash:", buy_unit_with_cash(save, args, timestamp_now(), already_stored))
+        except (VillageCommandError, KeyError, ValueError, TypeError, IndexError) as error:
+            print("Unit with cash rejected:", error)
+
+    elif cmd in DARTS_COMMANDS and (daily_darts_enabled() or (cmd == Constant.CMD_STORE_ADD_ITEMS and village_commands_enabled())):
         dart_cost = int(get_game_config()['globals'].get('DART_COST_CASH', DEFAULT_DART_COST))
-        print("Darts:", apply_darts_command(save, cmd, args, timestamp_now(), dart_cost))
+        print("Darts:" if cmd != Constant.CMD_STORE_ADD_ITEMS else "Storage:", apply_darts_command(save, cmd, args, timestamp_now(), dart_cost))
+        if cmd == Constant.CMD_STORE_ADD_ITEMS:  # what went to the storage in this batch (see buy_unit_with_cash)
+            items = json.loads(args[0]) if isinstance(args[0], str) else args[0]
+            _STORED_IN_BATCH.setdefault(USERID, []).extend(int(item) for item in items)
 
     else:
         print(f"Unhandled command '{cmd}' -> args", args)

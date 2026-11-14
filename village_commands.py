@@ -164,3 +164,24 @@ def apply_village_command(save, cmd, args, config):
         town['increasedPopulation'] = int(town.get('increasedPopulation', 0)) + 1
         return f"population increase {town['increasedPopulation']}"
     raise VillageCommandError(f'not a village command: {cmd}')
+
+
+def buy_unit_with_cash(save, args, now, already_stored=False):
+    """A unit paid with cash: trained at once in a building (IsoBuilding.OnTrainingTimer) or bought in the heroes'
+    shop (PopupHeroes.onBuyItem). Arguments: [unit, x, y, frame, town].
+
+    It costs the unit's cost_unit_cash and gives its xp. The unit is placed at (x, y), unless the game has just
+    put it in the storage in this same batch (no altar: store_add_items comes first), where it already is.
+    """
+    from get_game_config import get_item_from_id
+    unit_id, x, y, town = int(args[0]), int(args[1]), int(args[2]), _town(save, args[4])
+    unit = get_item_from_id(unit_id)
+    if not unit:
+        raise VillageCommandError(f'unknown unit {unit_id}')
+    cost = int(unit.get('cost_unit_cash') or 0)
+    save['playerInfo']['cash'] = max(int(save['playerInfo'].get('cash', 0)) - cost, 0)
+    town['xp'] = int(town.get('xp', 0)) + int(unit.get('xp') or 0)
+    if already_stored:
+        return f"{unit.get('name')} for {cost} cash, in the storage"
+    town.setdefault('items', []).append([unit_id, x, y, 0, now, 0])
+    return f"{unit.get('name')} for {cost} cash at ({x},{y})"

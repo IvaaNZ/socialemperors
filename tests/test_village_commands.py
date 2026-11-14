@@ -133,6 +133,34 @@ class Dispatcher(unittest.TestCase):
         self.assertEqual(save['privateState']['mana'], GLOBALS['MANA_PER_PURCHASE'])
         self.assertEqual(save['privateState']['gifts'], [0, 0, 0, 2])
 
+    def test_a_unit_paid_with_cash_is_placed_charged_and_gives_xp(self):
+        import command
+        unit = next(entry for entry in CONFIG['items'] if int(entry.get('cost_unit_cash') or 0) > 0
+                    and entry.get('type') == 'u' and int(entry.get('xp') or 0) > 0)
+        save = village()
+        save['playerInfo']['cash'] = 1000
+        save['maps'][0]['xp'] = 0
+        with patch.object(command, 'session', return_value=save), patch.object(command, 'save_session'):
+            command.command('u', {'ts': 0, 'first_number': 0, 'accessToken': '', 'tries': 0, 'publishActions': 0,
+                                  'commands': [{'cmd': Constant.CMD_BUY_UNIT_WITH_CASH, 'args': [unit['id'], 30, 31, 0, 0]}]})
+        self.assertEqual(save['playerInfo']['cash'], 1000 - int(unit['cost_unit_cash']))
+        self.assertEqual(save['maps'][0]['xp'], int(unit['xp']))
+        self.assertEqual(save['maps'][0]['items'][0][:3], [int(unit['id']), 30, 31])
+
+    def test_a_hero_bought_without_an_altar_goes_to_the_storage_only(self):
+        import command
+        unit = next(entry for entry in CONFIG['items'] if int(entry.get('cost_unit_cash') or 0) > 0 and entry.get('type') == 'u')
+        save = village()
+        save['playerInfo']['cash'] = 1000
+        with patch.object(command, 'session', return_value=save), patch.object(command, 'save_session'):
+            command.command('u', {'ts': 0, 'first_number': 0, 'accessToken': '', 'tries': 0, 'publishActions': 0,
+                                  'commands': [{'cmd': Constant.CMD_STORE_ADD_ITEMS, 'args': [f"[{unit['id']}]"]},
+                                               {'cmd': Constant.CMD_BUY_UNIT_WITH_CASH, 'args': [unit['id'], 400, 300, 0, 0]}]})
+        self.assertEqual(save['maps'][0]['items'], [])
+        self.assertEqual(save['privateState']['gifts'][int(unit['id'])], 1)
+        self.assertEqual(save['playerInfo']['cash'], 1000 - int(unit['cost_unit_cash']))
+        self.assertEqual(command._STORED_IN_BATCH, {})
+
     def test_level_up_gives_mana_once(self):
         start = GLOBALS['START_LEVEL_MANA_REWARD']
         save = village(level=start)
