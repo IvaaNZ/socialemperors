@@ -9,9 +9,9 @@ from monday_bonus import MondayBonusError, claim_monday_bonus
 from village_names import set_village_name
 from tutorial import record_tutorial_step
 from darts import DARTS_COMMANDS, DEFAULT_DART_COST, apply_darts_command, daily_darts_enabled
-from village_commands import (SOCIAL_COMMANDS, VILLAGE_COMMANDS, WAREHOUSE_COMMANDS, VillageCommandError,
-                              apply_social_command, apply_village_command, apply_warehouse_command, buy_unit_with_cash,
-                              grant_level_mana, start_social_building, village_commands_enabled)
+from village_commands import (COLLECTION_COMMANDS, SOCIAL_COMMANDS, VILLAGE_COMMANDS, WAREHOUSE_COMMANDS, VillageCommandError,
+                              apply_collection_command, apply_social_command, apply_village_command, apply_warehouse_command, buy_unit_with_cash,
+                              grant_level_mana, record_obtained_unit, start_social_building, village_commands_enabled)
 
 def get_strategy_type(id):
     if id == 8:
@@ -90,6 +90,8 @@ def do_command(USERID, cmd, args):
             apply_cost(save["playerInfo"], map, id, price_multiplier)
             xp = int(get_attribute_from_item_id(id, "xp"))
             map["xp"] = map["xp"] + xp
+            if village_commands_enabled():
+                record_obtained_unit(save, id)
         map["items"] += [[id, x, y, orientation, collected_at_timestamp, level]]
         # A social building the player buys waits for its workers (the game's own gifts open at once).
         if village_commands_enabled() and not bool_dont_modify_resources and start_social_building(map["items"][-1], get_game_config()):
@@ -328,6 +330,8 @@ def do_command(USERID, cmd, args):
             gifts[item_id] -= 1
             # The game gives the item's xp when it is placed (Base.sendPlaceItemCmd); the level-up statue,
             # which fills the level instead, is left to rt_publish_score.
+            if village_commands_enabled():
+                record_obtained_unit(save, item_id)
             if village_commands_enabled() and item_id != Constant.ID_BUILDING_LEVELUP_STATUE:
                 xp = int(get_attribute_from_item_id(item_id, "xp") or 0)
                 save["maps"][town_id]["xp"] = save["maps"][town_id].get("xp", 0) + xp
@@ -630,10 +634,14 @@ def do_command(USERID, cmd, args):
         except MondayBonusError as error:
             print("Monday bonus rejected:", error)
 
+    elif cmd in COLLECTION_COMMANDS and village_commands_enabled():
+        try:
+            print("Collections:", apply_collection_command(save, cmd, args, get_game_config()))
+        except (VillageCommandError, KeyError, ValueError, TypeError, IndexError) as error:
+            print("Collection command rejected:", error)
+
     elif cmd == Constant.CMD_ADD_COLLECTABLE:
-        collection_id = args[0]
-        collectible_id = args[1]
-        # TODO
+        pass  # SE_VILLAGE_COMMANDS=off: as before, the piece is not kept
 
     elif cmd == Constant.CMD_BUY_UNIT_WITH_CASH and village_commands_enabled():
         stored = _STORED_IN_BATCH.get(USERID, [])
@@ -642,6 +650,7 @@ def do_command(USERID, cmd, args):
             stored.remove(int(args[0]))
         try:
             print("Unit with cash:", buy_unit_with_cash(save, args, timestamp_now(), already_stored))
+            record_obtained_unit(save, args[0])
         except (VillageCommandError, KeyError, ValueError, TypeError, IndexError) as error:
             print("Unit with cash rejected:", error)
 

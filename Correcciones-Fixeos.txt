@@ -14,8 +14,8 @@ Cada grupo se arregla, se prueba dentro del juego (copia de los datos) y se marc
    Desbloquear y aplicar un clima a la aldea; antes no se veía nunca y el cobro volvía al recargar.
    (unlock_skin, set_skin)
 
-4. Colecciones
-   Canjear una colección completa y cobrar el premio de las colecciones de tropas.
+4. Colecciones [HECHO, probado en el juego]
+   Canjear una colección completa y cobrar el premio de las colecciones de tropas; las piezas no se guardaban.
    (finish_collection, unit_collection_completed, activate)
 
 5. Misiones del mapa y tesoros
@@ -54,7 +54,8 @@ YA ARREGLADO Y PROBADO EN EL JUEGO
 - Almacén de unidades: guardar y sacar tropas, comprar lugares, guardar el edificio; textos en español.
 - Regalos puestos en el imperio volvían al recargar: el juego enviaba cada ~30 s, ahora cada 3 s; colocar un regalo suma su experiencia.
 - Clima: desbloquear (20 de dinero) y aplicar; "Desbloquear" ya no lo tapa el precio.
+- Colecciones: piezas guardadas, canjear y comprar colecciones, premio de colecciones de tropas.
 
 VISTO Y SIN TOCAR
-- Botón "OPEN" del almacén de unidades en inglés (es un dibujo).
+- Botón "OPEN" del almacén de unidades y "COMPLETED!" de colecciones en inglés (son dibujos).
 - Campamento enemigo vuelve a 101 enemigos al recargar.

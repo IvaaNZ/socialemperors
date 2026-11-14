@@ -314,3 +314,79 @@ class Weather(unittest.TestCase):
         save['privateState']['unlockedSkins'] = [True]
         apply_village_command(save, Constant.CMD_UNLOCK_SKIN, ['1'], CONFIG)
         self.assertEqual(save['privateState']['unlockedSkins'], {'1': 'true'})
+
+
+class Collections(unittest.TestCase):
+    def run_command(self, save, cmd, args):
+        import command
+        with patch.object(command, 'session', return_value=save):
+            command.do_command('u', cmd, args)
+
+    def test_pieces_are_kept_and_a_full_collection_is_traded_for_its_reward(self):
+        save = village()
+        for piece in (1, 2, 3, 4, 5, 5):
+            self.run_command(save, Constant.CMD_ADD_COLLECTABLE, [3, piece])
+        self.assertEqual(save['privateState']['collections'][3], [0, 1, 1, 1, 1, 2])
+        self.run_command(save, Constant.CMD_FINISH_COLLECTION, [3])
+        self.assertEqual(save['privateState']['collections'][3], [1, 0, 0, 0, 0, 1])
+        reward = GLOBALS['COLLECTION_REWARDS'][3]
+        self.assertEqual(save['privateState']['gifts'][reward], 1)
+        self.assertEqual(save['privateState']['collectionsCompleted'], [3])
+        self.run_command(save, Constant.CMD_FINISH_COLLECTION, [3])  # pieces missing now: nothing
+        self.assertEqual(save['privateState']['gifts'][reward], 1)
+
+    def test_buying_costs_one_less_per_owned_piece_and_only_once(self):
+        from village_commands import PRIZE_COLLECTIONS_CASH
+        save = village()
+        self.run_command(save, Constant.CMD_ADD_COLLECTABLE, [2, 1])
+        self.run_command(save, Constant.CMD_ADD_COLLECTABLE, [2, 4])
+        self.run_command(save, Constant.CMD_FINISH_COLLECTION, [2, 1, 3])
+        self.assertEqual(save['playerInfo']['cash'], 100 - (PRIZE_COLLECTIONS_CASH[2] - 2))
+        self.assertEqual(save['privateState']['collections'][2], [1, 0, 0, 0, 0, 0])
+        self.run_command(save, Constant.CMD_FINISH_COLLECTION, [2, 1, 3])  # already traded in
+        self.assertEqual(save['playerInfo']['cash'], 100 - (PRIZE_COLLECTIONS_CASH[2] - 2))
+
+    def test_fixed_price_minimum_one_and_unknown_collections(self):
+        from village_commands import collection_price
+        self.assertEqual(collection_price([0, 1, 1, 1, 1, 1], 10), 15)
+        self.assertEqual(collection_price([0, 1, 1, 1, 1, 1], 1), 1)
+        save = village()
+        self.run_command(save, Constant.CMD_ADD_COLLECTABLE, [99, 1])
+        self.run_command(save, Constant.CMD_ADD_COLLECTABLE, [1, 6])
+        self.assertNotIn('collections', {k: v for k, v in save['privateState'].items() if v})
+
+    def test_a_unit_collection_rewards_once(self):
+        save = village()
+        self.run_command(save, Constant.CMD_UNIT_COLLECTION_COMPLETED, [1])
+        self.run_command(save, Constant.CMD_UNIT_COLLECTION_COMPLETED, [1])
+        self.assertEqual(save['privateState']['unitCollectionsCompleted'], [1])
+        self.assertEqual(save['playerInfo']['cash'], 101)
+        self.assertEqual(save['privateState']['gifts'], [0, 0, 0, 2])  # the cash is the whole reward
+
+    def test_activate_keeps_the_chosen_production(self):
+        save = village()
+        save['maps'][0]['items'] = [[3, 10, 12, 0, 0, 0]]
+        self.run_command(save, Constant.CMD_ACTIVATE, [10, 12, 0, 3, 2])
+        self.assertEqual(save['maps'][0]['items'][0][7], {'cp': 2})
+        self.run_command(save, Constant.CMD_ACTIVATE, [10, 12, 0, 3, 0])
+        self.assertEqual(save['maps'][0]['items'][0][7], {'cp': 0})
+
+
+class ObtainedUnits(unittest.TestCase):
+    COW = 504
+
+    def run_command(self, save, cmd, args):
+        import command
+        with patch.object(command, 'session', return_value=save):
+            command.do_command('u', cmd, args)
+
+    def test_units_the_player_gets_are_remembered_but_not_the_enemy_camp(self):
+        save = village()
+        save['privateState']['boughtUnits'] = []
+        self.run_command(save, Constant.CMD_BUY, [529, 86, 86, 0, 0, 1, 1, 'u'])  # the camp's free troll
+        self.assertEqual(save['privateState']['boughtUnits'], [])
+        self.run_command(save, Constant.CMD_BUY, [self.COW, 10, 10, 0, 0, 0, 1, 'u'])
+        self.assertEqual(save['privateState']['boughtUnits'], [self.COW])
+        save['privateState']['gifts'] = [0] * 557 + [1]
+        self.run_command(save, Constant.CMD_PLACE_GIFT, [557, 11, 11, 0, 0])
+        self.assertEqual(save['privateState']['boughtUnits'], [self.COW, 557])

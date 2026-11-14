@@ -380,3 +380,126 @@ def apply_warehouse_command(save, cmd, args, config, now=0):
         units.clear()
         return f'{total} warehoused units to the storage'
     raise VillageCommandError(f'not a unit warehouse command: {cmd}')
+
+
+# Collections (CollectableManager). privateState.collections[collection] is [traded in (1), count of piece 1..5];
+# Base.processAttacks reads it back. Rewards: globals.COLLECTION_REWARDS[collection]. The cash price is the game's
+# own Config.PRIZE_COLLECTIONS_CASH, one less per piece already owned (at least 1), except collections 10 and 20,
+# whose price is fixed (CollectableManager.getRealPrice).
+PRIZE_COLLECTIONS_CASH = (0,) + (5,) * 9 + (15,) + (5,) * 9 + (20, 400, 400, 999)
+FIXED_PRICE_COLLECTIONS = (10, 20)
+PIECES_PER_COLLECTION = 5
+COLLECTION_COMMANDS = (Constant.CMD_ADD_COLLECTABLE, Constant.CMD_FINISH_COLLECTION,
+                       Constant.CMD_UNIT_COLLECTION_COMPLETED, Constant.CMD_ACTIVATE)
+UNIT_COLLECTION_CASH = 1  # PopupAllUnits.getCollectionReward: +1 cash
+
+
+def _collection(state, globals_, collection):
+    collection = int(collection)
+    if not 1 <= collection < len(globals_.get('COLLECTION_REWARDS', [])):
+        raise VillageCommandError(f'unknown collection {collection}')
+    collections = state.get('collections')
+    if not isinstance(collections, list):
+        collections = state['collections'] = []
+    while len(collections) <= collection:
+        collections.append([])
+    entry = collections[collection]
+    if not isinstance(entry, list):
+        entry = collections[collection] = []
+    if not entry:
+        entry.append(0)
+    while len(entry) <= PIECES_PER_COLLECTION:
+        entry.append(0)
+    return collection, entry
+
+
+def collection_price(entry, collection):
+    price = PRIZE_COLLECTIONS_CASH[collection]
+    if collection in FIXED_PRICE_COLLECTIONS:
+        return price
+    owned = sum(1 for count in entry[1:PIECES_PER_COLLECTION + 1] if int(count) >= 1)
+    return max(price - owned, 1)
+
+
+def _complete_collection(save, globals_, collection, entry):
+    for piece in range(1, PIECES_PER_COLLECTION + 1):
+        if int(entry[piece]) > 0:
+            entry[piece] = int(entry[piece]) - 1
+    entry[0] = 1
+    reward = int(globals_['COLLECTION_REWARDS'][collection])
+    _add_gift(save, reward)
+    completed = save['privateState'].setdefault('collectionsCompleted', [])
+    if not isinstance(completed, list):
+        completed = save['privateState']['collectionsCompleted'] = []
+    completed.append(collection)
+    return reward
+
+
+def apply_collection_command(save, cmd, args, config):
+    """Apply one collection command. Returns a short description for the log."""
+    globals_ = config.get('globals', {})
+    state = save['privateState']
+    if cmd == Constant.CMD_ADD_COLLECTABLE:
+        piece = int(args[1])
+        if not 1 <= piece <= PIECES_PER_COLLECTION:
+            raise VillageCommandError(f'unknown piece {piece} of collection {args[0]}')
+        collection, entry = _collection(state, globals_, args[0])
+        entry[piece] = int(entry[piece]) + 1
+        return f'piece {piece} of collection {collection} ({entry[piece]} of it)'
+    if cmd == Constant.CMD_FINISH_COLLECTION:
+        collection, entry = _collection(state, globals_, args[0])
+        if len(args) > 1 and int(args[1]) == 1:  # bought with cash (popupCollections.onBuy)
+            if int(entry[0]) == 1:
+                raise VillageCommandError(f'collection {collection} was already traded in')
+            price = collection_price(entry, collection)
+            save['playerInfo']['cash'] = max(int(save['playerInfo'].get('cash', 0)) - price, 0)
+            reward = _complete_collection(save, globals_, collection, entry)
+            return f'collection {collection} bought for {price} cash: item {reward} to the storage'
+        if any(int(count) < 1 for count in entry[1:PIECES_PER_COLLECTION + 1]):
+            raise VillageCommandError(f'collection {collection} is not complete')
+        reward = _complete_collection(save, globals_, collection, entry)
+        return f'collection {collection} traded in: item {reward} to the storage'
+    if cmd == Constant.CMD_UNIT_COLLECTION_COMPLETED:
+        category = int(args[0])
+        entry = config.get('units_collections_categories', {}).get(str(category))
+        if entry is None:
+            raise VillageCommandError(f'unknown unit collection {category}')
+        completed = state.get('unitCollectionsCompleted')
+        if not isinstance(completed, list):
+            completed = state['unitCollectionsCompleted'] = []
+        if category in [int(done) for done in completed]:
+            raise VillageCommandError(f'unit collection {category} was already rewarded')
+        completed.append(category)
+        # The reward is the cash alone: the popup shows only it ("rewards" is the collection's last unit).
+        save['playerInfo']['cash'] = int(save['playerInfo'].get('cash', 0)) + UNIT_COLLECTION_CASH
+        return f'unit collection {category}: {UNIT_COLLECTION_CASH} cash'
+    if cmd == Constant.CMD_ACTIVATE:
+        town = _town(save, args[2])
+        item = _placed_item(town, args[0], args[1], args[3])
+        while len(item) < 8:
+            item.append([] if len(item) == 6 else {})
+        if not isinstance(item[7], dict):
+            item[7] = {}
+        item[7]['cp'] = int(args[4])
+        return f"building {args[3]} at ({args[0]},{args[1]}) set to {item[7]['cp']}"
+    raise VillageCommandError(f'not a collection command: {cmd}')
+
+
+def record_obtained_unit(save, item_id):
+    """privateState.boughtUnits: the ids of every unit the player has had, a list (UnitCollectionsManager walks it
+    by position; a dictionary there leaves the game stuck on "Loading"). The game only counts the units on the map at
+    load, so a unit that died or was sold dropped out of its collection. Enemy camp units are added with free buys
+    and are not recorded."""
+    from get_game_config import get_item_from_id
+    item = get_item_from_id(int(item_id))
+    if not item or item.get('type') != 'u':
+        return False
+    state = save['privateState']
+    obtained = state.get('boughtUnits')
+    if isinstance(obtained, dict):  # written by an earlier version of this function
+        obtained = state['boughtUnits'] = [int(unit) for unit in obtained]
+    elif not isinstance(obtained, list):
+        obtained = state['boughtUnits'] = []
+    if int(item_id) not in obtained:
+        obtained.append(int(item_id))
+    return True
