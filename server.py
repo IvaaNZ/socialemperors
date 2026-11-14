@@ -48,7 +48,7 @@ from quests import get_quest_map
 from localization import LANGUAGE_FLAGS, LANGUAGE_NAMES, PLAYER_LANGUAGES
 from portal_i18n import set_portal_language, portal_language, translate as _, translations_for
 from swf_localization import localize_swf
-from village_commands import grant_missed_level_mana, village_commands_enabled
+from village_commands import fill_map_defaults, grant_missed_level_mana, village_commands_enabled
 from sessions import save_session as save_village
 from village_names import rename_village, normalize_legacy_village_name, name_default_player, validate_player_name, VillageNameError, MAX_VILLAGE_NAME_LENGTH
 from pvp import RaidService, RaidError
@@ -266,7 +266,7 @@ def ensure_village(account):
             village = village_session(account['village_id'])
             counted = 'manaRewardLevel' in village['privateState']
             grant_missed_level_mana(village, get_game_config()['globals'])
-            if not counted:
+            if fill_map_defaults(village) or not counted:  # also the map fields the market reads
                 save_village(account['village_id'])
         return account
 
@@ -820,6 +820,11 @@ def similar_05122012_magicParticles():
 @app.route("/default01.static.socialpointgames.com/static/socialempires/swf/05122012_dynamic.swf")
 def similar_05122012_dynamic():
     return send_from_directory(ASSETS_DIR + "/swf", "120608_dynamic.swf")
+
+@app.route("/default01.static.socialpointgames.com/static/socialempires/fx/p.miniFireball2.swf")
+def similar_mini_fireball():
+    # The game's P_MINI_FIREBALL projectile; the file is not among the bundled assets (it answered 404).
+    return send_from_directory(ASSETS_DIR + "/fx", "p.fireBall_02.swf")
 
 @app.route("/default01.static.socialpointgames.com/static/socialempires/<path:path>")
 def static_assets_loader(path):

@@ -39,6 +39,8 @@ from constants import Constant
 TRADE_RESOURCES = {'w': 'wood', 's': 'stone', 'f': 'food'}
 CASH, GOLD = 1, 0
 UNLOCK_MULTIPLIER = 1 / 3  # the game's Config.MULTIPLIER_UNLOCK
+MARKET_MAX_NUM_TRADES = 20  # the game's Config.MARKET_MAX_NUM_TRADES
+MAP_DEFAULTS = {'numTradesDone': 0, 'timestampLastTrade': 0}  # read by the game; missing, the market shows NaN
 
 VILLAGE_COMMANDS = (Constant.CMD_USE_MAGIC, Constant.CMD_BUY_MAGIC, Constant.CMD_BUY_MANA, Constant.CMD_TRADE_RESOURCE,
                     Constant.CMD_UNLOCK_BUILDING, Constant.CMD_INCREASE_POPULATION, Constant.CMD_PLACE_STORED_ITEM,
@@ -105,7 +107,18 @@ def market_price(globals_, resource, amount, traded, sell):
     return round(cost * float(globals_['MARKET_SELL_PERCENTAGE'])) if sell else cost
 
 
-def apply_village_command(save, cmd, args, config):
+def fill_map_defaults(save):
+    """Map fields the game reads but older saves lack (the market's trades left showed \"NaN\"). Returns True if any was added."""
+    added = False
+    for town in save.get('maps', []):
+        for key, value in MAP_DEFAULTS.items():
+            if key not in town:
+                town[key] = value
+                added = True
+    return added
+
+
+def apply_village_command(save, cmd, args, config, now=0):
     """Apply one village command to the save. Returns a short description for the log."""
     globals_ = config.get('globals', {})
     state = save['privateState']
@@ -131,6 +144,15 @@ def apply_village_command(save, cmd, args, config):
         resource, sell, amount = str(args[1]), int(args[2]) == 1, int(args[3])
         if resource not in TRADE_RESOURCES or amount <= 0:
             raise VillageCommandError(f'cannot trade {amount} {resource}')
+        # Trades per market period (Base.processAttacks: numTradesDone starts over MARKET_PERIOD_HOURS after
+        # timestampLastTrade, which only the server sets; at most MARKET_MAX_NUM_TRADES, Config: 20).
+        now = int(now or 0)
+        if now - int(town.get('timestampLastTrade') or 0) > int(globals_.get('MARKET_PERIOD_HOURS', 20)) * 3600:
+            town['numTradesDone'] = 0
+            town['timestampLastTrade'] = now
+        if int(town.get('numTradesDone') or 0) >= MARKET_MAX_NUM_TRADES:
+            raise VillageCommandError('no trades left in this market period')
+        town['numTradesDone'] = int(town.get('numTradesDone') or 0) + 1
         traded = town.setdefault('resourcesTraded', {})
         if isinstance(traded, list):  # an empty JSON object can come back as []
             traded = town['resourcesTraded'] = {}
@@ -164,6 +186,60 @@ def apply_village_command(save, cmd, args, config):
         town['increasedPopulation'] = int(town.get('increasedPopulation', 0)) + 1
         return f"population increase {town['increasedPopulation']}"
     raise VillageCommandError(f'not a village command: {cmd}')
+
+
+SOCIAL_COMMANDS = (Constant.CMD_BUY_SI_HELP, Constant.CMD_FINISH_SI)
+
+
+def social_item(config, item_id):
+    """The config's social_items entry (workers to hire) of a building, or None."""
+    for entry in config.get('social_items', []):
+        if int(entry['id']) == int(item_id):
+            return entry
+    return None
+
+
+def start_social_building(item, config):
+    """A social building just bought (market, harbor, zeppelin tower...) still needs its workers: the game keeps
+    them in the item's attributes as "si" (one entry per hired worker) and opens it when finish_si comes
+    (Base.IsBeingBuilt: a social building with attrs.si is still being built)."""
+    entry = social_item(config, item[0])
+    if entry is None or int(entry.get('worker_cost') or 0) <= 0:
+        return False  # no workers to pay for (or friends only): open at once, as before
+    while len(item) < 8:
+        item.append([] if len(item) == 6 else {})
+    if not isinstance(item[7], dict):
+        item[7] = {}
+    item[7]['si'] = []
+    return True
+
+
+def _placed_item(town, x, y, item_id):
+    for item in town.get('items', []):
+        if int(item[0]) == int(item_id) and int(item[1]) == int(x) and int(item[2]) == int(y):
+            return item
+    raise VillageCommandError(f'no item {item_id} at ({x},{y})')
+
+
+def apply_social_command(save, cmd, args, config):
+    """buy_si_help [x, y, town, building(, free)] hires one worker: worker_cost cash, unless the game gives it
+    (free = 1, Base.countAllBuildings). finish_si [x, y, town, building] opens the building."""
+    town = _town(save, args[2])
+    item = _placed_item(town, args[0], args[1], args[3])
+    attrs = item[7] if len(item) > 7 and isinstance(item[7], dict) else None
+    if cmd == Constant.CMD_BUY_SI_HELP:
+        entry = social_item(config, args[3])
+        free = len(args) > 4 and int(args[4]) == 1
+        cost = 0 if free or entry is None else int(entry.get('worker_cost') or 0)
+        save['playerInfo']['cash'] = max(int(save['playerInfo'].get('cash', 0)) - cost, 0)
+        if attrs is not None and isinstance(attrs.get('si'), list):
+            attrs['si'].append(0)
+        return f"worker hired for {cost} cash" + (' (given by the game)' if free else '')
+    if cmd == Constant.CMD_FINISH_SI:
+        if attrs is not None:
+            attrs.pop('si', None)
+        return 'social building opened'
+    raise VillageCommandError(f'not a social building command: {cmd}')
 
 
 def buy_unit_with_cash(save, args, now, already_stored=False):

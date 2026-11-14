@@ -6,8 +6,8 @@ Cada grupo se arregla, se prueba dentro del juego (copia de los datos) y se marc
    Guardar tropas en el almacén de unidades, sacarlas y comprar más espacio.
    (add_unit_warehouse, place_warehoused_item, buy_warehouse_capacity_new)
 
-2. Muelle y zepelín (edificios sociales)
-   Terminar el edificio con ayuda de amigos o pagando.
+2. Edificios sociales (mercado, muelle, zepelín...) [HECHO, probado en el juego]
+   Contratar ayudantes pagando y abrir el edificio; antes se abrían gratis al recargar.
    (finish_si, buy_si_help)
 
 3. Clima
@@ -43,3 +43,11 @@ Cada grupo se arregla, se prueba dentro del juego (copia de los datos) y se marc
    Bono de regreso, estatua de oro, asedio pesado, huevo de fénix, venta desde edificios,
    razas/islas, packs de ofertas, templo de Bahamut, contrataciones de dragones,
    ayudas entre vecinos, avisos ya vistos.
+
+YA ARREGLADO Y PROBADO EN EL JUEGO
+- Tropas pagadas con dinero (buy_cash): quedan en la aldea y se cobran.
+- Almacén: guardar, vender y volver a colocar en la misma sesión.
+- Mercado: compra y venta guardadas; "Intercambios restantes hoy" mostraba NaN (ahora 20 por período).
+- Hechizos y maná; mejorar edificios (ya funcionaba).
+- Resucitar héroes: daba error y el héroe se perdía.
+- Efecto p.miniFireball2 faltante (error 404): se usa otra bola de fuego.

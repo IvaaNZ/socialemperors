@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 from constants import Constant
 from get_game_config import get_game_config
-from village_commands import (VillageCommandError, apply_village_command, grant_level_mana, grant_missed_level_mana,
+from village_commands import (VillageCommandError, apply_social_command, apply_village_command, grant_level_mana, grant_missed_level_mana,
                               market_price)
 
 CONFIG = get_game_config()
@@ -13,7 +13,7 @@ GLOBALS = CONFIG['globals']
 
 def village(level=40):
     return {'playerInfo': {'cash': 100},
-            'maps': [{'coins': 50000, 'wood': 1000, 'stone': 1000, 'food': 1000, 'level': level, 'resourcesTraded': {},
+            'maps': [{'coins': 50000, 'wood': 1000, 'stone': 1000, 'food': 1000, 'level': level, 'xp': 0, 'resourcesTraded': {},
                       'increasedPopulation': 0, 'items': []}],
             'privateState': {'mana': 0, 'magics': {}, 'unlockedEarlyBuildings': {}, 'gifts': [0, 0, 0, 2]}}
 
@@ -83,6 +83,22 @@ class Market(unittest.TestCase):
         self.assertEqual((town['wood'], town['coins'], town['resourcesTraded']), (1000, 50000 - first + sale, {'w': 0}))
         with self.assertRaises(VillageCommandError):
             apply_village_command(save, Constant.CMD_TRADE_RESOURCE, [0, 'x', 0, 10], CONFIG)
+
+    def test_twenty_trades_per_market_period_and_the_fields_the_game_reads(self):
+        from village_commands import MARKET_MAX_NUM_TRADES, fill_map_defaults
+        save = village()
+        self.assertTrue(fill_map_defaults(save))
+        self.assertEqual((save['maps'][0]['numTradesDone'], save['maps'][0]['timestampLastTrade']), (0, 0))
+        self.assertFalse(fill_map_defaults(save))
+        start = 10 ** 9
+        for _ in range(MARKET_MAX_NUM_TRADES):
+            apply_village_command(save, Constant.CMD_TRADE_RESOURCE, [0, 'f', 1, 10], CONFIG, start)
+        self.assertEqual(save['maps'][0]['timestampLastTrade'], start)
+        with self.assertRaises(VillageCommandError):
+            apply_village_command(save, Constant.CMD_TRADE_RESOURCE, [0, 'f', 1, 10], CONFIG, start + 60)
+        later = start + GLOBALS['MARKET_PERIOD_HOURS'] * 3600 + 1
+        apply_village_command(save, Constant.CMD_TRADE_RESOURCE, [0, 'f', 1, 10], CONFIG, later)
+        self.assertEqual((save['maps'][0]['numTradesDone'], save['maps'][0]['timestampLastTrade']), (1, later))
 
     def test_the_price_step_stays_within_the_games_limits(self):
         save = village()
@@ -160,6 +176,35 @@ class Dispatcher(unittest.TestCase):
         self.assertEqual(save['privateState']['gifts'][int(unit['id'])], 1)
         self.assertEqual(save['playerInfo']['cash'], 1000 - int(unit['cost_unit_cash']))
         self.assertEqual(command._STORED_IN_BATCH, {})
+
+    def test_a_social_building_waits_for_its_paid_workers_and_then_opens(self):
+        save = village()
+        self.run_command(save, Constant.CMD_BUY, [23, 58, 50, 0, 0, 0, 1, 'b'])  # Market: 3 workers, 2 cash each
+        market = save['maps'][0]['items'][-1]
+        self.assertEqual(market[:3], [23, 58, 50])
+        self.assertEqual(market[7], {'si': []})
+        for _ in range(3):
+            self.run_command(save, Constant.CMD_BUY_SI_HELP, [58, 50, 0, 23])
+        self.run_command(save, Constant.CMD_BUY_SI_HELP, [58, 50, 0, 23, 1])  # given by the game: free
+        self.assertEqual(save['playerInfo']['cash'], 100 - 3 * 2)
+        self.assertEqual(market[7], {'si': [0, 0, 0, 0]})
+        self.run_command(save, Constant.CMD_FINISH_SI, [58, 50, 0, 23])
+        self.assertEqual(market[7], {})
+
+    def test_buildings_the_game_gives_and_ordinary_ones_open_at_once(self):
+        save = village()
+        self.run_command(save, Constant.CMD_BUY, [224, 40, 40, 0, 0, 1, 1, 'b'])  # a harbor the game places for free
+        self.run_command(save, Constant.CMD_BUY, [38, 44, 44, 0, 0, 0, 1, 'b'])  # Barracks I: not social
+        self.assertEqual([len(item) for item in save['maps'][0]['items']], [6, 6])
+        with self.assertRaises(VillageCommandError):
+            apply_social_command(save, Constant.CMD_FINISH_SI, [1, 1, 0, 23], CONFIG)
+
+    def test_a_resurrected_hero_is_placed(self):
+        save = village()
+        save['privateState']['potion'] = 2
+        self.run_command(save, Constant.CMD_RESURRECT_HERO, [600, 12, 13, 0, '1'])
+        self.assertEqual(save['maps'][0]['items'][-1][:3], [600, 12, 13])
+        self.assertEqual(save['privateState']['potion'], 1)
 
     def test_level_up_gives_mana_once(self):
         start = GLOBALS['START_LEVEL_MANA_REWARD']
