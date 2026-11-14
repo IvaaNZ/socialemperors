@@ -12,6 +12,11 @@ import command
 from constants import Constant
 
 
+
+def without_collect_time(items):
+    """The items without the time they were last collected (collecting now saves it)."""
+    return [item[:4] + item[5:] for item in items]
+
 class TutorialCommandTests(unittest.TestCase):
     def setUp(self):
         self.save = json.loads(Path('villages/initial.json').read_text(encoding='utf-8'))
@@ -83,7 +88,7 @@ class TutorialCommandTests(unittest.TestCase):
         self.assertEqual(self.save['maps'][0]['wood'], before['maps'][0]['wood'] + 20)
         self.assertEqual(self.save['maps'][0]['xp'], before['maps'][0]['xp'] + 1)
         self.assertEqual(self.save['playerInfo']['cash'], before['playerInfo']['cash'] - 10)
-        self.assertEqual(self.save['maps'][0]['items'], before['maps'][0]['items'])
+        self.assertEqual(without_collect_time(self.save['maps'][0]['items']), without_collect_time(before['maps'][0]['items']))
 
     def test_regular_mill_can_be_collected_again_without_being_removed(self):
         self.save['maps'][0]['items'].append([5, 60, 60, 0, 0, 0, [], {}])
@@ -93,7 +98,7 @@ class TutorialCommandTests(unittest.TestCase):
         self.run_command(Constant.CMD_COLLECT, [60, 60, 0, 5, 0, 1, 0])
         self.assertEqual(self.save['maps'][0]['food'], before['maps'][0]['food'] + 500)
         self.assertEqual(self.save['maps'][0]['xp'], before['maps'][0]['xp'] + 18)
-        self.assertEqual(self.save['maps'][0]['items'], before['maps'][0]['items'])
+        self.assertEqual(without_collect_time(self.save['maps'][0]['items']), without_collect_time(before['maps'][0]['items']))
         self.assertEqual(self.save['playerInfo']['cash'], before['playerInfo']['cash'])
 
     def test_unoccupied_natural_deposits_do_not_reward_scenery_cleanup(self):

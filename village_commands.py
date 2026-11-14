@@ -62,8 +62,11 @@ UNLOCK_MULTIPLIER = 1 / 3  # the game's Config.MULTIPLIER_UNLOCK
 MARKET_MAX_NUM_TRADES = 20  # the game's Config.MARKET_MAX_NUM_TRADES
 WAREHOUSE_START_CAPACITY = 20  # map.warehouseAditionalCapacitySingle of the original villages (villages/quests)
 # Read by the game; missing, the market shows NaN and the unit warehouse has no room (capacity NaN).
+# Missing, the allies' market reads "undefined": it shows cash as its product instead of asking for a resource
+# (RecuadroInfo.openAlliesMarket asks only when it is "n").
 MAP_DEFAULTS = {'numTradesDone': 0, 'timestampLastTrade': 0,
-                'warehouseAditionalCapacitySingle': WAREHOUSE_START_CAPACITY, 'warehousedUnits': {}}
+                'warehouseAditionalCapacitySingle': WAREHOUSE_START_CAPACITY, 'warehousedUnits': {},
+                'resourceAlliesMarket': 'n'}
 
 # Weathers (PopupWeather.themeIds); 0 is always available. The popup shows a weather as unlocked when
 # unlockedSkins[id] == "true", a string comparison: a JSON true would show it locked again.
@@ -436,7 +439,7 @@ def _complete_collection(save, globals_, collection, entry):
     return reward
 
 
-def apply_collection_command(save, cmd, args, config):
+def apply_collection_command(save, cmd, args, config, now=0):
     """Apply one collection command. Returns a short description for the log."""
     globals_ = config.get('globals', {})
     state = save['privateState']
@@ -482,6 +485,8 @@ def apply_collection_command(save, cmd, args, config):
         if not isinstance(item[7], dict):
             item[7] = {}
         item[7]['cp'] = int(args[4])
+        if item[7]['cp'] > 0:  # choosing a production starts its time now (IsoElement.initCollectTimer)
+            item[4] = int(now)
         return f"building {args[3]} at ({args[0]},{args[1]}) set to {item[7]['cp']}"
     raise VillageCommandError(f'not a collection command: {cmd}')
 
@@ -560,15 +565,26 @@ def apply_map_quest_command(save, cmd, args, config, now=0):
         # [x, y, town, building, friend]: a friend's help brings the collection COLLECT_HELP_SECONDS closer.
         item = _placed_item(_town(save, args[2]), args[0], args[1], args[3])
         item[4] = int(item[4] if len(item) > 4 else now) - int(globals_.get('COLLECT_HELP_SECONDS', 3600))
+        # attrs.hc holds the friends' helps as "u<friend>": false (IsoElement.addHurryUpCollect skips true ones);
+        # the game marks the used help true under the friend's id without the "u".
         if len(item) > 7 and isinstance(item[7], dict) and isinstance(item[7].get('hc'), dict):
-            item[7]['hc'].pop(str(args[4]), None)
+            helps, friend = item[7]['hc'], str(args[4])
+            for key in ('u' + friend, friend):
+                if key in helps:
+                    helps[key] = True
         return f'help from {args[4]} on building {args[3]}'
     if cmd == Constant.CMD_SET_RESOURCE_ALLIES:
         # [resource, x, y, town, building]: the resource the allies' market collects next.
         resource = str(args[0])
         if resource not in ALLIES_MARKET_RESOURCES:
             raise VillageCommandError(f'unknown resource {resource}')
-        _town(save, args[3])['resourceAlliesMarket'] = resource
+        town = _town(save, args[3])
+        town['resourceAlliesMarket'] = resource
+        if resource != 'n':  # choosing one starts the market's 24 hours again (PopupSelectResource.onSelect)
+            item = _placed_item(town, args[1], args[2], args[4])
+            while len(item) < 5:
+                item.append(0)
+            item[4] = int(now)
         return f"allies' market resource {resource}"
     raise VillageCommandError(f'not a map mission command: {cmd}')
 
@@ -580,3 +596,20 @@ def _item_at(save, args):
         if int(item[1]) == int(args[0]) and int(item[2]) == int(args[1]):
             return item
     raise VillageCommandError(f'nothing at ({args[0]},{args[1]})')
+
+
+# Mills and mines (globals.COLLECT_VARIABLE_IDS) produce what the player chose in "Elegir tiempo": attrs.cp 1-4,
+# 5 min / 1 h / 4 h / 8 h, times Config.COLLECT_MULTIPLIER (IsoElement.collect). The game sends 1 as the
+# multiplier of collect_new, so the server applies the choice itself.
+COLLECT_MULTIPLIER = (0.5, 1, 2, 3)
+
+
+def chosen_production_multiplier(town, x, y, item_id, config):
+    if int(item_id) not in [int(i) for i in config.get('globals', {}).get('COLLECT_VARIABLE_IDS', [])]:
+        return 1
+    for item in town.get('items', []):
+        if int(item[0]) == int(item_id) and int(item[1]) == int(x) and int(item[2]) == int(y):
+            attrs = item[7] if len(item) > 7 and isinstance(item[7], dict) else {}
+            choice = int(attrs.get('cp') or 0)
+            return COLLECT_MULTIPLIER[choice - 1] if 1 <= choice <= len(COLLECT_MULTIPLIER) else 1
+    return 1

@@ -22,11 +22,30 @@ from swf_localization import decode_swf, encode_tag, iter_tags
 # warehouse's button and offer ('Buy now', 'Buy 1 more slot for ' + price +
 # ' cash', PopupUnitWarehouse) and its cards' 'USE UNIT' (UnitWarehouseCard) are
 # only passed to setHTML; ' cash' is pushed nowhere else.
+# The production options of mills and mines (PopupCollect.<init>, the window to choose a collection time): these
+# 16 strings are pushed only there and name no property, class or namespace.
+_COLLECT_OPTIONS = {
+    'es': {'Gold': ('Poco oro', 'Oro', 'Más oro', 'Mucho oro'), 'Wood': ('Poca madera', 'Madera', 'Más madera', 'Mucha madera'),
+           'Food': ('Poca comida', 'Comida', 'Más comida', 'Mucha comida'), 'Stone': ('Poca piedra', 'Piedra', 'Más piedra', 'Mucha piedra')},
+    'pt-BR': {'Gold': ('Pouco ouro', 'Ouro', 'Mais ouro', 'Muito ouro'), 'Wood': ('Pouca madeira', 'Madeira', 'Mais madeira', 'Muita madeira'),
+              'Food': ('Pouca comida', 'Comida', 'Mais comida', 'Muita comida'), 'Stone': ('Pouca pedra', 'Pedra', 'Mais pedra', 'Muita pedra')},
+}
+
+
+def _collect_options(language):
+    out = {}
+    for resource, (some, plain, more, lots) in _COLLECT_OPTIONS[language].items():
+        out.update({f'Some {resource}': some, resource: plain, f'More {resource}': more, f'Lots of {resource}': lots})
+    return out
+
+
 ABC_STRING_TRANSLATIONS = {
     'pt-BR': {'Gods & Colossus': 'Deuses e Colossos', 'Buy now': 'Comprar',
-              'Buy 1 more slot for ': '1 espaço a mais por ', ' cash': ' de dinheiro', 'USE UNIT': 'USAR'},
+              'Buy 1 more slot for ': '1 espaço a mais por ', ' cash': ' de dinheiro', 'USE UNIT': 'USAR',
+              **_collect_options('pt-BR')},
     'es': {'Gods & Colossus': 'Dioses y Colosos', 'Buy now': 'Comprar',
-           'Buy 1 more slot for ': '1 espacio más por ', ' cash': ' de dinero', 'USE UNIT': 'USAR'},
+           'Buy 1 more slot for ': '1 espacio más por ', ' cash': ' de dinero', 'USE UNIT': 'USAR',
+           **_collect_options('es')},
 }
 DO_ABC = 82
 

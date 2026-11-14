@@ -56,6 +56,9 @@ YA ARREGLADO Y PROBADO EN EL JUEGO
 - Clima: desbloquear (20 de dinero) y aplicar; "Desbloquear" ya no lo tapa el precio.
 - Colecciones: piezas guardadas, canjear y comprar colecciones, premio de colecciones de tropas.
 - Misiones del mapa: el tesoro, el avance de misión y la cuenta regresiva del campamento se guardan.
+- Recolectar no reiniciaba el tiempo de los edificios (recargar = todo listo otra vez); molinos y minas dan lo elegido.
+- Mercado de aliados preguntaba nada y mostraba dinero; ayudas de amigos no vuelven al recargar.
+- Aviso "Toca el juego para activar el sonido" durante la carga.
 
 VISTO Y SIN TOCAR
 - Botón "OPEN" del almacén de unidades y "COMPLETED!" de colecciones en inglés (son dibujos).

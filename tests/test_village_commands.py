@@ -241,6 +241,7 @@ class UnitWarehouse(unittest.TestCase):
         save = self.warehouse_village()
         self.assertEqual(save['maps'][0]['warehouseAditionalCapacitySingle'], WAREHOUSE_START_CAPACITY)
         self.assertEqual(save['maps'][0]['warehousedUnits'], {})
+        self.assertEqual(save['maps'][0]['resourceAlliesMarket'], 'n')  # the allies' market asks for a resource
 
     def test_units_go_in_and_come_back_out(self):
         save = self.warehouse_village()
@@ -368,6 +369,7 @@ class Collections(unittest.TestCase):
         save['maps'][0]['items'] = [[3, 10, 12, 0, 0, 0]]
         self.run_command(save, Constant.CMD_ACTIVATE, [10, 12, 0, 3, 2])
         self.assertEqual(save['maps'][0]['items'][0][7], {'cp': 2})
+        self.assertGreater(save['maps'][0]['items'][0][4], 0)  # the chosen production starts now
         self.run_command(save, Constant.CMD_ACTIVATE, [10, 12, 0, 3, 0])
         self.assertEqual(save['maps'][0]['items'][0][7], {'cp': 0})
 
@@ -418,12 +420,37 @@ class MapMissions(unittest.TestCase):
 
     def test_help_city_missions_and_the_allies_market(self):
         save = village()
-        save['maps'][0]['items'] = [[3, 10, 12, 0, 10000, 0, [], {'hc': {'77': 1}}]]
+        save['maps'][0]['items'] = [[3, 10, 12, 0, 10000, 0, [], {'hc': {'u77': False}}]]
         self.run_command(save, Constant.CMD_ACCEPT_COLLECT_HELP, [10, 12, 0, 3, 77])
         item = save['maps'][0]['items'][0]
-        self.assertEqual((item[4], item[7]['hc']), (10000 - GLOBALS['COLLECT_HELP_SECONDS'], {}))
+        self.assertEqual((item[4], item[7]['hc']), (10000 - GLOBALS['COLLECT_HELP_SECONDS'], {'u77': True}))
         self.run_command(save, Constant.CMD_PERFORM_CITY_QUEST, [10, 12, 0, 8])
         self.assertGreater(item[4], 10000)
+        item[4] = 5
         self.run_command(save, Constant.CMD_SET_RESOURCE_ALLIES, ['w', 10, 12, 0, 3])
         self.run_command(save, Constant.CMD_SET_RESOURCE_ALLIES, ['x', 10, 12, 0, 3])
         self.assertEqual(save['maps'][0]['resourceAlliesMarket'], 'w')
+        self.assertGreater(item[4], 5)  # the market's time starts again
+
+
+class CollectTimer(unittest.TestCase):
+    def test_collecting_starts_the_building_again(self):
+        import command
+        save = village()
+        coliseum = 53
+        save['maps'][0]['items'] = [[coliseum, 43, 58, 0, 1000, 0]]
+        with patch.object(command, 'session', return_value=save):
+            command.do_command('u', Constant.CMD_COLLECT, [43, 58, 0, coliseum, 0, 1, 0])
+        self.assertGreater(save['maps'][0]['items'][0][4], 1000)  # not ready again after a reload
+
+
+    def test_a_mill_gives_what_the_player_chose(self):
+        import command
+        save = village()
+        mill = 5
+        for choice, food in ((1, 125), (4, 750)):
+            save['maps'][0]['food'] = 0
+            save['maps'][0]['items'] = [[mill, 10, 10, 0, 1000, 0, [500], {'cp': choice}]]
+            with patch.object(command, 'session', return_value=save):
+                command.do_command('u', Constant.CMD_COLLECT, [10, 10, 0, mill, 1, 1, 0])
+            self.assertEqual(save['maps'][0]['food'], food)

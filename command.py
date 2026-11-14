@@ -10,7 +10,7 @@ from village_names import set_village_name
 from tutorial import record_tutorial_step
 from darts import DARTS_COMMANDS, DEFAULT_DART_COST, apply_darts_command, daily_darts_enabled
 from village_commands import (COLLECTION_COMMANDS, MAP_QUEST_COMMANDS, SOCIAL_COMMANDS, VILLAGE_COMMANDS, WAREHOUSE_COMMANDS, VillageCommandError,
-                              apply_collection_command, apply_map_quest_command, apply_social_command, apply_village_command, apply_warehouse_command, buy_unit_with_cash,
+                              apply_collection_command, apply_map_quest_command, apply_social_command, apply_village_command, apply_warehouse_command, buy_unit_with_cash, chosen_production_multiplier,
                               grant_level_mana, record_obtained_unit, start_social_building, village_commands_enabled)
 
 def get_strategy_type(id):
@@ -138,8 +138,19 @@ def do_command(USERID, cmd, args):
                 item[0] == id and item[1] == x and item[2] == y for item in map['items'])):
             print("Ignoring scenery cleanup or an already removed resource.")
             return
+        if village_commands_enabled():
+            resource_multiplier *= chosen_production_multiplier(map, x, y, id, get_game_config())
         apply_collect(save["playerInfo"], map, id, resource_multiplier)
         save["playerInfo"]["cash"] = max(save["playerInfo"]["cash"] - cash_to_substract, 0)
+        if village_commands_enabled():
+            # The building starts producing again now (the game sets its collected_at to 0). Without this the
+            # save kept the time it was built: after a reload every building was ready to collect again.
+            for item in map["items"]:
+                if item[0] == id and item[1] == x and item[2] == y:
+                    while len(item) < 5:
+                        item.append(0)
+                    item[4] = timestamp_now()
+                    break
     
     elif cmd == Constant.CMD_SELL:
         x = args[0]
@@ -642,7 +653,7 @@ def do_command(USERID, cmd, args):
 
     elif cmd in COLLECTION_COMMANDS and village_commands_enabled():
         try:
-            print("Collections:", apply_collection_command(save, cmd, args, get_game_config()))
+            print("Collections:", apply_collection_command(save, cmd, args, get_game_config(), timestamp_now()))
         except (VillageCommandError, KeyError, ValueError, TypeError, IndexError) as error:
             print("Collection command rejected:", error)
 
