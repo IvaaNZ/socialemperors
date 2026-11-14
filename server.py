@@ -1,5 +1,10 @@
 print (" [+] Loading basics...")
 import os
+if __name__ == '__main__':
+    # The switches in server.env (SE_DUELS, SE_PVP...), before any module reads them; console variables win.
+    from server_settings import SETTINGS_FILE, describe, load_settings_file
+    _settings = load_settings_file()
+    print(f" [+] Settings from {SETTINGS_FILE}: {describe(_settings) or 'none (file missing), built-in defaults'}")
 import json
 import secrets
 import threading

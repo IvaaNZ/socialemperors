@@ -20,6 +20,8 @@ python3 -m venv .venv
 .venv/bin/python server.py
 ```
 
+As funções opcionais (duelos, clãs, habilidades, PvP) e os ajustes ficam em `server.env`: `python server.py` lê esse arquivo ao iniciar, e uma variável definida no console tem prioridade.
+
 No Windows, substitua `.venv/bin/` por `.venv\Scripts\`. O comando `create-admin` pede nome, e-mail e senha, com confirmação oculta. Não existe administrador ou senha padrão, e a primeira pessoa que se cadastrar não recebe privilégios administrativos.
 
 Abra **http://127.0.0.1:5050/** em um navegador atual. Para manter uma vila antiga na conta do administrador, informe o PID do save durante a criação:

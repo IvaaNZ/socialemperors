@@ -313,3 +313,11 @@ Pedido del dueño: que el "Nombre del jugador" del registro sea el nombre del im
 - Con `SE_EMPIRE_NAME=off` el registro queda como antes.
 - Probado en el navegador con la copia de los datos: "Mi Reino" da error; "MiReino" crea la cuenta y muestra el login aunque había otra sesión abierta; la cuenta nueva no es administradora y su aldea se llama "MiReino".
 
+## Ajustes en `server.env`: alcanza con `python server.py`
+
+Pedido del dueño: no tener que escribir `SE_DUELS=on SE_CLANS=on SE_ABILITIES=on SE_PVP=on python server.py` para prender las funciones.
+
+- **`server.env`** (junto a `server.py`, como la carpeta `mods`): una línea `CLAVE=valor` por ajuste, con comentarios en español. Trae prendidas las cuatro funciones (duelos, clanes, habilidades, PvP) y los arreglos; los ajustes avanzados (forma de dibujo de Ruffle, calidad, puerto) están comentados y usan el valor de fábrica.
+- **`server_settings.py`:** `server.py` lee el archivo apenas arranca, antes de que cualquier módulo mire los interruptores, y muestra en la consola cuáles quedaron prendidos. Una variable puesta en la consola gana sobre el archivo (`SE_PVP=off python server.py` sigue funcionando). Sin el archivo, todo usa los valores de fábrica de siempre.
+- Solo se lee cuando `server.py` es el programa que se ejecuta: las pruebas y los comandos `flask --app server ...` siguen con los valores de fábrica, así las pruebas no dependen de lo que tenga el archivo.
+
