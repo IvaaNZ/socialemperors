@@ -9,6 +9,8 @@ from monday_bonus import MondayBonusError, claim_monday_bonus
 from village_names import set_village_name
 from tutorial import record_tutorial_step
 from darts import DARTS_COMMANDS, DEFAULT_DART_COST, apply_darts_command, daily_darts_enabled
+from village_commands import (VILLAGE_COMMANDS, VillageCommandError, apply_village_command, grant_level_mana,
+                              village_commands_enabled)
 
 def get_strategy_type(id):
     if id == 8:
@@ -230,6 +232,10 @@ def do_command(USERID, cmd, args):
         new_level = args[0]
         print("Level Up!:", new_level)
         map = save["maps"][0] # TODO : xp must be general, since theres no given town_id
+        if village_commands_enabled():  # the game's level-up mana (MagicManager.onLevelUp)
+            previous_level = int(save["privateState"].get("manaRewardLevel", map.get("level", 0)))
+            if int(new_level) > previous_level:
+                grant_level_mana(save, previous_level, int(new_level), get_game_config()["globals"])
         map["level"] = args[0]
         current_xp = map["xp"]
         min_expected_xp = get_xp_from_level(max(0, new_level - 1))
@@ -294,28 +300,44 @@ def do_command(USERID, cmd, args):
                 save["privateState"]["gifts"].append(0)
         save["privateState"]["gifts"][item_id] += 1
 
-    elif cmd == Constant.CMD_PLACE_GIFT:
+    elif cmd == Constant.CMD_PLACE_GIFT or (cmd == Constant.CMD_PLACE_STORED_ITEM and village_commands_enabled()):
+        # The game sends [item, x, y, frame, town] (Base.sendPlaceItemCmd). An item stored in this session
+        # (place_stored_item) is in privateState.gifts too: store_item keeps every stored item there.
         item_id = args[0]
         x = args[1]
         y = args[2]
-        town_id = args[3]#unsure, both 3 and 4 seem to stay 0
-        args[4]#unknown yet
+        town_id = args[4] if village_commands_enabled() and len(args) > 4 else args[3]
         print("Add", str(get_name_from_item_id(item_id)), "at", f"({x},{y})")
         items = save["maps"][town_id]["items"]
         orientation = 0#TODO
         collected_at_timestamp = timestamp_now()
         level = 0
         items += [[item_id, x, y, orientation, collected_at_timestamp, level]]#maybe make function for adding items
-        save["privateState"]["gifts"][item_id] -= 1
-        if save["privateState"]["gifts"][item_id] == 0: #removes excess zeros at end if necessary
-            while(save["privateState"]["gifts"][-1] == 0):
-                save["privateState"]["gifts"].pop()  
+        gifts = save["privateState"]["gifts"]
+        if item_id < len(gifts) and gifts[item_id] > 0:
+            gifts[item_id] -= 1
+        while len(gifts) != 0 and gifts[-1] == 0: #removes excess zeros at end if necessary
+            gifts.pop()
+
+    elif cmd == Constant.CMD_SELL_STORED and village_commands_enabled():
+        # Selling an item stored in this session: like selling a gift (GiftButtonLarge.sellGiftReally).
+        do_command(USERID, Constant.CMD_SELL_GIFT, args)
+        return
+
+    elif cmd in VILLAGE_COMMANDS and village_commands_enabled():
+        try:
+            print("Village:", apply_village_command(save, cmd, args, get_game_config()))
+        except (VillageCommandError, KeyError, ValueError, TypeError, IndexError) as error:
+            print("Village command rejected:", error)
 
     elif cmd == Constant.CMD_SELL_GIFT:
         item_id = args[0]
         town_id = args[1]
         print("Gift", str(get_name_from_item_id(item_id)), "sold on town:",town_id)
         gifts = save["privateState"]["gifts"]
+        if not (0 <= item_id < len(gifts) and gifts[item_id] > 0):
+            print("Nothing to sell: the storage has no", str(get_name_from_item_id(item_id)))
+            return
         gifts[item_id] -= 1
         if gifts[item_id] == 0: #removes excess zeros at end if necessary
             while(len(gifts) != 0 and gifts[-1] == 0):

@@ -48,6 +48,8 @@ from quests import get_quest_map
 from localization import LANGUAGE_FLAGS, LANGUAGE_NAMES, PLAYER_LANGUAGES
 from portal_i18n import set_portal_language, portal_language, translate as _, translations_for
 from swf_localization import localize_swf
+from village_commands import grant_missed_level_mana, village_commands_enabled
+from sessions import save_session as save_village
 from village_names import rename_village, normalize_legacy_village_name, name_default_player, validate_player_name, VillageNameError, MAX_VILLAGE_NAME_LENGTH
 from pvp import RaidService, RaidError
 from admin_villages import (AdminVillageService, AdminVillageError, AdminVillageConflict, EDITABLE_FIELDS, RESOURCE_LIMIT, CASH_LIMIT,
@@ -260,6 +262,12 @@ def ensure_village(account):
         if EMPIRE_NAME_ENABLED:  # the friends bar shows the account's name, not "Emperador"
             name_default_player(account['village_id'], account['name'])
         normalize_legacy_village_name(account['village_id'])
+        if village_commands_enabled():  # the level-up mana of levels reached before the server counted it
+            village = village_session(account['village_id'])
+            counted = 'manaRewardLevel' in village['privateState']
+            grant_missed_level_mana(village, get_game_config()['globals'])
+            if not counted:
+                save_village(account['village_id'])
         return account
 
 

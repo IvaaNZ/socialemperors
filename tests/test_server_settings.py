@@ -31,7 +31,7 @@ class ServerSettingsFile(unittest.TestCase):
         settings, errors = parse_settings((ROOT / SETTINGS_FILE).read_text(encoding='utf-8'))
         self.assertEqual(errors, [])
         for switch in ('SE_DUELS', 'SE_CLANS', 'SE_ABILITIES', 'SE_PVP', 'SE_DAILY_DARTS', 'SE_EMPIRE_NAME',
-                       'SE_READABLE_UI', 'SE_SOUND_FIX', 'SE_AUTO_APPROVE'):
+                       'SE_READABLE_UI', 'SE_SOUND_FIX', 'SE_AUTO_APPROVE', 'SE_VILLAGE_COMMANDS'):
             self.assertEqual(settings.get(switch), 'on', switch)
 
     def test_python_server_py_reads_it_before_the_switches_and_importing_server_does_not(self):
