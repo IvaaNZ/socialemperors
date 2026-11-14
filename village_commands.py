@@ -50,6 +50,7 @@ The unit warehouse (building 1284) keeps troops per map in map.warehousedUnits
 """
 
 import copy
+import json
 import math
 import os
 
@@ -503,3 +504,79 @@ def record_obtained_unit(save, item_id):
     if int(item_id) not in obtained:
         obtained.append(int(item_id))
     return True
+
+
+# Map missions and treasures (QuestsInMap, CustomQuestNew) and help with collections.
+MAP_QUEST_COMMANDS = (Constant.CMD_SET_QUEST_VAR, Constant.CMD_COLLECT_TREASURE, Constant.CMD_PERFORM_CITY_QUEST,
+                      Constant.CMD_ACCEPT_COLLECT_HELP, Constant.CMD_SET_RESOURCE_ALLIES)
+QUEST_VARS = ('spawned', 'activators', 'boss', 'treasure')  # CustomQuestNew.questStatus, read as map.currentQuestVars
+# The most a treasure gives (QuestsInMap.finalizeQuest): 750 gold and 100 xp from level 26, times
+# REWARD_QUESTS_CHAPTERS_MULTIPLIER, which the game keeps between 0 and 2. Food and stone are 0 in practice.
+TREASURE_MAX = {'gold': 1500, 'xp': 200, 'food': 1500, 'stone': 1500}
+ALLIES_MARKET_RESOURCES = ('n', 'w', 's', 'f', 'g')  # 'n': none chosen (IsoElement.collect)
+
+
+def apply_map_quest_command(save, cmd, args, config, now=0):
+    """Apply one map mission / treasure / collection help command. Returns a short description for the log."""
+    globals_ = config.get('globals', {})
+    if cmd == Constant.CMD_SET_QUEST_VAR:
+        town, name = _town(save, args[0]), str(args[1])
+        if name not in QUEST_VARS:
+            raise VillageCommandError(f'unknown mission variable {name}')
+        value = json.loads(args[2]) if isinstance(args[2], str) else args[2]
+        quest_vars = town.get('currentQuestVars')
+        if not isinstance(quest_vars, dict):
+            quest_vars = town['currentQuestVars'] = {}
+        quest_vars[name] = value
+        return f'mission {name} = {json.dumps(value)[:60]}'
+    if cmd == Constant.CMD_COLLECT_TREASURE:
+        # [gold, xp, next mission, food, stone, town]; [0, 0, mission, 0, 0, town] only sets the mission
+        # (MapInitializer.setCorrectQuest).
+        gold, xp, quest, food, stone = (int(value) for value in args[:5])
+        town = _town(save, args[5])
+        amounts = {'gold': gold, 'xp': xp, 'food': food, 'stone': stone}
+        for name, amount in amounts.items():
+            if not 0 <= amount <= TREASURE_MAX[name]:
+                raise VillageCommandError(f'a treasure gives at most {TREASURE_MAX[name]} {name}, not {amount}')
+        if quest < 0:
+            raise VillageCommandError(f'unknown mission {quest}')
+        town['idCurrentTreasure'] = quest
+        if not any(amounts.values()):
+            return f'map mission {quest}'
+        town['coins'] = int(town.get('coins', 0)) + gold
+        town['xp'] = int(town.get('xp', 0)) + xp
+        town['food'] = int(town.get('food', 0)) + food
+        town['stone'] = int(town.get('stone', 0)) + stone
+        town['timestampLastTreasure'] = int(now)
+        return f'treasure: {gold} gold, {xp} xp, {food} food, {stone} stone; next mission {quest}'
+    if cmd == Constant.CMD_PERFORM_CITY_QUEST:
+        # [x, y, town, quest]: a city mission building is collected and its timer starts again (IsoElement.collect).
+        item = _item_at(save, args)
+        while len(item) < 5:
+            item.append(0)
+        item[4] = int(now)
+        return f'city mission {args[3]} at ({args[0]},{args[1]})'
+    if cmd == Constant.CMD_ACCEPT_COLLECT_HELP:
+        # [x, y, town, building, friend]: a friend's help brings the collection COLLECT_HELP_SECONDS closer.
+        item = _placed_item(_town(save, args[2]), args[0], args[1], args[3])
+        item[4] = int(item[4] if len(item) > 4 else now) - int(globals_.get('COLLECT_HELP_SECONDS', 3600))
+        if len(item) > 7 and isinstance(item[7], dict) and isinstance(item[7].get('hc'), dict):
+            item[7]['hc'].pop(str(args[4]), None)
+        return f'help from {args[4]} on building {args[3]}'
+    if cmd == Constant.CMD_SET_RESOURCE_ALLIES:
+        # [resource, x, y, town, building]: the resource the allies' market collects next.
+        resource = str(args[0])
+        if resource not in ALLIES_MARKET_RESOURCES:
+            raise VillageCommandError(f'unknown resource {resource}')
+        _town(save, args[3])['resourceAlliesMarket'] = resource
+        return f"allies' market resource {resource}"
+    raise VillageCommandError(f'not a map mission command: {cmd}')
+
+
+def _item_at(save, args):
+    """The item at (x, y) on the town of a [x, y, town, ...] command, whatever its id."""
+    town = _town(save, args[2])
+    for item in town.get('items', []):
+        if int(item[1]) == int(args[0]) and int(item[2]) == int(args[1]):
+            return item
+    raise VillageCommandError(f'nothing at ({args[0]},{args[1]})')

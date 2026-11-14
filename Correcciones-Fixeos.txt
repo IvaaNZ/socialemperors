@@ -18,7 +18,7 @@ Cada grupo se arregla, se prueba dentro del juego (copia de los datos) y se marc
    Canjear una colección completa y cobrar el premio de las colecciones de tropas; las piezas no se guardaban.
    (finish_collection, unit_collection_completed, activate)
 
-5. Misiones del mapa y tesoros
+5. Misiones del mapa y tesoros [HECHO, probado en el juego]
    Progreso de misiones con jefes, tesoros, ayudas de recolección y recursos de aliados.
    (set_quest_var, collect_treasure, perform_city_quest, accept_collect_help, set_resource_allies)
 
@@ -55,7 +55,9 @@ YA ARREGLADO Y PROBADO EN EL JUEGO
 - Regalos puestos en el imperio volvían al recargar: el juego enviaba cada ~30 s, ahora cada 3 s; colocar un regalo suma su experiencia.
 - Clima: desbloquear (20 de dinero) y aplicar; "Desbloquear" ya no lo tapa el precio.
 - Colecciones: piezas guardadas, canjear y comprar colecciones, premio de colecciones de tropas.
+- Misiones del mapa: el tesoro, el avance de misión y la cuenta regresiva del campamento se guardan.
 
 VISTO Y SIN TOCAR
 - Botón "OPEN" del almacén de unidades y "COMPLETED!" de colecciones en inglés (son dibujos).
-- Campamento enemigo vuelve a 101 enemigos al recargar.
+- Campamento enemigo: las misiones 0 a 6 (campamentos trolls) se recrean en cada carga por diseño del juego;
+  ahora al terminarlas se avanza y aparece la cuenta regresiva.

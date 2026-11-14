@@ -390,3 +390,40 @@ class ObtainedUnits(unittest.TestCase):
         save['privateState']['gifts'] = [0] * 557 + [1]
         self.run_command(save, Constant.CMD_PLACE_GIFT, [557, 11, 11, 0, 0])
         self.assertEqual(save['privateState']['boughtUnits'], [self.COW, 557])
+
+
+class MapMissions(unittest.TestCase):
+    def run_command(self, save, cmd, args):
+        import command
+        with patch.object(command, 'session', return_value=save):
+            command.do_command('u', cmd, args)
+
+    def test_the_mission_state_is_kept(self):
+        save = village()
+        self.run_command(save, Constant.CMD_SET_QUEST_VAR, [0, 'spawned', 'true'])
+        self.run_command(save, Constant.CMD_SET_QUEST_VAR, [0, 'boss', '[3,4]'])
+        self.run_command(save, Constant.CMD_SET_QUEST_VAR, [0, 'cash', '999'])  # not a mission variable
+        self.assertEqual(save['maps'][0]['currentQuestVars'], {'spawned': True, 'boss': [3, 4]})
+
+    def test_a_treasure_gives_its_reward_and_moves_to_the_next_mission(self):
+        save = village()
+        self.run_command(save, Constant.CMD_COLLECT_TREASURE, [750, 100, 4, 0, 0, 0])
+        town = save['maps'][0]
+        self.assertEqual((town['coins'], town['xp'], town['idCurrentTreasure']), (50750, 100, 4))
+        self.assertGreater(town['timestampLastTreasure'], 0)
+        self.run_command(save, Constant.CMD_COLLECT_TREASURE, [0, 0, 5, 0, 0, 0])  # the game corrects the mission
+        self.assertEqual((town['coins'], town['idCurrentTreasure']), (50750, 5))
+        self.run_command(save, Constant.CMD_COLLECT_TREASURE, [99999, 0, 6, 0, 0, 0])  # more than a treasure gives
+        self.assertEqual((town['coins'], town['idCurrentTreasure']), (50750, 5))
+
+    def test_help_city_missions_and_the_allies_market(self):
+        save = village()
+        save['maps'][0]['items'] = [[3, 10, 12, 0, 10000, 0, [], {'hc': {'77': 1}}]]
+        self.run_command(save, Constant.CMD_ACCEPT_COLLECT_HELP, [10, 12, 0, 3, 77])
+        item = save['maps'][0]['items'][0]
+        self.assertEqual((item[4], item[7]['hc']), (10000 - GLOBALS['COLLECT_HELP_SECONDS'], {}))
+        self.run_command(save, Constant.CMD_PERFORM_CITY_QUEST, [10, 12, 0, 8])
+        self.assertGreater(item[4], 10000)
+        self.run_command(save, Constant.CMD_SET_RESOURCE_ALLIES, ['w', 10, 12, 0, 3])
+        self.run_command(save, Constant.CMD_SET_RESOURCE_ALLIES, ['x', 10, 12, 0, 3])
+        self.assertEqual(save['maps'][0]['resourceAlliesMarket'], 'w')
