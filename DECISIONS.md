@@ -365,3 +365,12 @@ Pedido del dueño: una tropa de "Regalos" puesta en el imperio volvía a "Regalo
 - Ahora la página pide 3 segundos, el mínimo que acepta el juego. Con la cola vacía el juego no envía nada (`CommandManager.sendCommands`), así que solo hay más pedidos cuando el jugador hace algo. `SE_QUICK_SAVE=off` deja el intervalo del juego.
 - Además, colocar un regalo suma la experiencia del ítem, como muestra el juego (antes se veía y al recargar se perdía); solo si el regalo estaba en el almacén. La estatua de nivel, que completa el nivel, queda como antes.
 - Probado jugando: colocar el Paladín alado desde el almacén llegó al servidor un segundo después y, saliendo de la página a los 4 segundos, al recargar sigue en la aldea y no en el almacén; colocar el Sacerdote celestial sumó 200 de experiencia y se mantuvo al recargar.
+
+## Clima (`SE_VILLAGE_COMMANDS`)
+
+Grupo 3 de `Correcciones-Fixeos.txt`. La Máquina del clima (edificio 373) abre el "Selector de temas" (`PopupWeather`): seis climas (0, 1, 2, 4, 5 y 6); el 0, Praderas Verdes, siempre está.
+
+- `unlock_skin` [clima] cobra `COST_UNLOCK_SKIN` (20) de dinero y lo guarda en `privateState.unlockedSkins`; `set_skin` [isla, clima] guarda `map.skin`. El juego vuelve a cargar la isla del servidor justo después, así que antes el clima nuevo no se veía nunca y el dinero cobrado volvía al recargar.
+- La ventana muestra un clima como desbloqueado cuando `unlockedSkins[id] == "true"`, una comparación con el texto: un `true` de JSON lo mostraría bloqueado otra vez. Se guarda `"true"`. Las aldeas originales usaban una lista (`[true]`); se convierte al leerla. Un clima que no existe, o aplicar uno bloqueado, se rechaza; desbloquear uno ya desbloqueado no cobra de nuevo.
+- "Unlock for" se traducía "Desbloquear por" y el precio lo tapaba ("Desbloquear po20"); ahora dice "Desbloquear" (español y portugués), con el precio y el billete al lado.
+- Probado jugando (Tuki2, copia de los datos; la Máquina del clima se agregó a la partida de la copia): desbloquear Llanuras Nevadas descontó 20 y la aldea se volvió nevada; volver a Praderas Verdes no cobró; al recargar la página la aldea sigue verde, el dinero sigue descontado y Nevadas aparece con "Aplicar tema".

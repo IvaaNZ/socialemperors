@@ -291,3 +291,26 @@ class GiftXp(unittest.TestCase):
             command.do_command('u', Constant.CMD_PLACE_GIFT, [655, 53, 58, 0, 0])
             command.do_command('u', Constant.CMD_PLACE_GIFT, [655, 54, 58, 0, 0])  # none left: no more xp
         self.assertEqual(save['maps'][0]['xp'], int(get_attribute_from_item_id(655, 'xp')))
+
+
+class Weather(unittest.TestCase):
+    def test_unlocking_costs_cash_once_and_applying_needs_it_unlocked(self):
+        save = village()
+        with self.assertRaises(VillageCommandError):
+            apply_village_command(save, Constant.CMD_SET_SKIN, [0, '4'], CONFIG)
+        apply_village_command(save, Constant.CMD_UNLOCK_SKIN, ['4'], CONFIG)
+        apply_village_command(save, Constant.CMD_UNLOCK_SKIN, ['4'], CONFIG)  # already: no second charge
+        self.assertEqual(save['playerInfo']['cash'], 100 - GLOBALS['COST_UNLOCK_SKIN'])
+        self.assertEqual(save['privateState']['unlockedSkins'], {'4': 'true'})  # the game compares with "true"
+        apply_village_command(save, Constant.CMD_SET_SKIN, [0, '4'], CONFIG)
+        self.assertEqual(save['maps'][0]['skin'], 4)
+        apply_village_command(save, Constant.CMD_SET_SKIN, [0, '0'], CONFIG)  # the default is always there
+        self.assertEqual(save['maps'][0]['skin'], 0)
+        with self.assertRaises(VillageCommandError):
+            apply_village_command(save, Constant.CMD_UNLOCK_SKIN, ['3'], CONFIG)  # no such weather
+
+    def test_the_original_list_form_is_read(self):
+        save = village()
+        save['privateState']['unlockedSkins'] = [True]
+        apply_village_command(save, Constant.CMD_UNLOCK_SKIN, ['1'], CONFIG)
+        self.assertEqual(save['privateState']['unlockedSkins'], {'1': 'true'})

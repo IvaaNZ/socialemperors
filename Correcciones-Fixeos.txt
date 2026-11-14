@@ -10,8 +10,8 @@ Cada grupo se arregla, se prueba dentro del juego (copia de los datos) y se marc
    Contratar ayudantes pagando y abrir el edificio; antes se abrían gratis al recargar.
    (finish_si, buy_si_help)
 
-3. Clima
-   Desbloquear y aplicar un clima a la aldea.
+3. Clima [HECHO, probado en el juego]
+   Desbloquear y aplicar un clima a la aldea; antes no se veía nunca y el cobro volvía al recargar.
    (unlock_skin, set_skin)
 
 4. Colecciones
@@ -53,6 +53,7 @@ YA ARREGLADO Y PROBADO EN EL JUEGO
 - Efecto p.miniFireball2 faltante (error 404): se usa otra bola de fuego.
 - Almacén de unidades: guardar y sacar tropas, comprar lugares, guardar el edificio; textos en español.
 - Regalos puestos en el imperio volvían al recargar: el juego enviaba cada ~30 s, ahora cada 3 s; colocar un regalo suma su experiencia.
+- Clima: desbloquear (20 de dinero) y aplicar; "Desbloquear" ya no lo tapa el precio.
 
 VISTO Y SIN TOCAR
 - Botón "OPEN" del almacén de unidades en inglés (es un dibujo).

@@ -29,6 +29,10 @@ the same numbers the game showed:
   * place_stored_item / sell_stored_item: an item put in the storage during
     this session is placed or sold like a gift (the server keeps every stored
     item in privateState.gifts, see store_item).
+  * unlock_skin [weather]: COST_UNLOCK_SKIN cash, kept in
+    privateState.unlockedSkins; set_skin [town, weather]: the island's
+    map.skin. The game reloads the map right after, so the server must keep
+    them at once (PopupWeather.onUnlock / onApply).
 
 The unit warehouse (building 1284) keeps troops per map in map.warehousedUnits
 ({unit id: count}) up to map.warehouseAditionalCapacitySingle units
@@ -60,9 +64,15 @@ WAREHOUSE_START_CAPACITY = 20  # map.warehouseAditionalCapacitySingle of the ori
 MAP_DEFAULTS = {'numTradesDone': 0, 'timestampLastTrade': 0,
                 'warehouseAditionalCapacitySingle': WAREHOUSE_START_CAPACITY, 'warehousedUnits': {}}
 
+# Weathers (PopupWeather.themeIds); 0 is always available. The popup shows a weather as unlocked when
+# unlockedSkins[id] == "true", a string comparison: a JSON true would show it locked again.
+SKINS = (0, 1, 2, 4, 5, 6)
+DEFAULT_SKIN = 0
+SKIN_UNLOCKED = 'true'
+
 VILLAGE_COMMANDS = (Constant.CMD_USE_MAGIC, Constant.CMD_BUY_MAGIC, Constant.CMD_BUY_MANA, Constant.CMD_TRADE_RESOURCE,
                     Constant.CMD_UNLOCK_BUILDING, Constant.CMD_INCREASE_POPULATION, Constant.CMD_PLACE_STORED_ITEM,
-                    Constant.CMD_SELL_STORED)
+                    Constant.CMD_SELL_STORED, Constant.CMD_UNLOCK_SKIN, Constant.CMD_SET_SKIN)
 
 
 class VillageCommandError(ValueError):
@@ -203,7 +213,37 @@ def apply_village_command(save, cmd, args, config, now=0):
         town = _town(save, args[0])
         town['increasedPopulation'] = int(town.get('increasedPopulation', 0)) + 1
         return f"population increase {town['increasedPopulation']}"
+    if cmd == Constant.CMD_UNLOCK_SKIN:
+        skin = _skin(args[0])
+        unlocked = _unlocked_skins(state)
+        if skin == DEFAULT_SKIN or unlocked.get(str(skin)) == SKIN_UNLOCKED:
+            return f'weather {skin} already unlocked'
+        cost = int(globals_.get('COST_UNLOCK_SKIN', 20))
+        save['playerInfo']['cash'] = max(int(save['playerInfo'].get('cash', 0)) - cost, 0)
+        unlocked[str(skin)] = SKIN_UNLOCKED
+        return f'weather {skin} unlocked for {cost} cash'
+    if cmd == Constant.CMD_SET_SKIN:
+        town, skin = _town(save, args[0]), _skin(args[1])
+        if skin != DEFAULT_SKIN and _unlocked_skins(state).get(str(skin)) != SKIN_UNLOCKED:
+            raise VillageCommandError(f'weather {skin} is locked')
+        town['skin'] = skin
+        return f'weather {skin} on the island'
     raise VillageCommandError(f'not a village command: {cmd}')
+
+
+def _skin(value):
+    skin = int(value)
+    if skin not in SKINS:
+        raise VillageCommandError(f'unknown weather {skin}')
+    return skin
+
+
+def _unlocked_skins(state):
+    """privateState.unlockedSkins as {id: "true"}; the original villages kept a list ([true] = weather 0)."""
+    unlocked = state.get('unlockedSkins')
+    if not isinstance(unlocked, dict):
+        unlocked = state['unlockedSkins'] = {}
+    return unlocked
 
 
 SOCIAL_COMMANDS = (Constant.CMD_BUY_SI_HELP, Constant.CMD_FINISH_SI)
