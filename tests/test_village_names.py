@@ -14,6 +14,7 @@ from village_names import (
     DEFAULT_VILLAGE_NAME,
     MAX_VILLAGE_NAME_LENGTH,
     VillageNameError,
+    name_default_player,
     normalize_legacy_village_name,
     rename_village,
     set_village_name,
@@ -110,6 +111,23 @@ class VillageNameTests(unittest.TestCase):
         self.village['playerInfo']['name'] = 'Jogador original'
         self.assertFalse(normalize_legacy_village_name('own-village'))
         self.assertEqual(self.village['playerInfo']['name'], 'Jogador original')
+
+    def test_a_default_player_name_becomes_the_account_name_and_a_chosen_one_stays(self):
+        for default in ('Imperador', 'Emperador', 'Emperor'):
+            with self.subTest(default=default):
+                self.village['playerInfo']['name'] = default
+                with contextlib.redirect_stdout(io.StringIO()):
+                    self.assertTrue(name_default_player('own-village', 'Tuki'))
+                self.assertEqual(self.village['playerInfo']['name'], 'Tuki')
+                self.assertEqual(json.loads(self.path.read_text(encoding='utf-8'))['playerInfo']['name'], 'Tuki')
+        with patch.object(sessions, 'save_session') as writer:
+            self.assertFalse(name_default_player('own-village', 'Otro'))  # already a chosen name
+            self.village['playerInfo']['name'] = 'Imperador'
+            self.assertFalse(name_default_player('own-village', 'x' * (MAX_VILLAGE_NAME_LENGTH + 1)))
+            self.assertFalse(name_default_player('own-village', '<b>'))
+            writer.assert_not_called()
+        self.assertEqual(self.village['playerInfo']['name'], 'Imperador')
+        self.assertEqual(self.village['playerInfo']['map_names'], ['My Empire', 'Ilha distante'])
 
     def test_unicode_validation_rejects_markup_controls_and_excess_length(self):
         self.assertEqual(validate_village_name(' Sa\u0303o Joa\u0303o '), 'São João')

@@ -117,6 +117,31 @@ def rename_village(userid, value, map_index=None):
     return name
 
 
+def name_default_player(userid, account_name):
+    """Give a player still called by the template's default ("Imperador") its account name.
+
+    That name is what other players see on the friends bar. A name chosen in the
+    save is kept, and an account name that cannot be a label (too long, < or >)
+    leaves the default. The caller must hold the lock used for every game mutation.
+    """
+    village = sessions.session(userid)
+    player = village.get('playerInfo')
+    if not isinstance(player, dict) or player.get('name') not in DEFAULT_PLAYER_NAMES:
+        return False
+    try:
+        name = validate_village_name(account_name)
+    except VillageNameError:
+        return False
+    previous = player.get('name')
+    player['name'] = name
+    try:
+        sessions.save_session(userid)
+    except Exception:
+        player['name'] = previous
+        raise
+    return True
+
+
 def normalize_legacy_village_name(userid):
     """Translate only exact default labels of an owned home village.
 

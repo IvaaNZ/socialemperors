@@ -43,7 +43,7 @@ from quests import get_quest_map
 from localization import LANGUAGE_FLAGS, LANGUAGE_NAMES, PLAYER_LANGUAGES
 from portal_i18n import set_portal_language, portal_language, translate as _, translations_for
 from swf_localization import localize_swf
-from village_names import rename_village, normalize_legacy_village_name, validate_player_name, VillageNameError, MAX_VILLAGE_NAME_LENGTH
+from village_names import rename_village, normalize_legacy_village_name, name_default_player, validate_player_name, VillageNameError, MAX_VILLAGE_NAME_LENGTH
 from pvp import RaidService, RaidError
 from admin_villages import (AdminVillageService, AdminVillageError, AdminVillageConflict, EDITABLE_FIELDS, RESOURCE_LIMIT, CASH_LIMIT,
                             UNITS_PER_CHANGE, giveable_units, mission_state)
@@ -252,6 +252,8 @@ def ensure_village(account):
             account = accounts().bind_village(account['id'], village_id)
         if account['village_id'] not in all_saves_userid():
             abort(503, description='O arquivo da sua vila não foi encontrado. Contate o administrador para restaurar o save.')
+        if EMPIRE_NAME_ENABLED:  # the friends bar shows the account's name, not "Emperador"
+            name_default_player(account['village_id'], account['name'])
         normalize_legacy_village_name(account['village_id'])
         return account
 

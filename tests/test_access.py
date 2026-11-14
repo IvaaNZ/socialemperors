@@ -102,6 +102,7 @@ class AccessTests(unittest.TestCase):
         village = sessions.session(self.store.get(account['id'])['village_id'])
         info = village['playerInfo']
         self.assertEqual(info['map_names'][int(info.get('default_map', 0))], 'ReinoÑandú2')
+        self.assertEqual(info['name'], 'ReinoÑandú2')  # the friends bar shows it too, not "Imperador"
 
     def test_registering_signs_out_whoever_was_signed_in(self):
         self.create_admin()
@@ -126,6 +127,16 @@ class AccessTests(unittest.TestCase):
             account = self.store.list_accounts()[0]
             village = sessions.session(self.store.get(account['id'])['village_id'])
             self.assertNotIn('Maria Luz', village['playerInfo']['map_names'])
+            self.assertNotEqual(village['playerInfo']['name'], 'Maria Luz')
+
+    def test_a_player_still_called_emperor_gets_the_account_name_on_login(self):
+        player = self.create_player(status='approved')  # "Jogador", from before this change
+        self.login()
+        village_id = self.store.get(player['id'])['village_id']
+        self.assertEqual(sessions.session(village_id)['playerInfo']['name'], 'Jogador')
+        sessions.session(village_id)['playerInfo']['name'] = 'Senhor dos Dragões'  # chosen in the save: kept
+        self.login(client=server.app.test_client())
+        self.assertEqual(sessions.session(village_id)['playerInfo']['name'], 'Senhor dos Dragões')
 
     @patch.object(server, 'AUTO_APPROVE', False)
     def test_registration_waits_for_explicit_admin_approval(self):
