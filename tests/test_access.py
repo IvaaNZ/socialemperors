@@ -238,6 +238,21 @@ class AccessTests(unittest.TestCase):
         with patch.object(server, 'QUICK_SAVE_ENABLED', False):
             self.assertIsNone(push_time())
 
+    def test_the_page_asks_for_a_touch_to_turn_the_sound_on(self):
+        self.create_player(status='approved')
+        self.login()
+
+        def game_page():
+            page = self.client.get('/play.html')
+            return page.text, json.loads(re.search(r'<script id="game-config" type="application/json">(.*?)</script>',
+                                                   page.text, re.S).group(1))
+
+        text, configuration = game_page()
+        self.assertTrue(configuration['soundHint'])
+        self.assertIn('id="sound-hint"', text)
+        with patch.object(server, 'SOUND_FIX_ENABLED', False):
+            self.assertFalse(game_page()[1]['soundHint'])
+
     def test_the_server_picks_ruffles_renderer_and_quality(self):
         self.create_player(status='approved')
         self.login()

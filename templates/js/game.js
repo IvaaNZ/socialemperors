@@ -32,6 +32,7 @@
     const controlsToggle = document.getElementById("controls-toggle");
     const controlsPanel = document.getElementById("controls-panel");
     const villageUpdate = document.getElementById("village-update");
+    const soundHint = document.getElementById("sound-hint");
     const preferenceKey = "socialempires.player";
     let player;
     let loadingTimer;
@@ -120,6 +121,24 @@
         mute.textContent = silent ? t("Ativar som") : t("Silenciar");
         mute.setAttribute("aria-pressed", String(silent));
         if (player) player.ruffle().volume = silent ? 0 : preferences.volume / 100;
+    }
+
+    // Browsers keep a page silent until the player touches it: until then Ruffle starts the game muted and
+    // only shows a small speaker. The hint asks for that first touch on the game, where Ruffle turns the sound on;
+    // it lets the touch through and goes away with it (SE_SOUND_FIX).
+    function showSoundHint() {
+        const activation = navigator.userActivation;
+        if (!config.soundHint || !soundHint || !activation || activation.hasBeenActive) return;
+        if (preferences.muted || preferences.volume === 0) return;
+        soundHint.textContent = t("Toque no jogo para ativar o som");
+        soundHint.hidden = false;
+        const hide = () => {
+            soundHint.hidden = true;
+            container.removeEventListener("pointerdown", hide, true);
+            document.removeEventListener("keydown", hide, true);
+        };
+        container.addEventListener("pointerdown", hide, true);
+        document.addEventListener("keydown", hide, true);
     }
 
     function setExpanded(value) {
@@ -294,6 +313,7 @@
         try {
             const ruffle = window.RufflePlayer.newest();
             player = ruffle.createPlayer();
+            showSoundHint();
             player.setAttribute("aria-label", "Social Empires");
             container.appendChild(player);
             player.addEventListener("loadedmetadata", applyAudio, { once: true });
