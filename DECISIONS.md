@@ -302,3 +302,13 @@ Pedido del dueño: los Dardos eran semanales y los quería diarios.
 - Con `SE_DAILY_DARTS=off` todo queda como antes.
 - Probado en el navegador con la copia de los datos: aparece "¡Ganaste un dardo GRATIS!"; la cuenta regresiva llega hasta la medianoche; el dardo gratis dio un Paladín alado, que quedó en el almacén; un dardo pagado descontó 20 de dinero; los globos reventados quedan guardados.
 
+## Registro: el nombre del jugador nombra el imperio; registrarse cierra la sesión anterior (`SE_EMPIRE_NAME`, encendido)
+
+Pedido del dueño: que el "Nombre del jugador" del registro sea el nombre del imperio, sin espacios ni símbolos, y que una cuenta nueva no entre como administradora.
+
+- **Nombre:** al registrarse, el nombre del jugador solo puede tener letras (también acentuadas y ñ) y números, de 2 a 32 caracteres (el largo máximo de un nombre de aldea). El formulario lo avisa y el servidor lo valida (`validate_player_name` en `village_names.py`).
+- **Imperio:** cuando la cuenta entra por primera vez y se le crea la aldea, la aldea toma ese nombre (`map_names`), en vez de "Mi Imperio". Se puede cambiar después como siempre. `playerInfo.name` (el "Emperador" que se ve en la barra de amigos) no cambia, como dice la regla de `village_names.py`. Las cuentas que ya existen no cambian.
+- **Administrador:** las cuentas nuevas nunca se crean administradoras (en la base, `is_admin` es 0). Lo que pasaba: el registro no cerraba la sesión que ya estaba abierta en ese navegador. Si alguien se registraba estando conectado como administrador, después de "¡Cuenta creada!" el login lo devolvía al juego con la cuenta del administrador. Ahora registrarse cierra esa sesión (se conserva el idioma elegido) y muestra el formulario para entrar con la cuenta nueva.
+- Con `SE_EMPIRE_NAME=off` el registro queda como antes.
+- Probado en el navegador con la copia de los datos: "Mi Reino" da error; "MiReino" crea la cuenta y muestra el login aunque había otra sesión abierta; la cuenta nueva no es administradora y su aldea se llama "MiReino".
+

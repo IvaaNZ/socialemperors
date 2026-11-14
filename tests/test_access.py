@@ -79,6 +79,54 @@ class AccessTests(unittest.TestCase):
         self.assertIn(self.store.get(account['id'])['village_id'], sessions.all_saves_userid())
         self.assertEqual(self.client.get('/admin').status_code, 403)
 
+    def register(self, name, email='maria@example.com', client=None):
+        client = client or self.client
+        return client.post('/register', data={
+            'name': name, 'email': email, 'password': 'secret-password',
+            'password_confirm': 'secret-password', 'csrf_token': self.token(client),
+        }, follow_redirects=True)
+
+    def test_the_player_name_is_letters_and_digits_and_names_the_new_empire(self):
+        self.assertTrue(server.EMPIRE_NAME_ENABLED)
+        form = self.client.get('/register').text
+        self.assertIn('maxlength="32" pattern="[\\p{L}\\p{N}]+"', form)
+        for name in ('Maria Luz', 'Maria_Luz', 'María!', 'A', 'x' * 33, '<b>'):
+            with self.subTest(name=name):
+                response = self.register(name)
+                self.assertIn('O nome do jogador', response.text)
+                self.assertEqual(self.store.list_accounts(), [])
+        self.assertIn('Conta criada!', self.register('ReinoÑandú2').text)
+        account = self.store.list_accounts()[0]
+        self.assertEqual(account['name'], 'ReinoÑandú2')
+        self.assertEqual(self.login('maria@example.com').location, '/play.html')
+        village = sessions.session(self.store.get(account['id'])['village_id'])
+        info = village['playerInfo']
+        self.assertEqual(info['map_names'][int(info.get('default_map', 0))], 'ReinoÑandú2')
+
+    def test_registering_signs_out_whoever_was_signed_in(self):
+        self.create_admin()
+        self.assertEqual(self.login('admin@example.com').status_code, 302)
+        self.assertEqual(self.client.get('/admin').status_code, 200)
+        self.assertIn('Conta criada!', self.register('Maria').text)
+        with self.client.session_transaction() as session:
+            self.assertNotIn('account_id', session)
+        self.assertEqual(self.client.get('/login').status_code, 200)  # the login form, not the admin's village
+        self.assertEqual(self.client.get('/admin').status_code, 403)
+        self.assertEqual(self.login('maria@example.com').location, '/play.html')
+        self.assertEqual(self.client.get('/admin').status_code, 403)
+        maria = [account for account in self.store.list_accounts() if account['name'] == 'Maria'][0]
+        self.assertFalse(maria['is_admin'])
+
+    def test_off_keeps_the_earlier_registration(self):
+        with patch.object(server, 'EMPIRE_NAME_ENABLED', False), \
+                patch.dict(server.app.jinja_env.globals, {'empire_name_enabled': False}):
+            self.assertIn('maxlength="60"', self.client.get('/register').text)
+            self.assertIn('Conta criada!', self.register('Maria Luz').text)
+            self.login('maria@example.com')
+            account = self.store.list_accounts()[0]
+            village = sessions.session(self.store.get(account['id'])['village_id'])
+            self.assertNotIn('Maria Luz', village['playerInfo']['map_names'])
+
     @patch.object(server, 'AUTO_APPROVE', False)
     def test_registration_waits_for_explicit_admin_approval(self):
         response = self.client.post('/register', data={
@@ -213,7 +261,14 @@ class AccessTests(unittest.TestCase):
         self.assertEqual(introduction['text'], 'Boas-vindas ao seu império!')
         self.assertEqual(configuration['items'][0]['name'], 'Casa I')
         self.assertEqual(server.get_game_config()['items'][0]['name'], 'House I')
-        self.assertEqual(sessions.save_info(self.game_data()['USERID'])['name'], 'Meu Império')
+        # A new empire takes its player's name (SE_EMPIRE_NAME); off, it is the translated default.
+        self.assertEqual(sessions.save_info(self.game_data()['USERID'])['name'], 'Jogador')
+        with patch.object(server, 'EMPIRE_NAME_ENABLED', False):
+            other = self.create_player('other@example.com', status='approved')
+            client = server.app.test_client()
+            self.login('other@example.com', client)
+            village = self.store.get(other['id'])['village_id']
+        self.assertEqual(sessions.save_info(village)['name'], 'Meu Império')
 
     def test_translated_movie_requires_login_and_supports_browser_range_requests(self):
         movie_url = server.STATIC_GAME_PREFIX + 'flash/' + server.GAME_VERSION

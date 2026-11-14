@@ -11,7 +11,12 @@
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="form-field">
             <label for="name">{{ _('Nome do jogador') }}</label>
+            {% if empire_name_enabled | default(false) %}
+            <input id="name" name="name" type="text" autocomplete="nickname" minlength="2" maxlength="32" pattern="[\p{L}\p{N}]+" aria-describedby="name-hint" value="{{ (values | default({})).get('name', '') }}" required autofocus>
+            <span id="name-hint" class="field-hint">{{ _('Será o nome do seu império. Só letras e números, sem espaços nem símbolos.') }}</span>
+            {% else %}
             <input id="name" name="name" type="text" autocomplete="nickname" minlength="2" maxlength="60" value="{{ (values | default({})).get('name', '') }}" required autofocus>
+            {% endif %}
         </div>
         <div class="form-field">
             <label for="email">{{ _('E-mail') }}</label>

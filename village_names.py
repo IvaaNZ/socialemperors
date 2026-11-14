@@ -5,6 +5,7 @@ separate ``playerInfo.name`` identifies the player and must not be renamed.
 Callers that mutate a live village must hold the server's ``village_lock``.
 """
 
+import re
 import unicodedata
 
 import sessions
@@ -44,6 +45,22 @@ def validate_village_name(value):
         )
     if '<' in name or '>' in name:
         raise VillageNameError('Use um nome sem os símbolos < e >.')
+    return name
+
+
+def validate_player_name(value):
+    """A new account's player name, which also names its empire: letters and digits only.
+
+    No spaces, punctuation or symbols (accented letters and ñ are letters).
+    Between MIN_VILLAGE_NAME_LENGTH and MAX_VILLAGE_NAME_LENGTH characters, so it fits as a village name.
+    """
+    name = unicodedata.normalize('NFC', value if isinstance(value, str) else '').strip()
+    if not MIN_VILLAGE_NAME_LENGTH <= len(name) <= MAX_VILLAGE_NAME_LENGTH:
+        raise VillageNameError(
+            f'O nome do jogador deve ter entre {MIN_VILLAGE_NAME_LENGTH} e {MAX_VILLAGE_NAME_LENGTH} caracteres.'
+        )
+    if not re.fullmatch(r'[^\W_]+', name):
+        raise VillageNameError('O nome do jogador só pode ter letras e números, sem espaços nem símbolos.')
     return name
 
 

@@ -787,5 +787,9 @@
   "Vitória contra {name}! Você saqueou {amount} recursos com {troops} tropas.": "¡Victoria contra {name}! Saqueaste {amount} recursos con {troops} tropas.",
   "Volte para a sua vila para escolher as tropas.": "Vuelve a tu aldea para elegir las tropas.",
   "{mine}% contra {theirs}%": "{mine} % contra {theirs} %",
-  "Últimos duelos": "Últimos duelos"
+  "Últimos duelos": "Últimos duelos",
+
+  "Será o nome do seu império. Só letras e números, sem espaços nem símbolos.": "Será el nombre de tu imperio. Solo letras y números, sin espacios ni símbolos.",
+  "O nome do jogador deve ter entre 2 e 32 caracteres.": "El nombre del jugador debe tener entre 2 y 32 caracteres.",
+  "O nome do jogador só pode ter letras e números, sem espaços nem símbolos.": "El nombre del jugador solo puede tener letras y números, sin espacios ni símbolos."
 }

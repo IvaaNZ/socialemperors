@@ -43,7 +43,7 @@ from quests import get_quest_map
 from localization import LANGUAGE_FLAGS, LANGUAGE_NAMES, PLAYER_LANGUAGES
 from portal_i18n import set_portal_language, portal_language, translate as _, translations_for
 from swf_localization import localize_swf
-from village_names import rename_village, normalize_legacy_village_name, VillageNameError, MAX_VILLAGE_NAME_LENGTH
+from village_names import rename_village, normalize_legacy_village_name, validate_player_name, VillageNameError, MAX_VILLAGE_NAME_LENGTH
 from pvp import RaidService, RaidError
 from admin_villages import (AdminVillageService, AdminVillageError, AdminVillageConflict, EDITABLE_FIELDS, RESOURCE_LIMIT, CASH_LIMIT,
                             UNITS_PER_CHANGE, giveable_units, mission_state)
@@ -243,7 +243,13 @@ def ensure_village(account):
         recover_raids()
         account = accounts().get(account['id'])
         if not account['village_id']:
-            account = accounts().bind_village(account['id'], new_village())
+            village_id = new_village()
+            if EMPIRE_NAME_ENABLED:
+                try:  # the new empire is named after its player
+                    rename_village(village_id, account['name'])
+                except VillageNameError:
+                    pass  # an older account whose name is no village name keeps the default one
+            account = accounts().bind_village(account['id'], village_id)
         if account['village_id'] not in all_saves_userid():
             abort(503, description='O arquivo da sua vila não foi encontrado. Contate o administrador para restaurar o save.')
         normalize_legacy_village_name(account['village_id'])
@@ -398,9 +404,20 @@ def register():
             password = request.form.get('password', '')
             if password != request.form.get('password_confirm', ''):
                 raise AccountError('As senhas não conferem.')
+            if EMPIRE_NAME_ENABLED:
+                try:
+                    values['name'] = validate_player_name(values['name'])
+                except VillageNameError as exc:
+                    raise AccountError(str(exc)) from exc
             language = session.get('language') if session.get('language') in PLAYER_LANGUAGES else None
             accounts().create_account(values['name'], values['email'], password, language=language,
                                       status='approved' if AUTO_APPROVE else 'pending')
+            if EMPIRE_NAME_ENABLED:
+                # Whoever was signed in in this browser (an administrator, say) is signed out: the next
+                # login is the new account's, not the previous session's.
+                session.clear()
+                if language:
+                    session['language'] = language
             if AUTO_APPROVE:
                 flash('Conta criada! Já pode entrar na sua vila.', 'success')
             else:
@@ -1011,6 +1028,10 @@ ABILITIES_ENABLED = os.environ.get('SE_ABILITIES', 'off').strip().lower() in ('o
 PVP_ENABLED = os.environ.get('SE_PVP', 'off').strip().lower() in ('on', '1', 'true', 'yes')
 SOUND_FIX_ENABLED = os.environ.get('SE_SOUND_FIX', 'on').strip().lower() in ('on', '1', 'true', 'yes')
 READABLE_UI_ENABLED = os.environ.get('SE_READABLE_UI', 'on').strip().lower() in ('on', '1', 'true', 'yes')
+# New accounts: the player name is letters and digits only and names the new empire; registering signs out
+# whoever was signed in in that browser. Off: the earlier registration.
+EMPIRE_NAME_ENABLED = os.environ.get('SE_EMPIRE_NAME', 'on').strip().lower() in ('on', '1', 'true', 'yes')
+app.jinja_env.globals['empire_name_enabled'] = EMPIRE_NAME_ENABLED
 # Ruffle's renderer and quality for the game page ("default" lets Ruffle choose its renderer). With SE_ABILITIES=on
 # the quality is "high": at "16x16" Ruffle's wgpu renderer crashed building the ability effects' colour-filter
 # shader; its own WebGL renderer does not crash but draws no filters (no outlines, dotted hover highlights).

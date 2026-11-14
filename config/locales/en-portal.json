@@ -777,5 +777,9 @@
   "Vitória contra {name}! Você saqueou {amount} recursos com {troops} tropas.": "Victory against {name}! You looted {amount} resources with {troops} troops.",
   "Volte para a sua vila para escolher as tropas.": "Go back to your village to choose the troops.",
   "{mine}% contra {theirs}%": "{mine}% against {theirs}%",
-  "Últimos duelos": "Latest duels"
+  "Últimos duelos": "Latest duels",
+
+  "Será o nome do seu império. Só letras e números, sem espaços nem símbolos.": "It will be your empire's name. Letters and numbers only, no spaces or symbols.",
+  "O nome do jogador deve ter entre 2 e 32 caracteres.": "The player name must be 2 to 32 characters long.",
+  "O nome do jogador só pode ter letras e números, sem espaços nem símbolos.": "The player name can only have letters and numbers, no spaces or symbols."
 }
