@@ -8,6 +8,7 @@ from engine import apply_cost, apply_collect, apply_collect_xp, timestamp_now
 from monday_bonus import MondayBonusError, claim_monday_bonus
 from village_names import set_village_name
 from tutorial import record_tutorial_step
+from darts import DARTS_COMMANDS, DEFAULT_DART_COST, apply_darts_command, daily_darts_enabled
 
 def get_strategy_type(id):
     if id == 8:
@@ -583,7 +584,11 @@ def do_command(USERID, cmd, args):
     elif cmd == Constant.CMD_ADD_COLLECTABLE:
         collection_id = args[0]
         collectible_id = args[1]
-        # TODO 
+        # TODO
+
+    elif cmd in DARTS_COMMANDS and daily_darts_enabled():
+        dart_cost = int(get_game_config()['globals'].get('DART_COST_CASH', DEFAULT_DART_COST))
+        print("Darts:", apply_darts_command(save, cmd, args, timestamp_now(), dart_cost))
 
     else:
         print(f"Unhandled command '{cmd}' -> args", args)

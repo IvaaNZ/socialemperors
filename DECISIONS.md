@@ -292,3 +292,13 @@ Pedido del dueño: algunas estructuras no mostraban su nombre al pasar el punter
 - **Arreglo** (`swf_readable_text.py`): esa comparación usa ahora una categoría que ningún ítem tiene (-1), así que todas las estructuras muestran su nombre. Es un solo byte (el operando de la comparación), dentro del try/catch propio del juego; es el único cambio a una instrucción original de este parche.
 - Probado en el navegador: "Torre V" y "Castillo III" muestran su nombre. Con la cámara muy cerca, la tarjeta de una estructura grande cerca del borde inferior puede quedar debajo de la barra de abajo del juego (el juego la ubica al pie de la estructura).
 
+## Dardos diarios (`SE_DAILY_DARTS`, encendido)
+
+Pedido del dueño: los Dardos eran semanales y los quería diarios.
+
+- **Causa:** el tablero (25 globos y 6 premios) solo se reinicia cuando empieza una nueva entrada de `darts_items` en la configuración, y esas entradas van de semana en semana y terminan en septiembre de 2012 (la última no tiene premios: con la fecha de hoy el juego no encontraba ningún tablero). El dardo gratis ya era diario, pero solo hasta reventar todos los globos. Además, el servidor no atendía las órdenes de los dardos: los globos reventados, el dardo gratis y los **premios se perdían** al recargar.
+- **Ahora** (`darts.py`): el servidor arma `darts_items` con una entrada por día (desde 3 días atrás hasta 60 adelante) y va rotando los 32 juegos de premios originales del juego. El juego solo lee la fecha, como medianoche local del jugador, así que el tablero se renueva a la medianoche de cada jugador y la cuenta regresiva muestra lo que falta para el día siguiente. Los textos dicen "mañana" y "cada día" en vez de "la próxima semana" y "cada semana".
+- **Órdenes atendidas:** `darts_reset` (tablero nuevo con dardo gratis), `darts_new_free`, `darts_shoot_balloon` (un dardo pagado descuenta `DART_COST_CASH`, 20 de dinero) y `store_add_items` (el premio va al almacén, como `store_item`). El premio lo elige el juego, igual que el resto de las órdenes.
+- Con `SE_DAILY_DARTS=off` todo queda como antes.
+- Probado en el navegador con la copia de los datos: aparece "¡Ganaste un dardo GRATIS!"; la cuenta regresiva llega hasta la medianoche; el dardo gratis dio un Paladín alado, que quedó en el almacén; un dardo pagado descontó 20 de dinero; los globos reventados quedan guardados.
+

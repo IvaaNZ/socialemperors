@@ -24,6 +24,7 @@ else:
 
 print (" [+] Loading game config...")
 from get_game_config import get_game_config, patch_game_config
+from darts import with_daily_darts
 
 print (" [+] Loading players...")
 from get_player_info import get_player_info, get_neighbor_info
@@ -861,7 +862,7 @@ def get_game_config_response():
         spdebug = request.values['spdebug']
     language = request.values['language']
 
-    return get_game_config(game_language())
+    return with_daily_darts(get_game_config(game_language()))
 
 @app.route("/dynamic.flash1.dev.socialpoint.es/appsfb/socialempiresdev/srvempires/get_player_info.php", methods=['POST'])
 def get_player_info_response():
