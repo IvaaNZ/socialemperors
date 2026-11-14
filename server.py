@@ -49,6 +49,7 @@ from localization import LANGUAGE_FLAGS, LANGUAGE_NAMES, PLAYER_LANGUAGES
 from portal_i18n import set_portal_language, portal_language, translate as _, translations_for
 from swf_localization import localize_swf
 from village_commands import fill_map_defaults, grant_missed_level_mana, village_commands_enabled
+from seasons import apply_season, seasons_enabled
 from sessions import save_session as save_village
 from village_names import rename_village, normalize_legacy_village_name, name_default_player, validate_player_name, VillageNameError, MAX_VILLAGE_NAME_LENGTH
 from pvp import RaidService, RaidError
@@ -267,6 +268,10 @@ def ensure_village(account):
             counted = 'manaRewardLevel' in village['privateState']
             grant_missed_level_mana(village, get_game_config()['globals'])
             if fill_map_defaults(village) or not counted:  # also the map fields the market reads
+                save_village(account['village_id'])
+        if seasons_enabled():  # a new season gives the islands its weather (seasons.py)
+            village = village_session(account['village_id'])
+            if apply_season(village):
                 save_village(account['village_id'])
         return account
 

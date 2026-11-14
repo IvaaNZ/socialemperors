@@ -385,3 +385,13 @@ Grupo 4 de `Correcciones-Fixeos.txt`.
 - **`activate`** [x, y, isla, edificio, cp]: guarda en los atributos del edificio la producción elegida (`attrs.cp`, `PopupCollect`); vuelve a 0 al recolectar.
 - Probado jugando (Tuki2, copia de los datos, con piezas y tropas puestas en la partida de la copia): canjear "Misterios de la Arena" dio la Pirámide; comprar "El Viejo Cofre" con dos piezas costó 3; "Espadas" 5/5 dio 1 de dinero; al recargar todo sigue completado y sin volver a ofrecerse. Juntar una pieza de verdad y `activate` se probaron solo con pruebas automáticas.
 - "COMPLETED!" en la ventana de colecciones es un dibujo y sigue en inglés.
+
+## Estaciones de Argentina (`SE_SEASONS`, encendido)
+
+Pedido del dueño: que el clima cambie solo, con las cuatro estaciones de Argentina. El dueño eligió los climas, qué pasa con la elección del jugador y el costo (`seasons.py`).
+
+- **Fechas y climas:** verano (21 dic – 20 mar) Desierto Soleado; otoño (21 mar – 20 jun) Montañas Rocosas; invierno (21 jun – 22 sep) Llanuras Nevadas; primavera (23 sep – 20 dic) Praderas Verdes. Se usa la fecha del servidor.
+- **Cuándo cambia:** la primera vez que el jugador entra en una estación nueva, todas sus islas toman el clima de la estación (`privateState.seasonKey` recuerda la última, por ejemplo "2026-spring"). Si el jugador elige otro clima en la Máquina del clima, se queda hasta la estación siguiente.
+- **Costo:** el clima de la estación es gratis mientras dura: se marca desbloqueado y al terminar la estación se vuelve a bloquear (`seasonSkinGranted`), salvo que el jugador lo hubiera comprado antes.
+- `SE_SEASONS=off` deja el clima solo en manos del jugador. Al encenderlo, cada jugador recibe el clima de la estación actual la próxima vez que entra.
+- Probado jugando (Tuki2, copia de los datos, preparada como si hubiera entrado por última vez en invierno con la nieve regalada): al entrar en primavera la aldea pasó a Praderas Verdes y la nieve volvió a pedir desbloqueo; desbloquear y aplicar Desierto Soleado (20 de dinero) se mantuvo al recargar. Las demás estaciones y sus bordes se probaron con pruebas automáticas.
