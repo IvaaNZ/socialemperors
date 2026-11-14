@@ -131,6 +131,8 @@ class Dispatcher(unittest.TestCase):
         save = village()
         self.run_command(save, Constant.CMD_PLACE_STORED_ITEM, [3, 10, 12, 0, 0])
         self.assertEqual(save['privateState']['gifts'], [0, 0, 0, 1])
+        from get_game_config import get_attribute_from_item_id
+        self.assertEqual(save['maps'][0]['xp'], int(get_attribute_from_item_id(3, 'xp') or 0))  # as the game shows
         self.assertEqual(save['maps'][0]['items'][0][:3], [3, 10, 12])
         self.run_command(save, Constant.CMD_SELL_STORED, [3, 0])
         self.assertEqual(save['privateState']['gifts'], [])
@@ -277,3 +279,15 @@ class UnitWarehouse(unittest.TestCase):
         self.run_command(save, Constant.CMD_RESET_WAREHOUSE, [0])
         self.assertEqual(save['maps'][0]['warehousedUnits'], {})
         self.assertEqual(save['privateState']['gifts'], [0, 0, 0, 3])
+
+
+class GiftXp(unittest.TestCase):
+    def test_placing_a_gift_gives_its_xp_once(self):
+        import command
+        from get_game_config import get_attribute_from_item_id
+        save = village()
+        save['privateState']['gifts'] = [0] * 655 + [1]
+        with patch.object(command, 'session', return_value=save):
+            command.do_command('u', Constant.CMD_PLACE_GIFT, [655, 53, 58, 0, 0])
+            command.do_command('u', Constant.CMD_PLACE_GIFT, [655, 54, 58, 0, 0])  # none left: no more xp
+        self.assertEqual(save['maps'][0]['xp'], int(get_attribute_from_item_id(655, 'xp')))

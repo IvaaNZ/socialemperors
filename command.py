@@ -326,6 +326,11 @@ def do_command(USERID, cmd, args):
         gifts = save["privateState"]["gifts"]
         if item_id < len(gifts) and gifts[item_id] > 0:
             gifts[item_id] -= 1
+            # The game gives the item's xp when it is placed (Base.sendPlaceItemCmd); the level-up statue,
+            # which fills the level instead, is left to rt_publish_score.
+            if village_commands_enabled() and item_id != Constant.ID_BUILDING_LEVELUP_STATUE:
+                xp = int(get_attribute_from_item_id(item_id, "xp") or 0)
+                save["maps"][town_id]["xp"] = save["maps"][town_id].get("xp", 0) + xp
         while len(gifts) != 0 and gifts[-1] == 0: #removes excess zeros at end if necessary
             gifts.pop()
 

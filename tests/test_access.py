@@ -225,6 +225,19 @@ class AccessTests(unittest.TestCase):
                 self.assertIn(f'src="{prefix}/js/game.js"', page.text)
                 self.assertNotIn('http://', configuration['baseUrl'])
 
+    def test_the_game_sends_what_the_player_does_every_three_seconds(self):
+        self.create_player(status='approved')
+        self.login()
+
+        def push_time():
+            page = self.client.get('/play.html')
+            return json.loads(re.search(r'<script id="game-config" type="application/json">(.*?)</script>',
+                                        page.text, re.S).group(1))['pushTime']
+
+        self.assertEqual(push_time(), 3)
+        with patch.object(server, 'QUICK_SAVE_ENABLED', False):
+            self.assertIsNone(push_time())
+
     def test_the_server_picks_ruffles_renderer_and_quality(self):
         self.create_player(status='approved')
         self.login()

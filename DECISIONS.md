@@ -356,3 +356,12 @@ Grupo 1 de `Correcciones-Fixeos.txt`. El almacén de unidades (edificio 1284) gu
 - `add_unit_warehouse` [x, y, isla, tropa]: la tropa sale del mapa y entra, si hay lugar (`IsoBuilding.pushUnitToWarehause`). `place_warehoused_item` [tropa, x, y, 0, isla]: vuelve al mapa (`PopupUnitWarehouse.onUseClick`). `buy_warehouse_capacity_single` [isla]: un lugar más por `WAREHOUSE_CAPACITY_INCREASE_PRICE_SINGLE` (2) de dinero, hasta `WAREHOUSE_MAX_CAPACITY` (1000). `reset_warehouse` [isla]: al guardar el edificio, sus tropas pasan al almacén general (`Base.storeItem`). Si la tropa no está en el mapa o el almacén no la tiene, la orden se rechaza y no se duplica ni se pierde nada.
 - Textos del almacén escritos en inglés dentro del código del juego ("Buy now", "Buy 1 more slot for … cash", "USE UNIT") se traducen con la lista de `swf_abc_strings.py`; solo se usan en esa ventana. El botón "OPEN" es un dibujo de otro archivo y sigue en inglés.
 - Probado jugando (Tuki2, copia de los datos): el mapa de Tuki2 no tiene lugar libre para un edificio de 6×6, así que el almacén se agregó a la partida de la copia; meter una vaca, comprar un lugar (21, 2 de dinero), sacarla, volver a meterla, recargar (sigue adentro, capacidad 21) y guardar el almacén (la vaca y el edificio quedan en el almacén general).
+
+## Lo colocado justo antes de recargar se perdía (`SE_QUICK_SAVE`, encendido)
+
+Pedido del dueño: una tropa de "Regalos" puesta en el imperio volvía a "Regalos" al recargar.
+
+- El servidor sí guarda `place_gift`; el problema era el tiempo. El juego junta lo que hace el jugador y lo envía cada `push_time` segundos, un parámetro de la página (entre 3 y 60, `Base`); la página no lo pasaba y el juego usaba su valor propio, unos 30 segundos. Recargar antes de ese envío perdía lo último: la tropa seguía en los regalos.
+- Ahora la página pide 3 segundos, el mínimo que acepta el juego. Con la cola vacía el juego no envía nada (`CommandManager.sendCommands`), así que solo hay más pedidos cuando el jugador hace algo. `SE_QUICK_SAVE=off` deja el intervalo del juego.
+- Además, colocar un regalo suma la experiencia del ítem, como muestra el juego (antes se veía y al recargar se perdía); solo si el regalo estaba en el almacén. La estatua de nivel, que completa el nivel, queda como antes.
+- Probado jugando: colocar el Paladín alado desde el almacén llegó al servidor un segundo después y, saliendo de la página a los 4 segundos, al recargar sigue en la aldea y no en el almacén; colocar el Sacerdote celestial sumó 200 de experiencia y se mantuvo al recargar.

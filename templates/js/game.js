@@ -342,6 +342,8 @@
                     publishActions: "1",
                     friendsInfo: JSON.stringify(config.friendsInfo), serverTime: String(config.serverTime),
                     forceSyncError: "1", forceAttackReload: "0", forceQuestReload: "0",
+                    // Seconds between the game's command sends (SE_QUICK_SAVE); absent, the game's own interval.
+                    ...(config.pushTime ? { push_time: String(config.pushTime) } : {}),
                 },
             });
             applyAudio();

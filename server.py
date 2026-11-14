@@ -704,7 +704,8 @@ def play():
         if not isinstance(last_login, int) or last_login < 0:
             last_login = server_time
         return render_template("play.html", script_texts=game_script_texts(), save_info=save_info(USERID), serverTime=server_time, last_logged_in=last_login, friendsInfo=fb_friends_str(USERID), version=version_name, GAMEVERSION=GAME_VERSION, raid_revision=village_revision(USERID), game_user_key=game_session_key(USERID),
-                               webgl_renderer=RUFFLE_SETTINGS['renderer'] == 'webgl', ruffle_settings=RUFFLE_SETTINGS)
+                               webgl_renderer=RUFFLE_SETTINGS['renderer'] == 'webgl', ruffle_settings=RUFFLE_SETTINGS,
+                               push_time=QUICK_SAVE_SECONDS if QUICK_SAVE_ENABLED else None)
 
 
 @app.route('/village', methods=['GET', 'POST'])
@@ -1052,6 +1053,11 @@ READABLE_UI_ENABLED = os.environ.get('SE_READABLE_UI', 'on').strip().lower() in 
 # whoever was signed in in that browser. Off: the earlier registration.
 EMPIRE_NAME_ENABLED = os.environ.get('SE_EMPIRE_NAME', 'on').strip().lower() in ('on', '1', 'true', 'yes')
 app.jinja_env.globals['empire_name_enabled'] = EMPIRE_NAME_ENABLED
+# The game queues what the player does and sends it every push_time seconds (a page parameter, 3 to 60; missing,
+# the game's own TIMER_COMMANDS, about 30 s). Reloading before that lost it: a gift placed on the map came back
+# to the gifts. SE_QUICK_SAVE (on) asks for 3 s, the game's minimum; an empty queue sends nothing.
+QUICK_SAVE_ENABLED = os.environ.get('SE_QUICK_SAVE', 'on').strip().lower() in ('on', '1', 'true', 'yes')
+QUICK_SAVE_SECONDS = 3
 # Ruffle's renderer and quality for the game page ("default" lets Ruffle choose its renderer). With SE_ABILITIES=on
 # the quality is "high": at "16x16" Ruffle's wgpu renderer crashed building the ability effects' colour-filter
 # shader; its own WebGL renderer does not crash but draws no filters (no outlines, dotted hover highlights).
