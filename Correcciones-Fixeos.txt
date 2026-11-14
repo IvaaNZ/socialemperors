@@ -2,8 +2,8 @@ CORRECCIONES / FIXEOS PENDIENTES
 Órdenes que el juego envía y el servidor ignora: lo que hacen se pierde al recargar.
 Cada grupo se arregla, se prueba dentro del juego (copia de los datos) y se marca [HECHO].
 
-1. Almacén de unidades
-   Guardar tropas en el almacén de unidades, sacarlas y comprar más espacio.
+1. Almacén de unidades [HECHO, probado en el juego]
+   Guardar tropas en el almacén de unidades, sacarlas y comprar más espacio; antes no entraba ninguna.
    (add_unit_warehouse, place_warehoused_item, buy_warehouse_capacity_new)
 
 2. Edificios sociales (mercado, muelle, zepelín...) [HECHO, probado en el juego]
@@ -51,3 +51,8 @@ YA ARREGLADO Y PROBADO EN EL JUEGO
 - Hechizos y maná; mejorar edificios (ya funcionaba).
 - Resucitar héroes: daba error y el héroe se perdía (arreglado; falta probarlo jugando).
 - Efecto p.miniFireball2 faltante (error 404): se usa otra bola de fuego.
+- Almacén de unidades: guardar y sacar tropas, comprar lugares, guardar el edificio; textos en español.
+
+VISTO Y SIN TOCAR
+- Botón "OPEN" del almacén de unidades en inglés (es un dibujo).
+- Campamento enemigo vuelve a 101 enemigos al recargar.

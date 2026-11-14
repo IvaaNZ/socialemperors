@@ -9,9 +9,9 @@ from monday_bonus import MondayBonusError, claim_monday_bonus
 from village_names import set_village_name
 from tutorial import record_tutorial_step
 from darts import DARTS_COMMANDS, DEFAULT_DART_COST, apply_darts_command, daily_darts_enabled
-from village_commands import (SOCIAL_COMMANDS, VILLAGE_COMMANDS, VillageCommandError, apply_social_command,
-                              apply_village_command, buy_unit_with_cash, grant_level_mana, start_social_building,
-                              village_commands_enabled)
+from village_commands import (SOCIAL_COMMANDS, VILLAGE_COMMANDS, WAREHOUSE_COMMANDS, VillageCommandError,
+                              apply_social_command, apply_village_command, apply_warehouse_command, buy_unit_with_cash,
+                              grant_level_mana, start_social_building, village_commands_enabled)
 
 def get_strategy_type(id):
     if id == 8:
@@ -339,6 +339,12 @@ def do_command(USERID, cmd, args):
             print("Social building:", apply_social_command(save, cmd, args, get_game_config()))
         except (VillageCommandError, KeyError, ValueError, TypeError, IndexError) as error:
             print("Social building command rejected:", error)
+
+    elif cmd in WAREHOUSE_COMMANDS and village_commands_enabled():
+        try:
+            print("Unit warehouse:", apply_warehouse_command(save, cmd, args, get_game_config(), timestamp_now()))
+        except (VillageCommandError, KeyError, ValueError, TypeError, IndexError) as error:
+            print("Unit warehouse command rejected:", error)
 
     elif cmd in VILLAGE_COMMANDS and village_commands_enabled():
         try:

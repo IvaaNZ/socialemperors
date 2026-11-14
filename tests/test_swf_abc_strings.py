@@ -3,6 +3,7 @@
 from pathlib import Path
 import unittest
 
+from swf_abc import Abc
 from swf_abc_strings import ABC_STRING_TRANSLATIONS, localize_abc_strings, replace_abc_strings
 from swf_localization import decode_swf, iter_tags, localize_swf
 from swf_private_economy import patch_private_economy
@@ -28,14 +29,17 @@ class SwfAbcStringTests(unittest.TestCase):
     def test_lore_title_is_translated_after_the_audited_patches(self):
         for language, patched in self.patched.items():
             with self.subTest(language=language):
-                translated = abc_block(localize_abc_strings(patched, language))
+                # Exact constant-pool entries: short ones (' cash') also occur inside longer strings.
+                before = set(Abc(abc_block(patched)).strings)
+                after = set(Abc(abc_block(localize_abc_strings(patched, language))).strings)
                 for english, local in ABC_STRING_TRANSLATIONS[language].items():
-                    self.assertNotIn(english.encode('utf-8'), translated)
-                    self.assertIn(local.encode('utf-8'), translated)
+                    self.assertIn(english, before)
+                    self.assertNotIn(english, after)
+                    self.assertIn(local, after)
 
     def test_only_the_string_pool_entry_changes(self):
         source = abc_block(self.patched['es'])
-        translated = abc_block(localize_abc_strings(self.patched['es'], 'es'))
+        translated = replace_abc_strings(source, {'Gods & Colossus': 'Dioses y Colosos'})
         delta = len('Dioses y Colosos') - len('Gods & Colossus')
         self.assertEqual(len(translated), len(source) + delta)
         start = source.index(b'Gods & Colossus')

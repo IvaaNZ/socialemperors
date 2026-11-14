@@ -347,3 +347,12 @@ Pedido del dueño: probar siempre dentro del juego, arreglar lo que aparezca y l
 - **Efecto faltante:** el proyectil `P_MINI_FIREBALL` pedía `fx/p.miniFireball2.swf`, que no está entre los recursos (error 404 en cada combate); se sirve `p.fireBall_02.swf` en su lugar.
 - Para las pruebas: un clic necesita apretar y soltar con una pausa breve, y colocar desde el almacén necesita dos clics (el primero solo marca el lugar).
 
+
+## Almacén de unidades (`SE_VILLAGE_COMMANDS`)
+
+Grupo 1 de `Correcciones-Fixeos.txt`. El almacén de unidades (edificio 1284) guarda tropas por isla en `map.warehousedUnits` (`{id de tropa: cantidad}`) hasta `map.warehouseAditionalCapacitySingle` lugares (`Base.loadPlayerInfoSuccess`).
+
+- Las partidas no tenían esos dos campos: el juego leía la capacidad como NaN y ninguna tropa podía entrar. Ahora se agregan al entrar: capacidad 20 (el valor de las aldeas originales en `villages/quests`) y almacén vacío.
+- `add_unit_warehouse` [x, y, isla, tropa]: la tropa sale del mapa y entra, si hay lugar (`IsoBuilding.pushUnitToWarehause`). `place_warehoused_item` [tropa, x, y, 0, isla]: vuelve al mapa (`PopupUnitWarehouse.onUseClick`). `buy_warehouse_capacity_single` [isla]: un lugar más por `WAREHOUSE_CAPACITY_INCREASE_PRICE_SINGLE` (2) de dinero, hasta `WAREHOUSE_MAX_CAPACITY` (1000). `reset_warehouse` [isla]: al guardar el edificio, sus tropas pasan al almacén general (`Base.storeItem`). Si la tropa no está en el mapa o el almacén no la tiene, la orden se rechaza y no se duplica ni se pierde nada.
+- Textos del almacén escritos en inglés dentro del código del juego ("Buy now", "Buy 1 more slot for … cash", "USE UNIT") se traducen con la lista de `swf_abc_strings.py`; solo se usan en esa ventana. El botón "OPEN" es un dibujo de otro archivo y sigue en inglés.
+- Probado jugando (Tuki2, copia de los datos): el mapa de Tuki2 no tiene lugar libre para un edificio de 6×6, así que el almacén se agregó a la partida de la copia; meter una vaca, comprar un lugar (21, 2 de dinero), sacarla, volver a meterla, recargar (sigue adentro, capacidad 21) y guardar el almacén (la vaca y el edificio quedan en el almacén general).

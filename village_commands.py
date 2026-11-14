@@ -29,8 +29,23 @@ the same numbers the game showed:
   * place_stored_item / sell_stored_item: an item put in the storage during
     this session is placed or sold like a gift (the server keeps every stored
     item in privateState.gifts, see store_item).
+
+The unit warehouse (building 1284) keeps troops per map in map.warehousedUnits
+({unit id: count}) up to map.warehouseAditionalCapacitySingle units
+(Base.loadPlayerInfoSuccess):
+
+  * add_unit_warehouse [x, y, town, unit]: the unit leaves the map for the
+    warehouse, if there is room (IsoBuilding.pushUnitToWarehause);
+  * place_warehoused_item [unit, x, y, 0, town]: it comes back to the map
+    (PopupUnitWarehouse.onUseClick);
+  * buy_warehouse_capacity_single [town]: one more place for
+    WAREHOUSE_CAPACITY_INCREASE_PRICE_SINGLE cash, up to WAREHOUSE_MAX_CAPACITY
+    (PopupUnitWarehouse.onBuyMoreSlots);
+  * reset_warehouse [town]: the warehouse itself was stored; its units go to
+    the storage (Base.storeItem).
 """
 
+import copy
 import math
 import os
 
@@ -40,7 +55,10 @@ TRADE_RESOURCES = {'w': 'wood', 's': 'stone', 'f': 'food'}
 CASH, GOLD = 1, 0
 UNLOCK_MULTIPLIER = 1 / 3  # the game's Config.MULTIPLIER_UNLOCK
 MARKET_MAX_NUM_TRADES = 20  # the game's Config.MARKET_MAX_NUM_TRADES
-MAP_DEFAULTS = {'numTradesDone': 0, 'timestampLastTrade': 0}  # read by the game; missing, the market shows NaN
+WAREHOUSE_START_CAPACITY = 20  # map.warehouseAditionalCapacitySingle of the original villages (villages/quests)
+# Read by the game; missing, the market shows NaN and the unit warehouse has no room (capacity NaN).
+MAP_DEFAULTS = {'numTradesDone': 0, 'timestampLastTrade': 0,
+                'warehouseAditionalCapacitySingle': WAREHOUSE_START_CAPACITY, 'warehousedUnits': {}}
 
 VILLAGE_COMMANDS = (Constant.CMD_USE_MAGIC, Constant.CMD_BUY_MAGIC, Constant.CMD_BUY_MANA, Constant.CMD_TRADE_RESOURCE,
                     Constant.CMD_UNLOCK_BUILDING, Constant.CMD_INCREASE_POPULATION, Constant.CMD_PLACE_STORED_ITEM,
@@ -112,8 +130,8 @@ def fill_map_defaults(save):
     added = False
     for town in save.get('maps', []):
         for key, value in MAP_DEFAULTS.items():
-            if key not in town:
-                town[key] = value
+            if key not in town or (key == 'warehousedUnits' and town[key] == []):
+                town[key] = copy.deepcopy(value)
                 added = True
     return added
 
@@ -261,3 +279,64 @@ def buy_unit_with_cash(save, args, now, already_stored=False):
         return f"{unit.get('name')} for {cost} cash, in the storage"
     town.setdefault('items', []).append([unit_id, x, y, 0, now, 0])
     return f"{unit.get('name')} for {cost} cash at ({x},{y})"
+
+
+WAREHOUSE_COMMANDS = (Constant.CMD_ADD_UNIT_WAREHOUSE, Constant.CMD_PLACE_WAREHOUSED_ITEM,
+                      Constant.CMD_BUY_WAREHOUSE_CAPACITY_NEW, Constant.CMD_RESET_WAREHOUSE)
+
+
+def _warehouse(town):
+    units = town.get('warehousedUnits')
+    if not isinstance(units, dict):
+        units = town['warehousedUnits'] = {}
+    return units
+
+
+def _add_gift(save, item_id, count=1):
+    gifts = save['privateState'].setdefault('gifts', [])
+    while len(gifts) <= item_id:
+        gifts.append(0)
+    gifts[item_id] += count
+
+
+def apply_warehouse_command(save, cmd, args, config, now=0):
+    """Apply one unit warehouse command. Returns a short description for the log."""
+    globals_ = config.get('globals', {})
+    if cmd == Constant.CMD_ADD_UNIT_WAREHOUSE:
+        x, y, town, unit_id = int(args[0]), int(args[1]), _town(save, args[2]), int(args[3])
+        units = _warehouse(town)
+        capacity = int(town.get('warehouseAditionalCapacitySingle', WAREHOUSE_START_CAPACITY))
+        if sum(int(n) for n in units.values()) >= capacity:
+            raise VillageCommandError(f'the unit warehouse is full ({capacity})')
+        town['items'].remove(_placed_item(town, x, y, unit_id))
+        units[str(unit_id)] = int(units.get(str(unit_id), 0)) + 1
+        return f'unit {unit_id} into the warehouse ({units[str(unit_id)]} of it)'
+    if cmd == Constant.CMD_PLACE_WAREHOUSED_ITEM:
+        unit_id, x, y, town = int(args[0]), int(args[1]), int(args[2]), _town(save, args[4])
+        units = _warehouse(town)
+        if int(units.get(str(unit_id), 0)) <= 0:
+            raise VillageCommandError(f'no unit {unit_id} in the warehouse')
+        units[str(unit_id)] = int(units[str(unit_id)]) - 1
+        if units[str(unit_id)] == 0:
+            del units[str(unit_id)]
+        town.setdefault('items', []).append([unit_id, x, y, 0, now, 0])
+        return f'unit {unit_id} out of the warehouse at ({x},{y})'
+    if cmd == Constant.CMD_BUY_WAREHOUSE_CAPACITY_NEW:
+        town = _town(save, args[0])
+        capacity = int(town.get('warehouseAditionalCapacitySingle', WAREHOUSE_START_CAPACITY))
+        if capacity >= int(globals_.get('WAREHOUSE_MAX_CAPACITY', 1000)):
+            raise VillageCommandError('the unit warehouse is at its maximum')
+        cost = int(globals_.get('WAREHOUSE_CAPACITY_INCREASE_PRICE_SINGLE', 2))
+        save['playerInfo']['cash'] = max(int(save['playerInfo'].get('cash', 0)) - cost, 0)
+        town['warehouseAditionalCapacitySingle'] = capacity + 1
+        return f'warehouse capacity {capacity + 1} for {cost} cash'
+    if cmd == Constant.CMD_RESET_WAREHOUSE:
+        town = _town(save, args[0])
+        units = _warehouse(town)
+        total = 0
+        for unit_id, count in units.items():
+            _add_gift(save, int(unit_id), int(count))
+            total += int(count)
+        units.clear()
+        return f'{total} warehoused units to the storage'
+    raise VillageCommandError(f'not a unit warehouse command: {cmd}')

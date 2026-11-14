@@ -18,10 +18,15 @@ from localization import normalize_locale
 from swf_localization import decode_swf, encode_tag, iter_tags
 
 # English constant -> translation. 'Gods & Colossus' is the lore popup title
-# (GuiManager.openLore, PopupNews.onGoToStore, AdminPanel.testLore).
+# (GuiManager.openLore, PopupNews.onGoToStore, AdminPanel.testLore). The unit
+# warehouse's button and offer ('Buy now', 'Buy 1 more slot for ' + price +
+# ' cash', PopupUnitWarehouse) and its cards' 'USE UNIT' (UnitWarehouseCard) are
+# only passed to setHTML; ' cash' is pushed nowhere else.
 ABC_STRING_TRANSLATIONS = {
-    'pt-BR': {'Gods & Colossus': 'Deuses e Colossos'},
-    'es': {'Gods & Colossus': 'Dioses y Colosos'},
+    'pt-BR': {'Gods & Colossus': 'Deuses e Colossos', 'Buy now': 'Comprar',
+              'Buy 1 more slot for ': '1 espaço a mais por ', ' cash': ' de dinheiro', 'USE UNIT': 'USAR'},
+    'es': {'Gods & Colossus': 'Dioses y Colosos', 'Buy now': 'Comprar',
+           'Buy 1 more slot for ': '1 espacio más por ', ' cash': ' de dinero', 'USE UNIT': 'USAR'},
 }
 DO_ABC = 82
 

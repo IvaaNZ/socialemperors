@@ -217,3 +217,63 @@ class Dispatcher(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class UnitWarehouse(unittest.TestCase):
+    UNIT = 3  # any unit id: the warehouse keeps ids and counts
+
+    def warehouse_village(self):
+        from village_commands import fill_map_defaults
+        save = village()
+        fill_map_defaults(save)
+        save['maps'][0]['items'] = [[self.UNIT, 10, 12, 0, 0, 0], [self.UNIT, 11, 12, 0, 0, 0]]
+        return save
+
+    def run_command(self, save, cmd, args):
+        import command
+        with patch.object(command, 'session', return_value=save):
+            command.do_command('u', cmd, args)
+
+    def test_old_saves_get_the_starting_capacity_the_game_reads(self):
+        from village_commands import WAREHOUSE_START_CAPACITY
+        save = self.warehouse_village()
+        self.assertEqual(save['maps'][0]['warehouseAditionalCapacitySingle'], WAREHOUSE_START_CAPACITY)
+        self.assertEqual(save['maps'][0]['warehousedUnits'], {})
+
+    def test_units_go_in_and_come_back_out(self):
+        save = self.warehouse_village()
+        self.run_command(save, Constant.CMD_ADD_UNIT_WAREHOUSE, [10, 12, 0, self.UNIT])
+        self.run_command(save, Constant.CMD_ADD_UNIT_WAREHOUSE, [11, 12, 0, self.UNIT])
+        self.assertEqual(save['maps'][0]['items'], [])
+        self.assertEqual(save['maps'][0]['warehousedUnits'], {str(self.UNIT): 2})
+        self.run_command(save, Constant.CMD_PLACE_WAREHOUSED_ITEM, [self.UNIT, 20, 21, 0, 0])
+        self.assertEqual(save['maps'][0]['warehousedUnits'], {str(self.UNIT): 1})
+        self.assertEqual(save['maps'][0]['items'][0][:3], [self.UNIT, 20, 21])
+
+    def test_nothing_is_duplicated_or_lost(self):
+        save = self.warehouse_village()
+        self.run_command(save, Constant.CMD_ADD_UNIT_WAREHOUSE, [30, 30, 0, self.UNIT])  # no unit there
+        self.run_command(save, Constant.CMD_PLACE_WAREHOUSED_ITEM, [self.UNIT, 20, 21, 0, 0])  # none inside
+        self.assertEqual(len(save['maps'][0]['items']), 2)
+        self.assertEqual(save['maps'][0]['warehousedUnits'], {})
+        save['maps'][0]['warehouseAditionalCapacitySingle'] = 1
+        self.run_command(save, Constant.CMD_ADD_UNIT_WAREHOUSE, [10, 12, 0, self.UNIT])
+        self.run_command(save, Constant.CMD_ADD_UNIT_WAREHOUSE, [11, 12, 0, self.UNIT])  # full
+        self.assertEqual(len(save['maps'][0]['items']), 1)
+        self.assertEqual(save['maps'][0]['warehousedUnits'], {str(self.UNIT): 1})
+
+    def test_one_more_place_costs_cash_up_to_the_maximum(self):
+        save = self.warehouse_village()
+        self.run_command(save, Constant.CMD_BUY_WAREHOUSE_CAPACITY_NEW, [0])
+        self.assertEqual(save['maps'][0]['warehouseAditionalCapacitySingle'], 21)
+        self.assertEqual(save['playerInfo']['cash'], 100 - GLOBALS['WAREHOUSE_CAPACITY_INCREASE_PRICE_SINGLE'])
+        save['maps'][0]['warehouseAditionalCapacitySingle'] = GLOBALS['WAREHOUSE_MAX_CAPACITY']
+        self.run_command(save, Constant.CMD_BUY_WAREHOUSE_CAPACITY_NEW, [0])
+        self.assertEqual(save['maps'][0]['warehouseAditionalCapacitySingle'], GLOBALS['WAREHOUSE_MAX_CAPACITY'])
+
+    def test_storing_the_warehouse_moves_its_units_to_the_storage(self):
+        save = self.warehouse_village()
+        self.run_command(save, Constant.CMD_ADD_UNIT_WAREHOUSE, [10, 12, 0, self.UNIT])
+        self.run_command(save, Constant.CMD_RESET_WAREHOUSE, [0])
+        self.assertEqual(save['maps'][0]['warehousedUnits'], {})
+        self.assertEqual(save['privateState']['gifts'], [0, 0, 0, 3])
