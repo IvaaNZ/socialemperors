@@ -183,8 +183,8 @@ SE_DAY_NIGHT=off (día/noche y lluvia) y SE_SEASONS=off (estaciones).
 
 PUNTO 24. EDITOR DE MUNDO .......................................... 100 %
 -----------------------------------------------------------------------
-Una aplicación de escritorio ("Editor de mundo.bat", o python
-world_editor.py) para editar las islas de misión, la arena de duelos y las
+Una aplicación de escritorio (carpeta WorldEditor: "Editor de mundo.bat",
+con su guía "LEEME - Uso del World Editor.txt") para editar las islas de misión, la arena de duelos y las
 aldeas de los jugadores. Muestra el mapa visto desde arriba: se elige un
 objeto de la lista (en español, con buscador) y se coloca con un clic; los
 objetos del mapa se arrastran, giran (R) y borran (Supr), con deshacer

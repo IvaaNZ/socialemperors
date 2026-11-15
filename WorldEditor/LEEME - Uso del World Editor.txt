@@ -1,0 +1,93 @@
+WORLD EDITOR (EDITOR DE MUNDO) - SOCIAL EMPIRES
+================================================
+
+Sirve para editar, sin entrar al juego:
+  - las islas de misión (las del barco),
+  - la arena de duelos,
+  - las aldeas de los jugadores.
+
+
+CÓMO SE ABRE
+------------
+Doble clic en "Editor de mundo.bat" (en esta misma carpeta).
+
+No es un .exe: usa el Python del proyecto (la carpeta .venv de la carpeta
+de arriba), así que esta carpeta tiene que quedarse dentro del proyecto.
+También se puede abrir desde la carpeta del proyecto con:
+    .venv\Scripts\python WorldEditor\world_editor.py
+
+
+LA VENTANA
+----------
+  Izquierda ... qué se edita. Tres pestañas:
+                  Islas  : todas las islas de misión. Las que dicen "(nueva)"
+                           el juego las conoce pero no tienen mapa: empiezan
+                           vacías.
+                  Arena  : la arena donde se pelean los duelos.
+                  Aldeas : las aldeas de los jugadores. Abajo se elige cuál de
+                           sus islas editar.
+                Doble clic (o el botón "Abrir") para abrir.
+  Centro ...... el mapa de 100 x 100 casillas, visto desde arriba (el juego lo
+                muestra en perspectiva). Los edificios y decoraciones son
+                bloques de su tamaño; las unidades, círculos rojos.
+  Derecha ..... la lista de objetos para colocar, con buscador y filtro
+                (Todos / Edificios / Unidades), y los datos del objeto
+                seleccionado.
+  Abajo ....... la casilla y el objeto que hay bajo el ratón.
+
+
+CÓMO SE EDITA
+-------------
+  Colocar ........ elegir un objeto en la lista de la derecha y hacer clic en
+                   el mapa. Sigue elegido para colocar más.
+                   Esc o botón derecho: dejar de colocar.
+  Seleccionar .... clic sobre un objeto del mapa (queda con borde amarillo;
+                   si pisa otro objeto, el borde es rojo).
+  Mover .......... arrastrar el objeto seleccionado.
+  Girar .......... tecla R (o el botón "Girar").
+  Borrar ......... tecla Supr (o el botón "Borrar").
+  Deshacer ....... Ctrl+Z (hasta 100 pasos).
+  Guardar ........ Ctrl+S (o el botón "Guardar").
+  Nombre ......... escribir arriba y "Cambiar nombre" (nombre de la isla o
+                   del imperio).
+  Zoom ........... Ctrl + rueda del ratón, o "Acercar +" / "Alejar -".
+                   La rueda sola mueve el mapa arriba y abajo; Mayús + rueda,
+                   a los lados.
+
+El título de arriba muestra un * cuando hay cambios sin guardar. Si se abre
+otra cosa o se cierra la ventana con cambios, pregunta si guardarlos.
+
+
+CUÁNDO SE VE EL CAMBIO EN EL JUEGO
+----------------------------------
+  Islas ..... en la próxima batalla de esa isla. No hace falta reiniciar.
+  Arena ..... hay que reiniciar el servidor.
+  Aldeas .... SOLO SE GUARDAN CON EL SERVIDOR APAGADO. Con el servidor
+              prendido las aldeas están en su memoria y pisaría el cambio:
+              el editor avisa y no guarda. Apagar el servidor, guardar y
+              volver a prenderlo.
+
+
+COPIAS DE RESPALDO
+------------------
+La primera vez que se guarda un archivo, se deja al lado una copia del
+original con la fecha y hora:
+    100000006.json.bak-20261114-222854
+Para volver atrás: borrar el archivo editado y quitarle a la copia la parte
+".bak-..." del nombre. Las copias no se suben a git.
+
+Dónde están los archivos:
+  Islas ..... villages\quests\<número de isla>.json
+  Arena ..... config\duels\arena.json
+  Aldeas .... saves\<id>.save.json  (o la carpeta configurada en el servidor)
+
+
+A TENER EN CUENTA
+-----------------
+  - Las islas "(nueva)" se pueden crear, pero el barco del juego no tiene
+    botón para ir a ellas: todavía no se pueden jugar.
+  - Las islas originales tienen palmeras, calaveras y muros encimados a
+    propósito; el juego lo acepta.
+  - Una isla sin unidades enemigas no tiene contra quién pelear.
+  - Conviene probar los cambios en una copia antes de tocar las aldeas de
+    jugadores reales.

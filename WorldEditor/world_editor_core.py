@@ -1,4 +1,4 @@
-"""World Editor (point 24 of block E): what the desktop app does, without the window (world_editor.py).
+"""World Editor (point 24 of block E): what the desktop app does, without the window (WorldEditor/world_editor.py).
 
 The owner asked for a desktop app to edit mission islands (including the 12 the game lists without a map), the
 duel arena and players' villages. All three are the game's village format: privateState, playerInfo and the map
@@ -15,10 +15,13 @@ import copy
 import json
 import os
 import socket
+import sys
 import time
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parent.parent  # the project: this file lives in its WorldEditor folder
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))  # the game's config and texts are read with the server's own modules
 QUESTS_DIR = ROOT / 'villages' / 'quests'
 ARENA_FILE = ROOT / 'config' / 'duels' / 'arena.json'
 # The players' saves: the same folder the server uses (SOCIAL_EMPIRES_SAVES_DIR or SOCIAL_EMPIRES_DATA_DIR/saves).

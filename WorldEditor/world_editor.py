@@ -1,6 +1,6 @@
 """World Editor: desktop window to edit mission islands, the duel arena and players' villages.
 
-Run it with:  python world_editor.py   (Windows: .venv\\Scripts\\python world_editor.py)
+Run it with "Editor de mundo.bat" (this folder) or, from the project:  python WorldEditor/world_editor.py
 Only Python's own tkinter is used. The map is drawn seen from above (the game shows it in perspective): one square
 per tile, buildings as coloured blocks of their size, units as circles. The logic lives in world_editor_core.py.
 

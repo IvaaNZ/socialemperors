@@ -1,11 +1,13 @@
 import json
 import shutil
+import sys
 import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-import world_editor_core as core
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / 'WorldEditor'))
+import world_editor_core as core  # noqa: E402
 
 CATALOG = {1: {'type': 'b', 'width': '2', 'height': '2', 'label': 'Casa I'},
            2: {'type': 'b', 'width': '3', 'height': '1', 'label': 'Muro'},
