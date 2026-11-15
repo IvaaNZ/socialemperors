@@ -717,7 +717,8 @@ def play():
             last_login = server_time
         return render_template("play.html", script_texts=game_script_texts(), save_info=save_info(USERID), serverTime=server_time, last_logged_in=last_login, friendsInfo=fb_friends_str(USERID), version=version_name, GAMEVERSION=GAME_VERSION, raid_revision=village_revision(USERID), game_user_key=game_session_key(USERID),
                                webgl_renderer=RUFFLE_SETTINGS['renderer'] == 'webgl', ruffle_settings=RUFFLE_SETTINGS,
-                               push_time=QUICK_SAVE_SECONDS if QUICK_SAVE_ENABLED else None, sound_hint=SOUND_FIX_ENABLED)
+                               push_time=QUICK_SAVE_SECONDS if QUICK_SAVE_ENABLED else None, sound_hint=SOUND_FIX_ENABLED,
+                               day_night=DAY_NIGHT_ENABLED)
 
 
 @app.route('/village', methods=['GET', 'POST'])
@@ -861,6 +862,9 @@ def localized_game_movie(language=None):
     if SOUND_FIX_ENABLED:  # the game's music and sound buttons keep their choice after a reload
         from swf_sound_settings import fix_sound_settings
         translated = fix_sound_settings(translated)
+    if DAY_NIGHT_ENABLED:  # the page tints the map by the hour (day and night)
+        from swf_daylight import add_daylight
+        translated = add_daylight(translated)
     if READABLE_UI_ENABLED:  # white lettering with a black outline; no "x0" units in the team window
         from swf_readable_text import make_text_readable
         translated = make_text_readable(translated)
@@ -1067,6 +1071,8 @@ AUTO_APPROVE = os.environ.get('SE_AUTO_APPROVE', 'on').strip().lower() in ('on',
 ABILITIES_ENABLED = os.environ.get('SE_ABILITIES', 'off').strip().lower() in ('on', '1', 'true', 'yes')
 PVP_ENABLED = os.environ.get('SE_PVP', 'off').strip().lower() in ('on', '1', 'true', 'yes')
 SOUND_FIX_ENABLED = os.environ.get('SE_SOUND_FIX', 'on').strip().lower() in ('on', '1', 'true', 'yes')
+# Point 23: the village darkens at night by Argentina's hour, with rain or snow by season (swf_daylight.py, game.js).
+DAY_NIGHT_ENABLED = os.environ.get('SE_DAY_NIGHT', 'on').strip().lower() in ('on', '1', 'true', 'yes')
 READABLE_UI_ENABLED = os.environ.get('SE_READABLE_UI', 'on').strip().lower() in ('on', '1', 'true', 'yes')
 # New accounts: the player name is letters and digits only and names the new empire; registering signs out
 # whoever was signed in in that browser. Off: the earlier registration.

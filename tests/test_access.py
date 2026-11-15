@@ -249,6 +249,8 @@ class AccessTests(unittest.TestCase):
 
         text, configuration = game_page()
         self.assertTrue(configuration['soundHint'])
+        self.assertTrue(configuration['dayNight'])  # SE_DAY_NIGHT: the page tints the village by the hour
+        self.assertIn('id="weather-layer"', text)
         self.assertIn('id="sound-hint"', text)
         with patch.object(server, 'SOUND_FIX_ENABLED', False):
             self.assertFalse(game_page()[1]['soundHint'])

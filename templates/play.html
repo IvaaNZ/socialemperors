@@ -19,6 +19,7 @@
         'raidRevision': raid_revision | default(''),
         'pushTime': push_time | default(none),
         'soundHint': sound_hint | default(false),
+        'dayNight': day_night | default(false),
         'eventsUrl': url_for('village_events'),
         'texts': script_texts | default({}),
         'webglRenderer': webgl_renderer | default(false),
@@ -83,6 +84,7 @@
             <div class="game-stage">
                 <div id="game-player" class="game-player"></div>
                 <p id="sound-hint" class="sound-hint" role="status" hidden></p>
+                <canvas id="weather-layer" class="weather-layer" aria-hidden="true" hidden></canvas>
                 <div id="game-loading" class="game-loading" role="status" aria-live="polite">
                     <img src="{{ url_for('images', path='knight.png') }}" width="52" height="64" alt="">
                     <h2 id="loading-title">{{ _('Preparando sua vila') }}</h2>

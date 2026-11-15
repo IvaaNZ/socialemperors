@@ -56,6 +56,8 @@ a.secondary-button { display: flex; align-items: center; justify-content: center
 .game-player { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: min(100%, calc(100cqh * 760 / 600)); height: min(100%, calc(100cqw * 600 / 760)); }
 .sound-hint { position: absolute; top: 42%; left: 50%; z-index: 3; transform: translateX(-50%); margin: 0; padding: 10px 18px; border-radius: 999px; background: #1f2b17e6; color: #fff; font-size: 16px; font-weight: 600; text-align: center; box-shadow: 0 4px 16px #0006; pointer-events: none; max-width: calc(100% - 32px); }
 .sound-hint[hidden] { display: none; }
+.weather-layer { position: absolute; left: 0; top: 0; z-index: 2; pointer-events: none; }
+.weather-layer[hidden] { display: none; }
 .game-loading { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: safe center; overflow: auto; padding: 28px; background: #edf1e6; text-align: center; }
 .game-loading img { width: auto; height: 64px; object-fit: contain; margin-bottom: 16px; image-rendering: auto; }
 .game-loading h2 { font-family: Georgia, "Times New Roman", serif; font-weight: 500; font-size: 25px; margin: 0 0 12px; }

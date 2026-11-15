@@ -33,6 +33,7 @@
     const controlsPanel = document.getElementById("controls-panel");
     const villageUpdate = document.getElementById("village-update");
     const soundHint = document.getElementById("sound-hint");
+    const weatherLayer = document.getElementById("weather-layer");
     const preferenceKey = "socialempires.player";
     let player;
     let loadingTimer;
@@ -139,6 +140,141 @@
         };
         container.addEventListener("pointerdown", hide, true);
         document.addEventListener("keydown", hide, true);
+    }
+
+    // Point 23 (SE_DAY_NIGHT): the village follows Argentina's hour. The game tints only its map layer
+    // (Base.__setDayLight, swf_daylight.py); rain or snow falls now and then by season, drawn over the game.
+    // ?hora=22.5 and ?clima=lluvia|nieve|despejado on the page's address show a given hour or weather.
+    const ARGENTINA = "America/Argentina/Buenos_Aires";
+    const NIGHT = [0.5, 0.55, 0.78];
+    const DUSK = [0.95, 0.72, 0.62];
+    const pageParams = new URLSearchParams(location.search);
+
+    function argentinaNow() {
+        const parts = Object.fromEntries(new Intl.DateTimeFormat("en-GB", {
+            timeZone: ARGENTINA, year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "numeric",
+            hourCycle: "h23",
+        }).formatToParts(new Date()).map(part => [part.type, Number(part.value)]));
+        const forced = Number.parseFloat(pageParams.get("hora"));
+        const hour = Number.isFinite(forced) ? forced : parts.hour + parts.minute / 60;
+        return { hour: ((hour % 24) + 24) % 24, month: parts.month, day: parts.day, year: parts.year };
+    }
+
+    const mix = (from, to, amount) => from.map((value, index) => value + (to[index] - value) * amount);
+
+    function lightAt(hour) {
+        const day = [1, 1, 1];
+        if (hour < 5.5 || hour >= 20.5) return NIGHT;
+        if (hour < 6.5) return mix(NIGHT, DUSK, hour - 5.5);          // dawn
+        if (hour < 7.5) return mix(DUSK, day, hour - 6.5);
+        if (hour < 18.5) return day;
+        if (hour < 19.5) return mix(day, DUSK, hour - 18.5);          // dusk
+        return mix(DUSK, NIGHT, hour - 19.5);
+    }
+
+    // Argentina's seasons (seasons.py): summer from 21 Dec, autumn 21 Mar, winter 21 Jun, spring 23 Sep.
+    function seasonOf(month, day) {
+        const date = month * 100 + day;
+        if (date >= 1221 || date < 321) return "summer";
+        if (date < 621) return "autumn";
+        if (date < 923) return "winter";
+        return "spring";
+    }
+
+    const WEATHER_CHANCE = { summer: ["rain", 0.06], autumn: ["rain", 0.3], winter: ["snow", 0.35], spring: ["rain", 0.15] };
+
+    function weatherNow(clock) {
+        const forced = pageParams.get("clima");
+        if (forced === "lluvia") return "rain";
+        if (forced === "nieve") return "snow";
+        if (forced === "despejado") return "";
+        const [kind, chance] = WEATHER_CHANCE[seasonOf(clock.month, clock.day)];
+        // The same for every player in the same hour: a small hash of the date and the hour.
+        let hash = clock.year * 1000003 + clock.month * 10007 + clock.day * 101 + Math.floor(clock.hour);
+        hash = Math.imul(hash ^ (hash >>> 15), 2246822507) >>> 0;
+        hash = Math.imul(hash ^ (hash >>> 13), 3266489909) >>> 0;
+        return (hash % 1000) / 1000 < chance ? kind : "";
+    }
+
+    let weatherKind = "";
+    let particles = [];
+    let weatherFrame = 0;
+
+    function drawWeather() {
+        weatherFrame = 0;
+        if (!weatherKind || !weatherLayer) return;
+        // Only over the game itself: the stage is wider than the movie in the expanded and fullscreen views.
+        const stage = weatherLayer.parentElement.getBoundingClientRect();
+        const box = container.getBoundingClientRect();
+        weatherLayer.style.left = `${box.left - stage.left}px`;
+        weatherLayer.style.top = `${box.top - stage.top}px`;
+        weatherLayer.style.width = `${box.width}px`;
+        weatherLayer.style.height = `${box.height}px`;
+        const width = Math.max(1, Math.round(box.width));
+        const height = Math.max(1, Math.round(box.height));
+        if (weatherLayer.width !== width || weatherLayer.height !== height) {
+            weatherLayer.width = width;
+            weatherLayer.height = height;
+        }
+        const context = weatherLayer.getContext("2d");
+        context.clearRect(0, 0, width, height);
+        const snow = weatherKind === "snow";
+        const count = snow ? 110 : 160;
+        while (particles.length < count) {
+            particles.push({ x: Math.random(), y: Math.random(), speed: 0.5 + Math.random(), size: 0.5 + Math.random() });
+        }
+        context.strokeStyle = "rgba(200, 220, 255, 0.6)";
+        context.fillStyle = "rgba(255, 255, 255, 0.85)";
+        context.lineWidth = 1.5;
+        for (const drop of particles) {
+            if (snow) {
+                drop.y += 0.0012 * drop.speed;
+                drop.x += 0.0004 * Math.sin(drop.y * 20 + drop.size * 6);
+                context.beginPath();
+                context.arc(drop.x * width, drop.y * height, 1.2 + drop.size * 1.6, 0, Math.PI * 2);
+                context.fill();
+            } else {
+                drop.y += 0.018 * drop.speed;
+                drop.x += 0.003 * drop.speed;
+                context.beginPath();
+                context.moveTo(drop.x * width, drop.y * height);
+                context.lineTo((drop.x - 0.004) * width, drop.y * height - 10 - drop.size * 8);
+                context.stroke();
+            }
+            if (drop.y > 1.05 || drop.x > 1.05 || drop.x < -0.05) {
+                drop.y = -0.05;
+                drop.x = Math.random();
+            }
+        }
+        weatherFrame = requestAnimationFrame(drawWeather);
+    }
+
+    function setWeather(kind) {
+        if (!weatherLayer || kind === weatherKind) return;
+        weatherKind = kind;
+        particles = [];
+        weatherLayer.hidden = !kind;
+        if (weatherFrame) cancelAnimationFrame(weatherFrame);
+        weatherFrame = 0;
+        if (kind) weatherFrame = requestAnimationFrame(drawWeather);
+    }
+
+    function updateDayNight() {
+        const clock = argentinaNow();
+        const [red, green, blue] = lightAt(clock.hour);
+        try {
+            if (player && typeof player.seSetDayLight === "function") player.seSetDayLight(red, green, blue);
+        } catch (error) {
+            // the game is still loading or changing maps: the next round tints it
+        }
+        const quiet = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        setWeather(quiet ? "" : weatherNow(clock));
+    }
+
+    function startDayNight() {
+        if (!config.dayNight) return;
+        updateDayNight();
+        setInterval(updateDayNight, 10000);  // also tints a map loaded meanwhile (an attack, the way back home)
     }
 
     function setExpanded(value) {
@@ -314,6 +450,7 @@
             const ruffle = window.RufflePlayer.newest();
             player = ruffle.createPlayer();
             showSoundHint();
+            startDayNight();
             player.setAttribute("aria-label", "Social Empires");
             container.appendChild(player);
             player.addEventListener("loadedmetadata", applyAudio, { once: true });
@@ -338,7 +475,7 @@
                 backgroundColor: "#669C2C",
                 // Only with duels or clans on: the duel page opens the tournament arena (Base.__startDuel)
                 // and the game's "Clan" button opens the clan window (window.seOpenClan).
-                allowScriptAccess: Boolean(document.getElementById("duel-config") || document.getElementById("clan-overlay-config")
+                allowScriptAccess: Boolean(config.dayNight || document.getElementById("duel-config") || document.getElementById("clan-overlay-config")
                     || document.getElementById("pvp-overlay-config")),
                 allowFullscreen: true,
                 splashScreen: false,

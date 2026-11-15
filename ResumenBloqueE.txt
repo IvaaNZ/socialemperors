@@ -172,9 +172,18 @@ En los saqueos solo cuentan las elegidas; en los duelos van a la arena.
 El reto dura 90 s para dar tiempo a elegir. Detalle en DECISIONS.md.
 
 
+PUNTO 23. CLIMA Y CICLO DÍA/NOCHE .................................. 100 %
+-----------------------------------------------------------------------
+La aldea sigue la hora real de Argentina: se oscurece de noche, con amanecer
+y atardecer graduales, sin tocar el HUD ni las ventanas. El clima cambia con
+las estaciones (verano desierto, otoño montañas, invierno nieve, primavera
+praderas) y cada tanto llueve o nieva según la estación. Se apaga con
+SE_DAY_NIGHT=off (día/noche y lluvia) y SE_SEASONS=off (estaciones).
+
+
 PUNTOS QUE SIGUEN
 -----------------
-  23. Clima y ciclo día/noche ........................................... 0 %
+  23. Clima y ciclo día/noche ......................................... 100 %
   24. Editor de mundo ................................................... 0 %
   25. Pase de temporada gratuito ........................................ 0 %
   26. Mejorar el HUD .................................................... 0 %
