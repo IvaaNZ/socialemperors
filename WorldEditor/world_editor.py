@@ -1,6 +1,6 @@
 """World Editor: desktop window to edit mission islands, the duel arena and players' villages.
 
-Run it with "World Editor.exe" or "Editor de mundo.bat" (this folder) or, from the project:
+Run it with "WorldEditor.exe" or "Editor de mundo.bat" (this folder) or, from the project:
 python WorldEditor/world_editor.py. The logic lives in world_editor_core.py and the game's pictures in sprites.py.
 
 Two views of the map:

@@ -19,7 +19,7 @@ import sys
 import time
 from pathlib import Path
 
-# The project: this file (or "World Editor.exe") lives in its WorldEditor folder.
+# The project: this file (or "WorldEditor.exe") lives in its WorldEditor folder.
 FROZEN = bool(getattr(sys, 'frozen', False))
 ROOT = (Path(sys.executable) if FROZEN else Path(__file__)).resolve().parent.parent
 if str(ROOT) not in sys.path:

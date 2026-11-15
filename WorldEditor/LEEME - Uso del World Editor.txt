@@ -9,7 +9,7 @@ Sirve para editar, sin entrar al juego:
 
 CÓMO SE ABRE
 ------------
-Doble clic en "World Editor.exe" (en esta misma carpeta).
+Doble clic en "WorldEditor.exe" (en esta misma carpeta).
 
 El .exe no trae adentro las islas ni las partidas: trabaja sobre los archivos
 del proyecto, que busca en la carpeta de arriba. Por eso esta carpeta tiene que
