@@ -8,6 +8,7 @@ from engine import apply_cost, apply_collect, apply_collect_xp, timestamp_now
 from monday_bonus import MondayBonusError, claim_monday_bonus
 from village_names import set_village_name
 from tutorial import record_tutorial_step
+from world import WORLD_COMMANDS, WorldError, apply_world_command, world_explorer_enabled
 from darts import DARTS_COMMANDS, DEFAULT_DART_COST, apply_darts_command, daily_darts_enabled
 from village_commands import (COLLECTION_COMMANDS, MAP_QUEST_COMMANDS, SOCIAL_COMMANDS, VILLAGE_COMMANDS, WAREHOUSE_COMMANDS, VillageCommandError,
                               apply_collection_command, apply_map_quest_command, apply_social_command, apply_village_command, apply_warehouse_command, buy_unit_with_cash, chosen_production_multiplier,
@@ -644,6 +645,12 @@ def do_command(USERID, cmd, args):
             print("Monday bonus:", claim_monday_bonus(save, args, timestamp_now()))
         except MondayBonusError as error:
             print("Monday bonus rejected:", error)
+
+    elif cmd in WORLD_COMMANDS and world_explorer_enabled():
+        try:
+            print("World explorer:", apply_world_command(USERID, save, cmd, args, get_game_config(), timestamp_now()))
+        except (WorldError, KeyError, ValueError, TypeError, IndexError) as error:
+            print("World explorer command rejected:", error)
 
     elif cmd in MAP_QUEST_COMMANDS and village_commands_enabled():
         try:

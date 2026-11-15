@@ -50,6 +50,7 @@ from portal_i18n import set_portal_language, portal_language, translate as _, tr
 from swf_localization import localize_swf
 from village_commands import fill_map_defaults, grant_missed_level_mana, village_commands_enabled
 from seasons import apply_season, seasons_enabled
+import world
 from sessions import save_session as save_village
 from village_names import rename_village, normalize_legacy_village_name, name_default_player, validate_player_name, VillageNameError, MAX_VILLAGE_NAME_LENGTH
 from pvp import RaidService, RaidError
@@ -212,6 +213,9 @@ def eligible_village_ids():
             if account['status'] == 'approved' and account['village_id']}
 
 
+world.set_eligible(lambda: eligible_village_ids())
+
+
 def raid_tokens():
     return URLSafeTimedSerializer(app.secret_key, salt='socialemperors-raids')
 
@@ -268,6 +272,9 @@ def ensure_village(account):
             counted = 'manaRewardLevel' in village['privateState']
             grant_missed_level_mana(village, get_game_config()['globals'])
             if fill_map_defaults(village) or not counted:  # also the map fields the market reads
+                save_village(account['village_id'])
+        if world.world_explorer_enabled():  # the explorer's fields the game reads at load (world.py)
+            if world.prepare_world(village_session(account['village_id'])):
                 save_village(account['village_id'])
         if seasons_enabled():  # a new season gives the islands its weather (seasons.py)
             village = village_session(account['village_id'])
@@ -917,7 +924,8 @@ def get_player_info_response():
     neighbors = request.values['neighbors'] if 'neighbors' in request.values else None
     client_id = request.values['client_id']
     user = request.values['user'] if 'user' in request.values else None
-    map = int(request.values['map']) if 'map' in request.values else None
+    map = request.values.get('map')
+    map = int(map) if map not in (None, '', 'null', 'undefined') else None  # an explorer rival without 'map'
 
     with village_lock:
         recover_raids()
@@ -1005,7 +1013,13 @@ def get_continent_ranking_response():
     town_id = request.values['map']
     user_key = request.values['user_key']
 
-    # TODO - stub
+    if world.world_explorer_enabled():
+        with village_lock:
+            validate_game_key(USERID)
+            response = world.continent(USERID, request.values.get('level_id'), request.values.get('relocate') == '1')
+            save_village(USERID)
+        return response
+    # SE_WORLD_EXPLORER=off: the earlier fixed continent
     response = {
         "world_id": 0,
         "continent": [

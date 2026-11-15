@@ -22,7 +22,7 @@ Cada grupo se arregla, se prueba dentro del juego (copia de los datos) y se marc
    Progreso de misiones con jefes, tesoros, ayudas de recolección y recursos de aliados.
    (set_quest_var, collect_treasure, perform_city_quest, accept_collect_help, set_resource_allies)
 
-6. Exploración y ataques
+6. Exploración y ataques [HECHO, probado en el juego]
    Atacar y espiar en el mapa del mundo, resultados, packs de ataques y territorios.
    (attack_player, end_attack, spy, clean_attacks, buy_attacks_pack, buy_spyings_pack,
     pvp_buy_territory, modify/reset_position_universe, reset_island_change, apply_rewards_ranking)
@@ -59,8 +59,11 @@ YA ARREGLADO Y PROBADO EN EL JUEGO
 - Recolectar no reiniciaba el tiempo de los edificios (recargar = todo listo otra vez); molinos y minas dan lo elegido.
 - Mercado de aliados preguntaba nada y mostraba dinero; ayudas de amigos no vuelven al recargar.
 - Aviso "Toca el juego para activar el sonido" durante la carga.
+- Explorador del mundo contra jugadores reales: islas, ataques, conquista, historial de batallas.
 
 VISTO Y SIN TOCAR
 - Botón "OPEN" del almacén de unidades y "COMPLETED!" de colecciones en inglés (son dibujos).
 - Campamento enemigo: las misiones 0 a 6 (campamentos trolls) se recrean en cada carga por diseño del juego;
   ahora al terminarlas se avanza y aparece la cuenta regresiva.
+- El aviso de ayuda del Explorador aparece cada vez (set_help_map, grupo 10).
+- Botones "PROFILE" y "ATTACK" del Explorador en inglés (son dibujos).
