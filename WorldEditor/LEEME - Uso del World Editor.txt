@@ -9,7 +9,8 @@ Sirve para editar, sin entrar al juego:
 
 CÓMO SE ABRE
 ------------
-Doble clic en "WorldEditor.exe" (en esta misma carpeta).
+Doble clic en "WorldEditor.exe" (en esta misma carpeta, con el ícono del
+castillo; Windows lo muestra como "WorldEditor", tipo Aplicación).
 
 El .exe no trae adentro las islas ni las partidas: trabaja sobre los archivos
 del proyecto, que busca en la carpeta de arriba. Por eso esta carpeta tiene que
@@ -65,7 +66,12 @@ CÓMO SE EDITA
                    una copia transparente con su base marcada (verde si el
                    lugar está libre, roja si pisa otro objeto). Clic en el
                    mapa para dejarlo. Sigue elegido para colocar más.
-                   Esc o botón derecho: dejar de colocar.
+                   Esc o un clic derecho (sin arrastrar): dejar de colocar.
+  Mover el mapa .. mantener el clic presionado sobre una zona vacía y arrastrar.
+                   También con el botón derecho o la rueda presionados, en
+                   cualquier lugar (sirve mientras se colocan objetos).
+  Zoom ........... rueda del ratón: acerca o aleja hacia donde apunta el
+                   cursor. También "Acercar +" / "Alejar -".
   Seleccionar .... clic sobre el dibujo de un objeto (queda con su base marcada
                    en amarillo; en rojo si pisa otro objeto).
   Mover .......... arrastrar el objeto seleccionado.
@@ -76,9 +82,7 @@ CÓMO SE EDITA
   Nombre ......... escribir arriba y "Cambiar nombre" (nombre de la isla o
                    del imperio).
   Cambiar vista .. tecla V, o "Vista del juego" / "Vista de plano" arriba.
-  Zoom ........... Ctrl + rueda del ratón, o "Acercar +" / "Alejar -".
-                   La rueda sola mueve el mapa arriba y abajo; Mayús + rueda,
-                   a los lados.
+  Mapa a los lados  Mayús + rueda del ratón.
 
 El título de arriba muestra un * cuando hay cambios sin guardar. Si se abre
 otra cosa o se cierra la ventana con cambios, pregunta si guardarlos.

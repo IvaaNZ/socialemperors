@@ -13,7 +13,9 @@ Mouse and keys:
   * choose an object in the list on the right and click the map to place it (a see-through copy follows the
     mouse; it stays chosen to place more; Esc or the right button stops placing);
   * click an object on the map to select it and drag it to move it;
-  * R turns it, Supr deletes it, Ctrl+Z undoes, Ctrl+S saves, the wheel scrolls and Ctrl+wheel zooms;
+  * holding the click on empty ground (or the wheel or right button anywhere) moves the map; the wheel zooms
+    towards the mouse;
+  * R turns it, Supr deletes it, Ctrl+Z undoes, Ctrl+S saves;
   * V switches between the game view and the plan view.
 """
 
@@ -58,6 +60,7 @@ class Editor(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title('Editor de mundo - Social Empires')
+        self._set_icon()
         self.minsize(1000, 600)
         self.geometry(f'{min(1360, self.winfo_screenwidth() - 40)}x{min(860, self.winfo_screenheight() - 100)}+10+10')
         try:
@@ -68,6 +71,7 @@ class Editor(tk.Tk):
         self.selected = None
         self.placing = None
         self.dragging = None
+        self.panning = None  # (start x, start y, moved) while the map is dragged
         self.view = 'game' if sprites else 'plan'
         self.zooms = {'plan': 2, 'game': 2}
         self.catalog = core.load_catalog()
@@ -199,12 +203,15 @@ class Editor(tk.Tk):
         c.bind('<Button-1>', self.on_press)
         c.bind('<B1-Motion>', self.on_drag)
         c.bind('<ButtonRelease-1>', self.on_release)
-        c.bind('<Button-3>', lambda e: self.stop_placing())
+        for button in ('2', '3'):  # the wheel or the right button held down: always move the map
+            c.bind(f'<Button-{button}>', self.on_pan_press)
+            c.bind(f'<B{button}-Motion>', self.on_pan_drag)
+            c.bind(f'<ButtonRelease-{button}>', self.on_pan_release)
         c.bind('<Motion>', self.on_motion)
         c.bind('<Leave>', lambda e: c.delete('ghost'))
-        c.bind('<MouseWheel>', self.on_wheel)
+        c.bind('<MouseWheel>', self.on_wheel)  # zoom towards the mouse
+        c.bind('<Control-MouseWheel>', self.on_wheel)
         c.bind('<Shift-MouseWheel>', lambda e: c.xview_scroll(-1 if e.delta > 0 else 1, 'units'))
-        c.bind('<Control-MouseWheel>', lambda e: self.change_zoom(1 if e.delta > 0 else -1))
         self.bind('<Control-z>', lambda e: self.undo())
         self.bind('<Control-s>', lambda e: self.save())
         self.bind('<Escape>', lambda e: self.stop_placing())
@@ -428,14 +435,23 @@ class Editor(tk.Tk):
         self._draw()
         self._show_tile(*centre)
 
-    def change_zoom(self, step):
+    def change_zoom(self, step, event=None):
+        """Zoom in (step > 0) or out; with a mouse event, the point under the mouse stays under it."""
         zooms = GAME_ZOOMS if self.view == 'game' else PLAN_ZOOMS
         index = max(0, min(len(zooms) - 1, self.zooms[self.view] + step))
-        if index != self.zooms[self.view]:
-            centre = self._centre_tile()
-            self.zooms[self.view] = index
-            self._draw()
-            self._show_tile(*centre)
+        if index == self.zooms[self.view]:
+            return
+        c = self.canvas
+        if event is None:
+            screen_x, screen_y = c.winfo_width() / 2, c.winfo_height() / 2
+        else:
+            screen_x, screen_y = event.x, event.y
+        point = self._world_at(c.canvasx(screen_x), c.canvasy(screen_y))
+        self.zooms[self.view] = index
+        self._draw()
+        self._keep_under(point, screen_x, screen_y)
+        if event is not None:
+            self.on_motion(event)
 
     # ------------------------------------------------------------------ coordinates
     @property
@@ -453,6 +469,23 @@ class Editor(tk.Tk):
         if self.view == 'game':
             return core.iso_tile(canvas_x / self.scale, canvas_y / self.scale)
         return int(canvas_x // self.scale), int(canvas_y // self.scale)
+
+    def _world_at(self, canvas_x, canvas_y):
+        """Fractional tile position of a canvas point."""
+        if self.view == 'game':
+            across = canvas_x / self.scale / core.HALF_WIDTH - core.MAP_SIZE
+            down = canvas_y / self.scale / core.HALF_HEIGHT
+            return (across + down) / 2, (down - across) / 2
+        return canvas_x / self.scale, canvas_y / self.scale
+
+    def _keep_under(self, point, screen_x, screen_y):
+        """Scroll so the (fractional) tile position is at that spot of the canvas widget."""
+        c = self.canvas
+        c.update_idletasks()
+        width, height = self._size()
+        px, py = self._to_canvas(*point)
+        c.xview_moveto(max(0.0, (px - screen_x) / width))
+        c.yview_moveto(max(0.0, (py - screen_y) / height))
 
     def _tile(self, event):
         return self._tile_at(self.canvas.canvasx(event.x), self.canvas.canvasy(event.y))
@@ -517,9 +550,14 @@ class Editor(tk.Tk):
             item = self.doc.items[self.selected]
             self.dragging = (x - int(item[1]), y - int(item[2]), int(item[1]), int(item[2]))
             self._show_preview(item[0])
+        else:  # empty ground: holding the click moves the map
+            self._start_pan(event)
         self._draw()
 
     def on_drag(self, event):
+        if self.panning is not None:
+            self.on_pan_drag(event)
+            return
         if self.dragging is None or self.selected is None:
             return
         x, y = self._tile(event)
@@ -531,6 +569,9 @@ class Editor(tk.Tk):
             self._draw()
 
     def on_release(self, event):
+        if self.panning is not None:
+            self.on_pan_release(event)
+            return
         if self.dragging is None or self.selected is None:
             self.dragging = None
             return
@@ -561,7 +602,39 @@ class Editor(tk.Tk):
         self.status['text'] = text
 
     def on_wheel(self, event):
-        self.canvas.yview_scroll(-1 if event.delta > 0 else 1, 'units')
+        self.change_zoom(1 if event.delta > 0 else -1, event)
+
+    def _start_pan(self, event):
+        self.panning = (event.x, event.y, False)
+        self.canvas.scan_mark(event.x, event.y)
+
+    def on_pan_press(self, event):
+        if self.doc:
+            self._start_pan(event)
+
+    def on_pan_drag(self, event):
+        if self.panning is None:
+            return
+        start_x, start_y, moved = self.panning
+        if moved or abs(event.x - start_x) + abs(event.y - start_y) > 3:
+            if not moved:
+                self.canvas.configure(cursor='fleur')
+            self.panning = (start_x, start_y, True)
+            self.canvas.scan_dragto(event.x, event.y, gain=1)
+
+    def on_pan_release(self, event):
+        moved = self.panning is not None and self.panning[2]
+        self.panning = None
+        self.canvas.configure(cursor='')
+        if not moved and event.num == 3:  # a right click without moving stops placing
+            self.stop_placing()
+
+    def _set_icon(self):
+        """The game's castle as the window's icon (the .exe carries the same picture as its file icon)."""
+        try:
+            self.iconbitmap(default=str(core.ROOT / 'WorldEditor' / 'castillo.ico'))
+        except tk.TclError:
+            pass
 
     # ------------------------------------------------------------------ drawing
     def _base_polygon(self, item):
