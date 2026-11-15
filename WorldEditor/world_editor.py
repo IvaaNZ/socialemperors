@@ -476,5 +476,17 @@ class Editor(tk.Tk):
             self.destroy()
 
 
+def main():
+    try:
+        app = Editor()
+    except Exception as error:  # the .exe has no console: say what went wrong in a window
+        root = tk.Tk()
+        root.withdraw()
+        messagebox.showerror('World Editor', f'No se pudo abrir el editor:\n\n{error}')
+        root.destroy()
+        return
+    app.mainloop()
+
+
 if __name__ == '__main__':
-    Editor().mainloop()
+    main()

@@ -9,12 +9,20 @@ Sirve para editar, sin entrar al juego:
 
 CÓMO SE ABRE
 ------------
-Doble clic en "Editor de mundo.bat" (en esta misma carpeta).
+Doble clic en "World Editor.exe" (en esta misma carpeta).
 
-No es un .exe: usa el Python del proyecto (la carpeta .venv de la carpeta
-de arriba), así que esta carpeta tiene que quedarse dentro del proyecto.
-También se puede abrir desde la carpeta del proyecto con:
-    .venv\Scripts\python WorldEditor\world_editor.py
+El .exe no trae adentro las islas ni las partidas: trabaja sobre los archivos
+del proyecto, que busca en la carpeta de arriba. Por eso esta carpeta tiene que
+quedarse dentro del proyecto (E:\socialemperors\WorldEditor). Si se mueve el
+.exe a otro lado, avisa que no encuentra el proyecto. Para tenerlo en el
+escritorio, crear un acceso directo (clic derecho > Enviar a > Escritorio).
+
+Otras formas de abrirlo:
+  - "Editor de mundo.bat": lo abre con el Python del proyecto, sin el .exe.
+  - Desde la carpeta del proyecto: .venv\Scripts\python WorldEditor\world_editor.py
+
+Si se cambia el código del editor, volver a crear el .exe con doble clic en
+"Crear exe.bat" (tarda menos de un minuto). El .exe no se sube a git.
 
 
 LA VENTANA

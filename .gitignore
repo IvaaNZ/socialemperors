@@ -16,3 +16,4 @@ instance/
 .env
 .impeccable/review/
 *.bak-*
+WorldEditor/*.exe

@@ -19,7 +19,9 @@ import sys
 import time
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent  # the project: this file lives in its WorldEditor folder
+# The project: this file (or "World Editor.exe") lives in its WorldEditor folder.
+FROZEN = bool(getattr(sys, 'frozen', False))
+ROOT = (Path(sys.executable) if FROZEN else Path(__file__)).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))  # the game's config and texts are read with the server's own modules
 QUESTS_DIR = ROOT / 'villages' / 'quests'
@@ -284,7 +286,15 @@ def load_catalog():
     """{item id: config entry} of every item, with its Spanish name when the game has one."""
     import contextlib
     import io
+    if not (ROOT / 'config' / 'game_config_20120826.json').exists():
+        raise EditorError(f'No se encontró el proyecto del juego en {ROOT}. '
+                          'El World Editor tiene que estar en la carpeta WorldEditor del proyecto.')
     os.chdir(ROOT)  # the game config is read from paths relative to the project
+    if FROZEN:  # inside the .exe, bundle.py would point at the .exe's temporary folder: use the project's
+        import bundle
+        bundle.CONFIG_DIR = str(ROOT / 'config')
+        bundle.CONFIG_PATCH_DIR = str(ROOT / 'config' / 'patch')
+        bundle.MODS_DIR = str(ROOT / 'mods')
     with contextlib.redirect_stdout(io.StringIO()):
         from get_game_config import get_game_config
         config = get_game_config()
