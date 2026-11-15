@@ -454,3 +454,37 @@ class CollectTimer(unittest.TestCase):
             with patch.object(command, 'session', return_value=save):
                 command.do_command('u', Constant.CMD_COLLECT, [10, 10, 0, mill, 1, 1, 0])
             self.assertEqual(save['maps'][0]['food'], food)
+
+
+class QuestStars(unittest.TestCase):
+    def run_command(self, save, cmd, args):
+        import command
+        with patch.object(command, 'session', return_value=save):
+            command.do_command('u', cmd, args)
+
+    @staticmethod
+    def result(win, difficulty, quest='100000041'):
+        import json
+        return json.dumps({'map': 0, 'resources': {'g': 0, 'x': 0}, 'units': [], 'win': win, 'duration': 60,
+                           'voluntary_end': 0, 'quest_id': quest, 'difficulty': difficulty})
+
+    def test_winning_an_island_unlocks_its_next_star_and_keeps_the_best(self):
+        save = village()
+        save['privateState']['unlockedQuestIndex'] = 0
+        save['privateState']['questsRank'] = '{}'  # how new villages store it
+        self.run_command(save, Constant.CMD_END_QUEST, [self.result(1, 1)])
+        self.assertEqual(save['privateState']['questsRank'], {'100000041': 1})
+        self.run_command(save, Constant.CMD_END_QUEST, [self.result(0, 2)])  # a defeat changes nothing
+        self.run_command(save, Constant.CMD_END_QUEST, [self.result(1, 3)])
+        self.run_command(save, Constant.CMD_END_QUEST, [self.result(1, 1)])  # the best stays
+        self.assertEqual(save['privateState']['questsRank'], {'100000041': 3})
+
+    def test_only_a_win_opens_the_next_island_of_the_route(self):
+        save = village()
+        save['privateState']['unlockedQuestIndex'] = 0
+        self.run_command(save, Constant.CMD_END_QUEST, [self.result(0, 1, quest='100000006')])
+        self.assertEqual(save['privateState']['unlockedQuestIndex'], 0)  # a defeat opens nothing
+        self.run_command(save, Constant.CMD_END_QUEST, [self.result(1, 1, quest='100000006')])
+        self.assertEqual(save['privateState']['unlockedQuestIndex'], 3)  # island 2 of the route, the next is 3
+        self.run_command(save, Constant.CMD_END_QUEST, [self.result(1, 1, quest='100000003')])
+        self.assertEqual(save['privateState']['unlockedQuestIndex'], 3)  # an earlier island does not go back

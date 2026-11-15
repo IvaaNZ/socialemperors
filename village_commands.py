@@ -613,3 +613,47 @@ def chosen_production_multiplier(town, x, y, item_id, config):
             choice = int(attrs.get('cp') or 0)
             return COLLECT_MULTIPLIER[choice - 1] if 1 <= choice <= len(COLLECT_MULTIPLIER) else 1
     return 1
+
+
+# Mission difficulty (PopupLoadingQuest.setDifficulty): 1 to 3 stars, chosen before sailing. The game offers 2 stars
+# once the island was won with 1, and 3 once won with 2, from privateState.questsRank[island id]. The server never
+# kept it, so every island stayed at 1 star.
+MAX_QUEST_STARS = 3
+
+
+def record_quest_rank(save, quest_id, difficulty):
+    """An island won at `difficulty` stars: keep the best (the next star unlocks). Returns the island's rank."""
+    state = save['privateState']
+    ranks = state.get('questsRank')
+    if isinstance(ranks, str):  # new villages store it as the text '{}'
+        try:
+            ranks = json.loads(ranks)
+        except ValueError:
+            ranks = {}
+    if not isinstance(ranks, dict):
+        ranks = {}
+    stars = max(1, min(int(difficulty or 1), MAX_QUEST_STARS))
+    key = str(int(quest_id))
+    ranks[key] = max(int(ranks.get(key, 0)), stars)
+    state['questsRank'] = ranks
+    return ranks[key]
+
+
+# The adventure route (PopupQuestsManager.goToIsland): unlockedQuestIndex is the position of the next island the
+# player may sail to. The server used to store the island's id + 1 there (100000007 after any end_quest, even a
+# defeat), which opened every island at once.
+QUEST_ROUTE = ('100000003', '100000002', '100000006', '100000007', '100000008', '100000012', '100000021',
+               '100000022', '100000028', '100000011', '100000013', '100000014', '100000019', '100000020',
+               '100000018', '100000015', '100000023', '100000033', '100000041', '100000042', '100000043',
+               '100000044', '100000045', '100000046', '100000047', '100000090', '100000091', '100000092')
+
+
+def unlock_next_island(save, quest_id):
+    """A won island opens the next one on the route. Returns the unlocked index."""
+    state = save['privateState']
+    current = int(state.get('unlockedQuestIndex') or 0)
+    key = str(int(quest_id))
+    if key in QUEST_ROUTE:
+        current = max(current, QUEST_ROUTE.index(key) + 1)
+    state['unlockedQuestIndex'] = current
+    return current

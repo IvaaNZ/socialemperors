@@ -12,7 +12,7 @@ from world import WORLD_COMMANDS, WorldError, apply_world_command, world_explore
 from darts import DARTS_COMMANDS, DEFAULT_DART_COST, apply_darts_command, daily_darts_enabled
 from village_commands import (COLLECTION_COMMANDS, MAP_QUEST_COMMANDS, SOCIAL_COMMANDS, VILLAGE_COMMANDS, WAREHOUSE_COMMANDS, VillageCommandError,
                               apply_collection_command, apply_map_quest_command, apply_social_command, apply_village_command, apply_warehouse_command, buy_unit_with_cash, chosen_production_multiplier,
-                              grant_level_mana, record_obtained_unit, start_social_building, village_commands_enabled)
+                              grant_level_mana, record_obtained_unit, record_quest_rank, unlock_next_island, start_social_building, village_commands_enabled)
 
 def get_strategy_type(id):
     if id == 8:
@@ -633,8 +633,12 @@ def do_command(USERID, cmd, args):
         save["maps"][town_id]["xp"] += int(xp_gained)
 
         # Update quests data
-        save["privateState"]["unlockedQuestIndex"] = max(quest_id + 1, save["privateState"]["unlockedQuestIndex"], 0)
-        # save["privateState"]["questsRank"] = TODO 
+        if village_commands_enabled():
+            if win:  # the next island on the route, and the next star of this one
+                unlock_next_island(save, quest_id)
+                record_quest_rank(save, quest_id, difficulty)
+        else:
+            save["privateState"]["unlockedQuestIndex"] = max(quest_id + 1, int(save["privateState"]["unlockedQuestIndex"]), 0)
         # save["maps"]["questTimes"] [quest_id] = TODO min (... , duration_sec)
         # save["maps"]["lastQuestTimes"] [quest_id] = TODO min (... , duration_sec)
 
