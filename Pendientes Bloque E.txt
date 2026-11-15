@@ -1,0 +1,20 @@
+PENDIENTES DEL BLOQUE E
+Órdenes del juego que el servidor todavía ignora: lo que hacen se pierde al recargar.
+(Los grupos 1 a 6 ya están hechos; detalle en Correcciones-Fixeos.txt y DECISIONS.md.)
+
+7. Supervivencia
+   Empezar y terminar una partida, comprar vidas y mapas.
+   (survival_start, survival_end, survival_buy_life, survival_buy_map)
+
+8. Máquina del tiempo
+   Comprar y usar viajes en el tiempo.
+   (time_machine_buy, time_machine_use, add_items_store)
+
+9. Torneos
+   Cobrar y devolver los recursos de inscripción.
+   (tournament_substract_resources, tournament_refund_resources)
+
+10. Varios
+   Bono de regreso, estatua de oro, asedio pesado, huevo de fénix, venta desde edificios,
+   razas/islas, packs de ofertas, templo de Bahamut, contrataciones de dragones,
+   ayudas entre vecinos, avisos ya vistos (la ayuda del Explorador aparece cada vez).
