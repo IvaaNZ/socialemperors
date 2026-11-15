@@ -181,10 +181,22 @@ praderas) y cada tanto llueve o nieva según la estación. Se apaga con
 SE_DAY_NIGHT=off (día/noche y lluvia) y SE_SEASONS=off (estaciones).
 
 
+PUNTO 24. EDITOR DE MUNDO .......................................... 100 %
+-----------------------------------------------------------------------
+Una aplicación de escritorio ("Editor de mundo.bat", o python
+world_editor.py) para editar las islas de misión, la arena de duelos y las
+aldeas de los jugadores. Muestra el mapa visto desde arriba: se elige un
+objeto de la lista (en español, con buscador) y se coloca con un clic; los
+objetos del mapa se arrastran, giran (R) y borran (Supr), con deshacer
+(Ctrl+Z). Al guardar deja una copia de respaldo del archivo. Las islas
+cambian en la próxima batalla; la arena, al reiniciar el servidor; las
+aldeas solo se guardan con el servidor apagado. Detalle en DECISIONS.md.
+
+
 PUNTOS QUE SIGUEN
 -----------------
   23. Clima y ciclo día/noche ......................................... 100 %
-  24. Editor de mundo ................................................... 0 %
+  24. Editor de mundo ................................................. 100 %
   25. Pase de temporada gratuito ........................................ 0 %
   26. Mejorar el HUD .................................................... 0 %
   27. Mejorar la IA de combate .......................................... 0 %
