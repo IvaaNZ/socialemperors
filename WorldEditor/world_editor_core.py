@@ -309,3 +309,49 @@ def load_catalog():
         entry['label'] = spanish.get(entry.get('name'), entry.get('name'))
         catalog[int(entry['id'])] = entry
     return catalog
+
+
+# --- the game's perspective (Base.addElement): a tile is 108 x 54 pixels and tile (x, y) has its top corner at
+# screen (54 * (x - y), 27 * (x + y)). The editor shifts x by the map width so the whole map is on positive pixels.
+HALF_WIDTH, HALF_HEIGHT = 54, 27
+
+
+def iso_point(x, y):
+    """Screen pixel (at scale 1) of the top corner of tile (x, y); fractions give points inside a tile."""
+    return HALF_WIDTH * (x - y + MAP_SIZE), HALF_HEIGHT * (x + y)
+
+
+def iso_tile(px, py):
+    """Tile (x, y) under a screen pixel (at scale 1)."""
+    across = px / HALF_WIDTH - MAP_SIZE  # x - y
+    down = py / HALF_HEIGHT  # x + y
+    return int((across + down) // 2), int((down - across) // 2)
+
+
+def iso_footprint(item, catalog):
+    """The four corners (top, right, bottom, left) of an item's base on screen, at scale 1."""
+    width, height = footprint(item, catalog)
+    x, y = int(item[1]), int(item[2])
+    return iso_point(x, y), iso_point(x + width, y), iso_point(x + width, y + height), iso_point(x, y + height)
+
+
+def depth_order(items, catalog):
+    """Indexes in drawing order for the perspective view: farther (smaller x + y of the base's bottom) first,
+    and among equals, buildings before units."""
+    def key(index):
+        item = items[index]
+        width, height = footprint(item, catalog)
+        unit = (catalog.get(int(item[0])) or {}).get('type') == 'u'
+        bottom = int(item[1]) + int(item[2]) + (1 if unit else width + height)
+        return bottom, unit, index
+    return sorted(range(len(items)), key=key)
+
+
+def island_area(items, catalog, margin=3):
+    """(x0, y0, x1, y1) of the land to draw: what the items use, at least the centre of the map."""
+    x0, y0, x1, y1 = 30, 30, 70, 70
+    for item in items:
+        width, height = footprint(item, catalog)
+        x0, y0 = min(x0, int(item[1]) - margin), min(y0, int(item[2]) - margin)
+        x1, y1 = max(x1, int(item[1]) + width + margin), max(y1, int(item[2]) + height + margin)
+    return max(0, x0), max(0, y0), min(MAP_SIZE, x1), min(MAP_SIZE, y1)

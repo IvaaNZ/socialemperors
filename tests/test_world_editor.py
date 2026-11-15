@@ -105,6 +105,20 @@ class WorldEditor(unittest.TestCase):
         self.assertEqual(core.item_at([house, troll], CATALOG, 11, 11), 0)
         self.assertIsNone(core.item_at([house], CATALOG, 12, 12))
 
+    def test_the_perspective_view_follows_the_games_tiles(self):
+        self.assertEqual(core.iso_point(0, 0), (54 * core.MAP_SIZE, 0))
+        self.assertEqual(core.iso_point(1, 0)[0] - core.iso_point(0, 0)[0], 54)  # +x goes right and down
+        self.assertEqual(core.iso_point(0, 1)[1], 27)
+        for tile in ((0, 0), (10, 3), (57, 81), (99, 99)):
+            px, py = core.iso_point(tile[0] + 0.5, tile[1] + 0.5)  # the centre of the tile
+            self.assertEqual(core.iso_tile(px, py), tile)
+        house, troll, far = [1, 10, 10, 0, 0], [9, 11, 11, 0, 0], [1, 2, 2, 0, 0]
+        self.assertEqual(core.depth_order([house, troll, far], CATALOG), [2, 1, 0])
+        top, right, bottom, left = core.iso_footprint(house, CATALOG)
+        self.assertEqual((top, bottom), (core.iso_point(10, 10), core.iso_point(12, 12)))
+        self.assertEqual(core.island_area([], CATALOG), (30, 30, 70, 70))
+        self.assertEqual(core.island_area([[1, 1, 90, 0, 0]], CATALOG, margin=0), (1, 30, 70, 92))
+
     def test_the_real_catalog_has_sizes_and_spanish_names(self):
         catalog = core.load_catalog()
         self.assertEqual(catalog[1]['label'], 'Casa I')

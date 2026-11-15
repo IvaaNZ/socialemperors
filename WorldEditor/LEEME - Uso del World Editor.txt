@@ -23,10 +23,21 @@ Otras formas de abrirlo:
 
 Si se cambia el código del editor, volver a crear el .exe con doble clic en
 "Crear exe.bat" (tarda menos de un minuto). El .exe no se sube a git.
+"Editor de mundo.bat" y "Crear exe.bat" necesitan Pillow en el .venv del
+proyecto (ya está instalado); el .exe lo lleva adentro.
 
 
 LA VENTANA
 ----------
+  Arriba ...... el nombre de lo que se edita y dos vistas del mapa:
+                  Vista del juego : el mapa en perspectiva, como en el juego,
+                                    con los dibujos reales de los edificios,
+                                    decoraciones y unidades.
+                  Vista de plano  : el mapa visto desde arriba, una casilla por
+                                    cuadradito y cada objeto como un bloque de
+                                    color de su tamaño. Sirve para ver bien las
+                                    posiciones exactas.
+                La tecla V cambia de una vista a la otra.
   Izquierda ... qué se edita. Tres pestañas:
                   Islas  : todas las islas de misión. Las que dicen "(nueva)"
                            el juego las conoce pero no tienen mapa: empiezan
@@ -35,29 +46,36 @@ LA VENTANA
                   Aldeas : las aldeas de los jugadores. Abajo se elige cuál de
                            sus islas editar.
                 Doble clic (o el botón "Abrir") para abrir.
-  Centro ...... el mapa de 100 x 100 casillas, visto desde arriba (el juego lo
-                muestra en perspectiva). Los edificios y decoraciones son
-                bloques de su tamaño; las unidades, círculos rojos.
+  Centro ...... el mapa (agua alrededor de la isla, arena con sus casillas).
   Derecha ..... la lista de objetos para colocar, con buscador y filtro
-                (Todos / Edificios / Unidades), y los datos del objeto
-                seleccionado.
+                (Todos / Edificios / Unidades). Al elegir uno se ve su imagen
+                en el cuadro de vista previa. Más abajo, los datos del objeto
+                seleccionado en el mapa.
   Abajo ....... la casilla y el objeto que hay bajo el ratón.
+
+La primera vez que aparece cada objeto, el editor saca su dibujo de los
+archivos del juego y lo guarda en la carpeta "imagenes" (al lado del .exe):
+las siguientes veces abre al instante. Esa carpeta se puede borrar sin
+problema; se vuelve a crear sola.
 
 
 CÓMO SE EDITA
 -------------
-  Colocar ........ elegir un objeto en la lista de la derecha y hacer clic en
-                   el mapa. Sigue elegido para colocar más.
+  Colocar ........ elegir un objeto en la lista de la derecha: sigue al ratón
+                   una copia transparente con su base marcada (verde si el
+                   lugar está libre, roja si pisa otro objeto). Clic en el
+                   mapa para dejarlo. Sigue elegido para colocar más.
                    Esc o botón derecho: dejar de colocar.
-  Seleccionar .... clic sobre un objeto del mapa (queda con borde amarillo;
-                   si pisa otro objeto, el borde es rojo).
+  Seleccionar .... clic sobre el dibujo de un objeto (queda con su base marcada
+                   en amarillo; en rojo si pisa otro objeto).
   Mover .......... arrastrar el objeto seleccionado.
-  Girar .......... tecla R (o el botón "Girar").
+  Girar .......... tecla R (o el botón "Girar"): el dibujo se da vuelta.
   Borrar ......... tecla Supr (o el botón "Borrar").
   Deshacer ....... Ctrl+Z (hasta 100 pasos).
   Guardar ........ Ctrl+S (o el botón "Guardar").
   Nombre ......... escribir arriba y "Cambiar nombre" (nombre de la isla o
                    del imperio).
+  Cambiar vista .. tecla V, o "Vista del juego" / "Vista de plano" arriba.
   Zoom ........... Ctrl + rueda del ratón, o "Acercar +" / "Alejar -".
                    La rueda sola mueve el mapa arriba y abajo; Mayús + rueda,
                    a los lados.
