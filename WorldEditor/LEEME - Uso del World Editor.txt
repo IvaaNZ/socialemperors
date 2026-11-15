@@ -47,7 +47,16 @@ LA VENTANA
                   Aldeas : las aldeas de los jugadores. Abajo se elige cuál de
                            sus islas editar.
                 Doble clic (o el botón "Abrir") para abrir.
-  Centro ...... el mapa (agua alrededor de la isla, arena con sus casillas).
+  Centro ...... el mapa, con el suelo del juego:
+                  Aldeas y arena : el mapa tiene 25 zonas de 20 x 20 casillas
+                           (separadas por líneas punteadas). Las zonas
+                           compradas se ven con el terreno del mapa (pradera,
+                           desierto, hielo, mar, mineral, selva o nubes) y el
+                           resto, con el color de fondo de ese terreno.
+                  Islas de misión: arena en medio del mar.
+                Abajo a la derecha dice qué terreno es y cuántas zonas tiene
+                compradas. No tiene barras de desplazamiento: se mueve
+                arrastrando (ver "Mover el mapa").
   Derecha ..... la lista de objetos para colocar, con buscador y filtro
                 (Todos / Edificios / Unidades). Al elegir uno se ve su imagen
                 en el cuadro de vista previa. Más abajo, los datos del objeto
@@ -65,13 +74,15 @@ CÓMO SE EDITA
   Colocar ........ elegir un objeto en la lista de la derecha: sigue al ratón
                    una copia transparente con su base marcada (verde si el
                    lugar está libre, roja si pisa otro objeto). Clic en el
-                   mapa para dejarlo. Sigue elegido para colocar más.
+                   mapa para dejarlo: la casilla del clic es la de más abajo
+                   de su base (así ubica el juego los objetos). Sigue elegido
+                   para colocar más.
                    Esc o un clic derecho (sin arrastrar): dejar de colocar.
   Mover el mapa .. mantener el clic presionado sobre una zona vacía y arrastrar.
                    También con el botón derecho o la rueda presionados, en
                    cualquier lugar (sirve mientras se colocan objetos).
-  Zoom ........... rueda del ratón: acerca o aleja hacia donde apunta el
-                   cursor. También "Acercar +" / "Alejar -".
+  Zoom ........... rueda del ratón: acerca o aleja de a poco (suave) hacia
+                   donde apunta el cursor. También "Acercar +" / "Alejar -".
   Seleccionar .... clic sobre el dibujo de un objeto (queda con su base marcada
                    en amarillo; en rojo si pisa otro objeto).
   Mover .......... arrastrar el objeto seleccionado.

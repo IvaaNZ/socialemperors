@@ -7,14 +7,16 @@ Two views of the map:
   * the game view (default): the game's perspective (tiles in a diamond, 108 x 54 pixels), with the real pictures
     of buildings and units taken from the game's sprites, farther objects drawn first;
   * the plan view: seen from above, one square per tile, coloured blocks of each object's size.
-The list of objects shows a preview of the chosen one.
+The ground is the game's: villages and the arena show their skin's terrain on the zones they own and its colour
+elsewhere, with the 25 zones outlined; mission islands are sand in the sea. The list of objects shows a preview
+of the chosen one.
 
 Mouse and keys:
   * choose an object in the list on the right and click the map to place it (a see-through copy follows the
     mouse; it stays chosen to place more; Esc or the right button stops placing);
   * click an object on the map to select it and drag it to move it;
   * holding the click on empty ground (or the wheel or right button anywhere) moves the map; the wheel zooms
-    towards the mouse;
+    smoothly towards the mouse (there are no scroll bars);
   * R turns it, Supr deletes it, Ctrl+Z undoes, Ctrl+S saves;
   * V switches between the game view and the plan view.
 """
@@ -32,8 +34,11 @@ try:
 except ImportError:  # without Pillow the editor still works, with the plan view only
     sprites = None
 
-PLAN_ZOOMS = (4, 6, 8, 12, 16, 24)  # pixels per tile
-GAME_ZOOMS = (0.15, 0.22, 0.3, 0.4, 0.55, 0.75, 1.0)  # scale of the game's pictures
+ZOOM_LIMITS = {'plan': (3.0, 32.0), 'game': (0.12, 1.2)}  # pixels per tile / scale of the game's pictures
+ZOOM_START = {'plan': 8.0, 'game': 0.3}
+ZOOM_STEP = 1.12  # each notch of the wheel: 12 % closer or farther, for a smooth zoom
+SEA = '#2e94e6'  # Config.BG_SKIN_COLORS of the sea: the water around mission islands
+SHORE = '#1f6fb8'
 UNIT_COLOUR = '#d64541'
 OVERLAP_COLOUR = '#ff2020'
 SELECTED_COLOUR = '#ffd700'
@@ -73,7 +78,11 @@ class Editor(tk.Tk):
         self.dragging = None
         self.panning = None  # (start x, start y, moved) while the map is dragged
         self.view = 'game' if sprites else 'plan'
-        self.zooms = {'plan': 2, 'game': 2}
+        self.zooms = dict(ZOOM_START)
+        self.zoom_steps = 0  # wheel notches waiting to be drawn (fast spins are drawn once)
+        self.zoom_event = None
+        self.zoom_job = None
+        self.terrain_colours = {}
         self.catalog = core.load_catalog()
         self.catalog_rows = []
         self.library = sprites.Library(core.ROOT, core.ROOT / 'WorldEditor' / 'imagenes') if sprites else None
@@ -146,12 +155,7 @@ class Editor(tk.Tk):
         # centre: the map
         centre = ttk.Frame(body)
         body.add(centre, weight=1)
-        self.canvas = tk.Canvas(centre, background=WATER, highlightthickness=0)
-        xbar = ttk.Scrollbar(centre, orient='horizontal', command=self.canvas.xview)
-        ybar = ttk.Scrollbar(centre, orient='vertical', command=self.canvas.yview)
-        self.canvas.configure(xscrollcommand=xbar.set, yscrollcommand=ybar.set)
-        ybar.pack(side='right', fill='y')
-        xbar.pack(side='bottom', fill='x')
+        self.canvas = tk.Canvas(centre, background=WATER, highlightthickness=0)  # moved by dragging: no bars
         self.canvas.pack(fill='both', expand=True)
 
         # right: objects, the preview and the selection
@@ -292,8 +296,7 @@ class Editor(tk.Tk):
         """Screen point (scale 1) the item's picture stands on."""
         if self._is_unit(item_id):
             return core.iso_point(x + 0.5, y + 0.5)
-        width, height = core.footprint([item_id, x, y, orientation], self.catalog)
-        return core.iso_point(x + width, y + height)
+        return core.iso_point(x + 1, y + 1)  # x, y is the last tile of the base (Base.setOccupiedGrid)
 
     def _show_preview(self, item_id):
         entry = self.catalog.get(int(item_id)) or {}
@@ -436,10 +439,11 @@ class Editor(tk.Tk):
         self._show_tile(*centre)
 
     def change_zoom(self, step, event=None):
-        """Zoom in (step > 0) or out; with a mouse event, the point under the mouse stays under it."""
-        zooms = GAME_ZOOMS if self.view == 'game' else PLAN_ZOOMS
-        index = max(0, min(len(zooms) - 1, self.zooms[self.view] + step))
-        if index == self.zooms[self.view]:
+        """Zoom in (step > 0) or out by ZOOM_STEP per step; with a mouse event, the point under the mouse
+        stays under it."""
+        low, high = ZOOM_LIMITS[self.view]
+        index = max(low, min(high, self.zooms[self.view] * ZOOM_STEP ** step))
+        if abs(index - self.zooms[self.view]) < 1e-9:
             return
         c = self.canvas
         if event is None:
@@ -456,7 +460,7 @@ class Editor(tk.Tk):
     # ------------------------------------------------------------------ coordinates
     @property
     def scale(self):
-        return GAME_ZOOMS[self.zooms['game']] if self.view == 'game' else PLAN_ZOOMS[self.zooms['plan']]
+        return self.zooms[self.view]
 
     def _to_canvas(self, tile_x, tile_y):
         """Canvas point of a (fractional) tile position."""
@@ -602,7 +606,17 @@ class Editor(tk.Tk):
         self.status['text'] = text
 
     def on_wheel(self, event):
-        self.change_zoom(1 if event.delta > 0 else -1, event)
+        """Notches that arrive together are drawn once, so a fast spin stays smooth."""
+        self.zoom_steps += max(1, abs(event.delta) // 120) * (1 if event.delta > 0 else -1)
+        self.zoom_event = event
+        if self.zoom_job is None:
+            self.zoom_job = self.after(15, self._apply_zoom)
+
+    def _apply_zoom(self):
+        steps, event = self.zoom_steps, self.zoom_event
+        self.zoom_steps, self.zoom_job = 0, None
+        if steps:
+            self.change_zoom(steps, event)
 
     def _start_pan(self, event):
         self.panning = (event.x, event.y, False)
@@ -641,8 +655,8 @@ class Editor(tk.Tk):
         if self.view == 'game':
             return [value * self.scale for point in core.iso_footprint(item, self.catalog) for value in point]
         width, height = core.footprint(item, self.catalog)
-        x0, y0 = int(item[1]) * self.scale, int(item[2]) * self.scale
-        x1, y1 = x0 + width * self.scale, y0 + height * self.scale
+        x0, y0 = (int(item[1]) - width + 1) * self.scale, (int(item[2]) - height + 1) * self.scale
+        x1, y1 = (int(item[1]) + 1) * self.scale, (int(item[2]) + 1) * self.scale
         return [x0, y0, x1, y0, x1, y1, x0, y1]
 
     def _draw_ghost(self, x, y):
@@ -665,6 +679,8 @@ class Editor(tk.Tk):
         c = self.canvas
         c.delete('all')
         self.hits = {}
+        scale = self.scale
+        self.pictures = {key: value for key, value in self.pictures.items() if key[3] == scale}
         width, height = self._size()
         c.configure(scrollregion=(0, 0, width, height))
         if self.view == 'game':
@@ -693,7 +709,12 @@ class Editor(tk.Tk):
             self.library.save_index()
         self.title_label['text'] = f"{KIND_NAMES[self.doc.kind]}: {self.doc.title}{'  *' if self.doc.dirty else ''}"
         units = sum(1 for item in items if self._is_unit(item[0]))
-        self.counts['text'] = (f'{len(items) - units} edificios y decoración, {units} unidades.'
+        if self.doc.kind == 'island':
+            ground = 'Terreno: isla de arena en el mar.'
+        else:
+            zones = core.owned_zones(self.doc.town)
+            ground = f'Terreno: {core.terrain_of(self.doc.town)[0]}, {len(zones)} de 25 zonas compradas.'
+        self.counts['text'] = (f'{ground}\n{len(items) - units} edificios y decoración, {units} unidades.'
                                + ('\nEl seleccionado pisa otro objeto (borde rojo).' if clash else ''))
         if self.selected is not None and self.selected < len(items):
             item = items[self.selected]
@@ -705,28 +726,117 @@ class Editor(tk.Tk):
         else:
             self.info['text'] = 'Nada (hacé clic en un objeto del mapa)'
 
+    def _ground(self):
+        """What the map stands on: ('island', None, None) or ('land', terrain, owned zones)."""
+        if not self.doc:
+            return None, None, []
+        if self.doc.kind == 'island':
+            return 'island', None, []
+        return 'land', core.terrain_of(self.doc.town), core.owned_zones(self.doc.town)
+
+    def _terrain_colour(self, terrain):
+        """The average colour of a terrain's picture (for the plan view and the zone lines)."""
+        name, picture_name, background = terrain
+        if picture_name not in self.terrain_colours:
+            colour = background
+            found = self.library.picture(picture_name) if self.library else None
+            if found:
+                small = found[0].resize((32, 16))
+                pixels = [p for p in small.getdata() if p[3] > 200]
+                if pixels:
+                    colour = '#%02x%02x%02x' % tuple(sum(p[i] for p in pixels) // len(pixels) for i in range(3))
+            self.terrain_colours[picture_name] = colour
+        return self.terrain_colours[picture_name]
+
+    @staticmethod
+    def _shade(colour, amount):
+        """A colour made darker (amount < 0) or lighter (amount > 0), for lines over a ground."""
+        red, green, blue = (int(colour[i:i + 2], 16) for i in (1, 3, 5))
+        target = 255 if amount > 0 else 0
+        mix = abs(amount)
+        return '#%02x%02x%02x' % tuple(int(v + (target - v) * mix) for v in (red, green, blue))
+
+    def _terrain_photo(self, picture_name, scale):
+        key = ('terrain', picture_name, False, scale, False)
+        if key not in self.pictures:
+            found = self.library.picture(picture_name) if self.library else None
+            if not found:
+                self.pictures[key] = None
+            else:
+                picture = found[0]
+                size = (max(1, round(picture.width * scale)), max(1, round(picture.height * scale)))
+                self.pictures[key] = ImageTk.PhotoImage(picture.resize(size, Image.BILINEAR))
+        return self.pictures[key]
+
     def _draw_plan_ground(self):
         c, z = self.canvas, self.scale
         size = core.MAP_SIZE * z
-        c.create_rectangle(0, 0, size, size, fill=GROUND, outline='')
+        kind, terrain, zones = self._ground()
+        if kind == 'island':
+            c.configure(background=SEA)
+            c.create_rectangle(0, 0, size, size, fill=SEA, outline='')
+            x0, y0, x1, y1 = core.island_area(self.doc.items, self.catalog)
+            c.create_rectangle(x0 * z, y0 * z, x1 * z, y1 * z, fill=SAND, outline=SHORE, width=3)
+        elif kind == 'land':
+            c.configure(background=terrain[2])
+            c.create_rectangle(0, 0, size, size, fill=terrain[2], outline='')
+            colour = self._terrain_colour(terrain)
+            for _, zx, zy in zones:
+                c.create_rectangle(zx * z, zy * z, (zx + core.ZONE) * z, (zy + core.ZONE) * z, fill=colour,
+                                   outline='')
+        else:
+            c.configure(background=WATER)
+            c.create_rectangle(0, 0, size, size, fill=GROUND, outline='')
         if z >= 8:
             for i in range(core.MAP_SIZE + 1):
                 c.create_line(i * z, 0, i * z, size, fill=GRID)
                 c.create_line(0, i * z, size, i * z, fill=GRID)
-        for i in range(0, core.MAP_SIZE + 1, 10):
-            c.create_line(i * z, 0, i * z, size, fill=GRID_MAJOR)
-            c.create_line(0, i * z, size, i * z, fill=GRID_MAJOR)
+        for i in range(0, core.MAP_SIZE + 1, core.ZONE):  # the 25 zones of the map
+            c.create_line(i * z, 0, i * z, size, fill=GRID_MAJOR, width=2)
+            c.create_line(0, i * z, size, i * z, fill=GRID_MAJOR, width=2)
+
+    def _iso_grid(self, x0, y0, x1, y1, colour, step=1, width=1, dash=None):
+        c = self.canvas
+        for x in range(x0, x1 + 1, step):
+            c.create_line(*self._to_canvas(x, y0), *self._to_canvas(x, y1), fill=colour, width=width, dash=dash)
+        for y in range(y0, y1 + 1, step):
+            c.create_line(*self._to_canvas(x0, y), *self._to_canvas(x1, y), fill=colour, width=width, dash=dash)
+
+    def _iso_area(self, x0, y0, x1, y1, **options):
+        corners = [self._to_canvas(*point) for point in ((x0, y0), (x1, y0), (x1, y1), (x0, y1))]
+        return self.canvas.create_polygon([value for point in corners for value in point], **options)
 
     def _draw_game_ground(self):
-        c = self.canvas
-        x0, y0, x1, y1 = core.island_area(self.doc.items if self.doc else [], self.catalog)
-        corners = [self._to_canvas(*point) for point in ((x0, y0), (x1, y0), (x1, y1), (x0, y1))]
-        c.create_polygon([value for point in corners for value in point], fill=SAND, outline='#c9b06f', width=2)
-        if self.scale >= 0.3:  # the tiles, so it is clear where an object will land
-            for x in range(x0, x1 + 1):
-                c.create_line(*self._to_canvas(x, y0), *self._to_canvas(x, y1), fill=SAND_LINE)
-            for y in range(y0, y1 + 1):
-                c.create_line(*self._to_canvas(x0, y), *self._to_canvas(x1, y), fill=SAND_LINE)
+        c, scale = self.canvas, self.scale
+        kind, terrain, zones = self._ground()
+        fine = scale >= 0.3  # the tiles, so it is clear where an object will land
+        if kind == 'island':  # mission islands: sand in the sea, as the battle shows them
+            c.configure(background=SEA)
+            x0, y0, x1, y1 = core.island_area(self.doc.items, self.catalog)
+            self._iso_area(x0, y0, x1, y1, fill=SAND, outline=SHORE, width=max(2, round(12 * scale)))
+            if fine:
+                self._iso_grid(x0, y0, x1, y1, SAND_LINE)
+            return
+        if kind is None:
+            c.configure(background=WATER)
+            return
+        # villages and the arena: the skin's colour everywhere, its terrain on the owned zones
+        name, picture_name, background = terrain
+        c.configure(background=background)
+        self._iso_area(0, 0, core.MAP_SIZE, core.MAP_SIZE, fill=background, outline='')
+        photo = self._terrain_photo(picture_name, scale)
+        colour = self._terrain_colour(terrain)
+        for _, zx, zy in zones:
+            if photo is not None:  # the zone's picture stands on its bottom corner, like a building
+                bx, by = self._to_canvas(zx + core.ZONE, zy + core.ZONE)
+                c.create_image(bx - photo.width() / 2, by - photo.height(), image=photo, anchor='nw')
+            else:
+                self._iso_area(zx, zy, zx + core.ZONE, zy + core.ZONE, fill=colour, outline='')
+            if fine:
+                self._iso_grid(zx, zy, zx + core.ZONE, zy + core.ZONE, self._shade(colour, -0.12))
+        # the borders of the 25 zones, so owned and free land are told apart
+        self._iso_grid(0, 0, core.MAP_SIZE, core.MAP_SIZE, self._shade(background, -0.3), step=core.ZONE,
+                       width=2, dash=(6, 4))
 
     def _draw_game_items(self, items):
         c, scale = self.canvas, self.scale
@@ -756,10 +866,10 @@ class Editor(tk.Tk):
             item = items[index]
             entry = self.catalog.get(int(item[0])) or {'label': f'#{item[0]}'}
             w, h = core.footprint(item, self.catalog)
-            x0, y0 = int(item[1]) * z, int(item[2]) * z
-            x1, y1 = x0 + w * z, y0 + h * z
+            x0, y0 = (int(item[1]) - w + 1) * z, (int(item[2]) - h + 1) * z
+            x1, y1 = (int(item[1]) + 1) * z, (int(item[2]) + 1) * z
             if entry.get('type') == 'u':
-                pad = max(1, z // 6)
+                pad = max(1.0, z / 6)
                 c.create_oval(x0 + pad, y0 + pad, x1 - pad, y1 - pad, fill=UNIT_COLOUR, outline='#333')
             else:
                 c.create_rectangle(x0, y0, x1, y1, fill=colour_of(entry), outline='#333')

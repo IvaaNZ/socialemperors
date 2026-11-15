@@ -3,9 +3,10 @@
 The owner asked for a desktop app to edit mission islands (including the 12 the game lists without a map), the
 duel arena and players' villages. All three are the game's village format: privateState, playerInfo and the map
 (one "map" in islands and the arena, a "maps" list in players' saves). A map item is
-[item id, x, y, orientation, collected at, (level, contained units, attributes)]: x, y is its first tile on the
-100 x 100 grid (Config.EI_MAP_WIDTH / HEIGHT) and it covers width x height tiles from the config (swapped when the
-orientation is odd, as the game draws a turned building).
+[item id, x, y, orientation, collected at, (level, contained units, attributes)] on the 100 x 100 grid
+(Config.EI_MAP_WIDTH / HEIGHT). x, y is the item's LAST tile: it covers width x height tiles (from the config,
+swapped when the orientation is odd) going back from there, x - width + 1 .. x and y - height + 1 .. y, as
+Base.setOccupiedGrid marks them (it counts tx down).
 
 Saving keeps a backup of the first version opened in each session (file.bak-YYYYmmdd-HHMMSS). A player's village
 lives in the server's memory while it runs, so it is only saved with the server stopped.
@@ -257,8 +258,9 @@ def footprint(item, catalog):
 
 
 def tiles_of(item, catalog):
+    """The tiles an item covers: back from its position (its last tile), as the game marks them."""
     width, height = footprint(item, catalog)
-    return {(int(item[1]) + dx, int(item[2]) + dy) for dx in range(width) for dy in range(height)}
+    return {(int(item[1]) - dx, int(item[2]) - dy) for dx in range(width) for dy in range(height)}
 
 
 def overlapping(items, catalog):
@@ -331,8 +333,9 @@ def iso_tile(px, py):
 def iso_footprint(item, catalog):
     """The four corners (top, right, bottom, left) of an item's base on screen, at scale 1."""
     width, height = footprint(item, catalog)
-    x, y = int(item[1]), int(item[2])
-    return iso_point(x, y), iso_point(x + width, y), iso_point(x + width, y + height), iso_point(x, y + height)
+    x0, y0 = int(item[1]) - width + 1, int(item[2]) - height + 1
+    x1, y1 = int(item[1]) + 1, int(item[2]) + 1
+    return iso_point(x0, y0), iso_point(x1, y0), iso_point(x1, y1), iso_point(x0, y1)
 
 
 def depth_order(items, catalog):
@@ -340,9 +343,8 @@ def depth_order(items, catalog):
     and among equals, buildings before units."""
     def key(index):
         item = items[index]
-        width, height = footprint(item, catalog)
         unit = (catalog.get(int(item[0])) or {}).get('type') == 'u'
-        bottom = int(item[1]) + int(item[2]) + (1 if unit else width + height)
+        bottom = int(item[1]) + int(item[2]) + (1 if unit else 2)  # a unit stands in the middle of its tile
         return bottom, unit, index
     return sorted(range(len(items)), key=key)
 
@@ -352,6 +354,46 @@ def island_area(items, catalog, margin=3):
     x0, y0, x1, y1 = 30, 30, 70, 70
     for item in items:
         width, height = footprint(item, catalog)
-        x0, y0 = min(x0, int(item[1]) - margin), min(y0, int(item[2]) - margin)
-        x1, y1 = max(x1, int(item[1]) + width + margin), max(y1, int(item[2]) + height + margin)
+        x0, y0 = min(x0, int(item[1]) - width + 1 - margin), min(y0, int(item[2]) - height + 1 - margin)
+        x1, y1 = max(x1, int(item[1]) + 1 + margin), max(y1, int(item[2]) + 1 + margin)
     return max(0, x0), max(0, y0), min(MAP_SIZE, x1), min(MAP_SIZE, y1)
+
+
+# --- terrain: the map is 5 x 5 zones of 20 x 20 tiles (Config.EI_TILES_IN_BIGTILE). A map's "expansions" are the
+# zones it owns, numbered 1 to 25 row by row (Base.purchaseLand: column (n - 1) % 5, row (n - 1) / 5). The game
+# draws each owned zone with the terrain item 1000 + the map's skin (Base.addExpandedTileBuilding) and fills the
+# rest with the skin's background colour (Config.BG_SKIN_COLORS). Mission islands are sand in the sea instead.
+ZONE = 20
+ZONES_PER_ROW = MAP_SIZE // ZONE
+TERRAINS = {  # skin: (name, terrain item's picture, background colour of the rest of the map)
+    0: ('Pradera', 'terreno', '#669c2c'),
+    1: ('Desierto', 'terrenodesierto', '#eabc4c'),
+    2: ('Hielo', 'terrenohielo', '#dfecf2'),
+    3: ('Mar', 'terrenomar2', '#2e94e6'),
+    4: ('Mineral', 'terrenomineral', '#863814'),
+    5: ('Selva', 'terrenoselva', '#398a00'),
+    6: ('Nubes', 'terrenonubes', '#ffffff'),
+}
+
+
+def terrain_of(town):
+    """(name, picture, background colour) of a map's skin; unknown skins are meadow."""
+    try:
+        skin = int(town.get('skin') or 0)
+    except (TypeError, ValueError):
+        skin = 0
+    return TERRAINS.get(skin, TERRAINS[0])
+
+
+def owned_zones(town):
+    """[(zone number, first tile x, first tile y)] of the zones a map owns."""
+    out = []
+    for number in town.get('expansions') or []:
+        try:
+            number = int(number)
+        except (TypeError, ValueError):
+            continue
+        if 1 <= number <= ZONES_PER_ROW * ZONES_PER_ROW:
+            index = number - 1
+            out.append((number, (index % ZONES_PER_ROW) * ZONE, (index // ZONES_PER_ROW) * ZONE))
+    return out

@@ -97,13 +97,15 @@ class WorldEditor(unittest.TestCase):
         self.assertEqual(core.layout_of('{\n "a": 1\n}'), 1)
 
     def test_footprints_overlaps_and_picking(self):
-        house, wall, troll = [1, 10, 10, 0, 0], [2, 11, 11, 1, 0], [9, 10, 10, 0, 0]
+        house, wall, troll = [1, 10, 10, 0, 0], [2, 9, 11, 1, 0], [9, 10, 10, 0, 0]
         self.assertEqual(core.footprint(wall, CATALOG), (1, 3))  # turned: width and height swap
+        # an item covers the tiles back from its position: the house is 9..10 x 9..10
+        self.assertEqual(core.tiles_of(house, CATALOG), {(9, 9), (10, 9), (9, 10), (10, 10)})
         self.assertEqual(core.overlapping([house, wall, troll], CATALOG), {0, 1})  # units stand anywhere
-        self.assertEqual(core.overlapping([house, [2, 12, 10, 0, 0]], CATALOG), set())
+        self.assertEqual(core.overlapping([house, [2, 13, 10, 0, 0]], CATALOG), set())
         self.assertEqual(core.item_at([house, troll], CATALOG, 10, 10), 1)  # the topmost
-        self.assertEqual(core.item_at([house, troll], CATALOG, 11, 11), 0)
-        self.assertIsNone(core.item_at([house], CATALOG, 12, 12))
+        self.assertEqual(core.item_at([house, troll], CATALOG, 9, 9), 0)
+        self.assertIsNone(core.item_at([house], CATALOG, 11, 11))
 
     def test_the_perspective_view_follows_the_games_tiles(self):
         self.assertEqual(core.iso_point(0, 0), (54 * core.MAP_SIZE, 0))
@@ -113,11 +115,19 @@ class WorldEditor(unittest.TestCase):
             px, py = core.iso_point(tile[0] + 0.5, tile[1] + 0.5)  # the centre of the tile
             self.assertEqual(core.iso_tile(px, py), tile)
         house, troll, far = [1, 10, 10, 0, 0], [9, 11, 11, 0, 0], [1, 2, 2, 0, 0]
-        self.assertEqual(core.depth_order([house, troll, far], CATALOG), [2, 1, 0])
+        self.assertEqual(core.depth_order([house, troll, far], CATALOG), [2, 0, 1])  # the troll stands in front
         top, right, bottom, left = core.iso_footprint(house, CATALOG)
-        self.assertEqual((top, bottom), (core.iso_point(10, 10), core.iso_point(12, 12)))
+        self.assertEqual((top, bottom), (core.iso_point(9, 9), core.iso_point(11, 11)))
         self.assertEqual(core.island_area([], CATALOG), (30, 30, 70, 70))
-        self.assertEqual(core.island_area([[1, 1, 90, 0, 0]], CATALOG, margin=0), (1, 30, 70, 92))
+        self.assertEqual(core.island_area([[1, 1, 90, 0, 0]], CATALOG, margin=0), (0, 30, 70, 91))
+
+    def test_terrain_zones_and_skins(self):
+        # zone 13 is the centre (tiles 40-59), 18 the one below it: Base.purchaseLand
+        town = {'expansions': [13, 18, 'x', 99], 'skin': 1}
+        self.assertEqual(core.owned_zones(town), [(13, 40, 40), (18, 40, 60)])
+        self.assertEqual(core.terrain_of(town)[:2], ('Desierto', 'terrenodesierto'))
+        self.assertEqual(core.terrain_of({'skin': 'raro'})[0], 'Pradera')
+        self.assertEqual(core.owned_zones({}), [])
 
     def test_the_real_catalog_has_sizes_and_spanish_names(self):
         catalog = core.load_catalog()
