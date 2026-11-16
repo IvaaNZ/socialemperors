@@ -546,3 +546,7 @@ Pedido del dueño ("faltarían los recursos y demás cosas dentro del juego"). L
 
 - `tools/make_hd_sprites.py` agranda las imágenes de cada objeto de tipo edificio igual que los íconos (Real-ESRGAN 4× y reducción exacta a 2×) y escribe el archivo de nuevo con `swf_hd_icons.replace_pictures` (mismos números, rellenos reescalados: nada se mueve). Las texturas de más de 1.024 píxeles por lado (los terrenos) quedan como están. Trabaja por tandas, saltea lo ya hecho (se puede cortar y volver a correr) y anota el avance en `assets_hd/progreso.txt`.
 - Los archivos HD van a `assets_hd/buildingsprites`, **fuera de git** (son cientos de MB y se pueden regenerar). Con `SE_HD_SPRITES=on` el servidor entrega la versión HD de un dibujo cuando existe; si no, el original.
+
+### HD apagado (resultado medido)
+
+Probado en la copia con una pantalla de alta resolución simulada: el juego HD y los edificios HD se entregan y Ruffle dibuja a resolución completa, pero la diferencia a tamaño normal es mínima (unos 2 tonos sobre 255 en promedio) y Ruffle achica las imágenes grandes sin suavizarlas bien, lo que deja bordes inclinados algo serruchados. El dueño no vio cambios y eligió apagarlo: `SE_HD_ICONS=off` y `SE_HD_SPRITES=off` (el juego vuelve a 4,1 MB). La generación de edificios se detuvo (quedaron unos 75 en `assets_hd`, fuera de git); el código y las herramientas quedan por si se usan con pantallas grandes.
