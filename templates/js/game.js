@@ -345,14 +345,23 @@
         return box.left - stage.left + 6 * scale;
     }
 
+    // While the game loads, its loading screen is a 760 x 600 picture drawn at the stage's top left corner: the
+    // stage stays 760 x 600, centred, until the village is ready (viewReady), and then fills the place.
+    let viewReady = false;
+
     function sizeView() {
         if (!fullView || !player) return;
         const width = Math.max(1, container.clientWidth);
         const height = Math.max(1, container.clientHeight);
         viewScale = Math.min(width / 760, height / 600);
-        player.style.width = `${width / viewScale}px`;
-        player.style.height = `${height / viewScale}px`;
+        const stageWidthPx = viewReady ? width / viewScale : 760;
+        const stageHeightPx = viewReady ? height / viewScale : 600;
+        player.style.width = `${stageWidthPx}px`;
+        player.style.height = `${stageHeightPx}px`;
+        player.style.left = `${(width - stageWidthPx * viewScale) / 2}px`;
+        player.style.top = `${(height - stageHeightPx * viewScale) / 2}px`;
         player.style.transform = `scale(${viewScale})`;
+        container.classList.toggle("is-loading", !viewReady);
         placeHud();
         placeClock();
     }
@@ -368,6 +377,13 @@
     function fitView() {
         const state = viewState();
         if (!state || !state.sw) return;
+        if (!viewReady) {
+            // Ready: the village is up (the player's numbers arrive, or with SE_HUD off, the view's bridge answers).
+            if (config.hudBar && !hudShown) return;
+            viewReady = true;
+            sizeView();
+            return;  // the next round lays the interface out for the new size
+        }
         const size = `${state.sw}x${state.sh}`;
         if (size === fittedSize) return;
         try {

@@ -610,3 +610,7 @@ Cómo funciona:
 - El nombre y la población siguen al globo. Sin el parche de clanes, la columna no existe y no se toca (se comprueba con `in`).
 - Para centrar el "Premio" se usa lo que se ve (`Base.__hudArt`, la unión de los límites de sus hijos visibles): sus límites incluyen botones ocultos del juego y por eso antes quedaba corrido. Las piezas nunca pasan del borde derecho.
 - Probado en la copia con una ventana de 1366 de ancho (escenario 1543×600) y en "Restaurar ventana".
+
+## Pantalla de carga centrada (`SE_VIEW`)
+
+Con el escenario del tamaño de la ventana, la pantalla de carga del juego (una imagen de 760×600) quedaba pegada a la izquierda, con el resto verde, y encima se veían el reloj y la lluvia. Ahora, mientras carga, el escenario mide 760×600, va centrado y agrandado para llenar la altura, sobre un fondo celeste como el cielo de esa imagen. El reloj y la lluvia esperan a la aldea. Cuando la aldea está lista (llegan los números del jugador; con `SE_HUD` apagado, cuando responde el puente de la vista), el escenario pasa a ocupar todo y el juego se reacomoda. Probado en la copia con una ventana de 1366 de ancho: las dos etapas de la carga se ven centradas.

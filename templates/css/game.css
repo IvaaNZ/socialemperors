@@ -204,3 +204,7 @@ body.hud-dimmed .hud-side * { pointer-events: none; }
 /* The menu's panel opens over the right column: the column steps aside meanwhile. */
 .game-shell.controls-open .hud-side { opacity: 0; pointer-events: none; }
 .game-shell.controls-open .hud-side * { pointer-events: none; }
+/* SE_VIEW, while the game loads: its 760 x 600 loading screen, centred on a sky like its own; the clock and the
+   weather wait for the village. */
+.game-player.is-view.is-loading { background: radial-gradient(circle at 50% 50%, #ffffff 0%, #d6efff 35%, #8fcdf2 75%, #6ab8e8 100%); }
+.game-player.is-loading ~ .hud-clock, .game-player.is-loading ~ .weather-layer { display: none !important; }
