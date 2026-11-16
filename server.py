@@ -725,7 +725,7 @@ def play():
         return render_template("play.html", script_texts=game_script_texts(), save_info=save_info(USERID), serverTime=server_time, last_logged_in=last_login, friendsInfo=fb_friends_str(USERID), version=version_name, GAMEVERSION=GAME_VERSION, raid_revision=village_revision(USERID), game_user_key=game_session_key(USERID),
                                webgl_renderer=RUFFLE_SETTINGS['renderer'] == 'webgl', ruffle_settings=RUFFLE_SETTINGS,
                                push_time=QUICK_SAVE_SECONDS if QUICK_SAVE_ENABLED else None, sound_hint=SOUND_FIX_ENABLED,
-                               day_night=DAY_NIGHT_ENABLED, hud_clock=HUD_ENABLED and DAY_NIGHT_ENABLED,
+                               day_night=DAY_NIGHT_ENABLED, hud_clock=HUD_ENABLED and DAY_NIGHT_ENABLED, hud_bar=HUD_ENABLED,
                                update_notice=UPDATE_NOTICE_ENABLED, server_build=SERVER_BUILD)
 
 
@@ -907,6 +907,9 @@ def localized_game_movie(language=None):
     if DAY_NIGHT_ENABLED:  # the page tints the map by the hour (day and night)
         from swf_daylight import add_daylight
         translated = add_daylight(translated)
+    if HUD_ENABLED:  # the page reads the player's numbers and draws its own resource bar (swf_hud.py)
+        from swf_hud import add_hud
+        translated = add_hud(translated)
     if READABLE_UI_ENABLED:  # white lettering with a black outline; no "x0" units in the team window
         from swf_readable_text import make_text_readable
         translated = make_text_readable(translated)

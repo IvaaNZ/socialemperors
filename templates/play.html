@@ -21,6 +21,7 @@
         'soundHint': sound_hint | default(false),
         'dayNight': day_night | default(false),
         'hudClock': hud_clock | default(false),
+        'hudBar': hud_bar | default(false),
         'updateNotice': update_notice | default(false),
         'build': server_build | default(''),
         'versionUrl': url_for('server_version'),
@@ -89,6 +90,21 @@
                 <div id="game-player" class="game-player"></div>
                 <p id="sound-hint" class="sound-hint" role="status" hidden></p>
                 <canvas id="weather-layer" class="weather-layer" aria-hidden="true" hidden></canvas>
+                <div id="hud-bar" class="hud-bar" hidden>
+                    <div class="hud-profile" data-hud="profile">
+                        <span class="hud-level"><span class="hud-level-number"></span></span>
+                        <span class="hud-xp"><span class="hud-xp-fill"></span><span class="hud-xp-text"></span></span>
+                    </div>
+                    <span class="hud-res" data-hud="g"><img src="/img/season_pass/coins.png" alt=""><b></b></span>
+                    <span class="hud-res" data-hud="w"><img src="/img/season_pass/wood.png" alt=""><b></b></span>
+                    <span class="hud-res" data-hud="f"><img src="/img/season_pass/food.png" alt=""><b></b></span>
+                    <span class="hud-res" data-hud="s"><img src="/img/season_pass/stone.png" alt=""><b></b></span>
+                    <span class="hud-res hud-cash" data-hud="c"><img src="/img/season_pass/cash.png" alt=""><b></b><button type="button" class="hud-add" aria-label="+">+</button></span>
+                </div>
+                <div id="hud-empire" class="hud-empire" hidden>
+                    <span class="hud-name"></span>
+                    <span class="hud-pop"><img src="/img/villager.png" alt=""><b></b></span>
+                </div>
                 <div id="hud-clock" class="hud-clock" role="status" aria-live="off" hidden>
                     <span class="hud-clock-icon" aria-hidden="true"></span>
                     <span class="hud-clock-time"></span>

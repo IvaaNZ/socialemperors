@@ -334,7 +334,8 @@
         const scale = Math.max(0.6, box.width / 760);
         hudClock.style.setProperty("--hud-scale", scale.toFixed(3));
         hudClock.style.left = `${box.left - stage.left + 8 * scale}px`;
-        hudClock.style.top = `${box.top - stage.top + 96 * scale}px`;  // below the game's resource bar
+        // below the resource bar: the page's own one (SE_HUD) or the game's
+        hudClock.style.top = `${box.top - stage.top + (hudShown ? 52 : 96) * scale}px`;
     }
 
     function updateClock(clock, weather) {
@@ -353,6 +354,98 @@
         hudClock.title = `${text} · ${SEASON_TEXT[seasonOf(clock.month, clock.day)]}`;
         hudClock.hidden = false;
         placeClock();
+    }
+
+    // Point 26 (SE_HUD): the page's resource bar. The game (swf_hud.py) answers seHudState() with the player's
+    // numbers and hides its own top ribbon on seHudHide(); seHudCash() opens the game's own "+ cash" window.
+    const hudBar = document.getElementById("hud-bar");
+    const hudEmpire = document.getElementById("hud-empire");
+    let hudShown = false;
+    let hudLast = {};
+    let hudHiddenAt = 0;
+    const numberFormat = new Intl.NumberFormat(document.documentElement.lang || "es");
+    const compactFormat = new Intl.NumberFormat(document.documentElement.lang || "es", { notation: "compact", maximumFractionDigits: 1 });
+    const shortNumber = value => (Math.abs(value) < 100000 ? numberFormat.format(value) : compactFormat.format(value));
+
+    function placeHud() {
+        if (!hudBar || hudBar.hidden) return;
+        const stage = hudBar.parentElement.getBoundingClientRect();
+        const box = container.getBoundingClientRect();
+        const scale = Math.max(0.6, box.width / 760);
+        hudBar.style.setProperty("--hud-scale", scale.toFixed(3));
+        hudBar.style.left = `${box.left - stage.left + 6 * scale}px`;
+        hudBar.style.top = `${box.top - stage.top + 6 * scale}px`;
+        if (hudEmpire) {  // right of the World globe, against the movie's right edge
+            hudEmpire.style.setProperty("--hud-scale", scale.toFixed(3));
+            hudEmpire.style.right = `${stage.right - box.right}px`;
+            hudEmpire.style.top = `${box.top - stage.top + 22 * scale}px`;
+        }
+    }
+
+    function readHud() {
+        let state = null;
+        try {
+            if (player && typeof player.seHudState === "function") state = player.seHudState();
+        } catch (error) {
+            state = null;  // the game is loading or changing maps
+        }
+        if (!state || typeof state.g !== "number") return;
+        const now = Date.now();
+        if (!hudShown || now - hudHiddenAt > 3000) {  // again now and then: a map change may show the ribbon again
+            try {
+                player.seHudHide();
+                hudHiddenAt = now;
+            } catch (error) {
+                return;  // keep the game's own ribbon
+            }
+        }
+        for (const key of ["g", "w", "f", "s", "c"]) {
+            const pill = hudBar.querySelector(`[data-hud="${key}"]`);
+            const value = state[key];
+            if (hudLast[key] === value) continue;
+            pill.querySelector("b").textContent = shortNumber(value);
+            pill.title = numberFormat.format(value);
+            if (typeof hudLast[key] === "number") {
+                pill.classList.remove("is-up", "is-down");
+                void pill.offsetWidth;
+                pill.classList.add(value > hudLast[key] ? "is-up" : "is-down");
+                clearTimeout(pill.hudTimer);
+                pill.hudTimer = setTimeout(() => pill.classList.remove("is-up", "is-down"), 1200);
+            }
+        }
+        const span = Math.max(1, state.xpMax - state.xpMin);
+        const progress = Math.min(1, Math.max(0, (state.xp - state.xpMin) / span));
+        hudBar.querySelector(".hud-level-number").textContent = state.lvl;
+        hudBar.querySelector(".hud-xp-fill").style.width = `${(progress * 100).toFixed(1)}%`;
+        hudBar.querySelector(".hud-xp-text").textContent = `${Math.floor(progress * 100)}%`;
+        hudBar.querySelector('[data-hud="profile"]').title =
+            `${t("Nível")} ${state.lvl} · ${numberFormat.format(state.xp)} / ${numberFormat.format(state.xpMax)} XP`;
+        if (hudEmpire) {
+            hudEmpire.querySelector(".hud-name").textContent = state.name || "";
+            hudEmpire.querySelector(".hud-pop b").textContent = state.popText || "";
+        }
+        hudLast = state;
+        if (!hudShown) {
+            hudShown = true;
+            hudBar.hidden = false;
+            if (hudEmpire) hudEmpire.hidden = false;
+            placeHud();
+            placeClock();
+        }
+    }
+
+    function startHud() {
+        if (!config.hudBar || !hudBar) return;
+        hudBar.querySelector(".hud-add").addEventListener("click", () => {
+            try {
+                player.seHudCash();
+            } catch (error) {
+                // the game is not ready
+            }
+        });
+        window.addEventListener("resize", placeHud);
+        document.addEventListener("fullscreenchange", () => setTimeout(placeHud, 50));
+        setInterval(readHud, 500);
     }
 
     if (hudClock) {
@@ -555,6 +648,7 @@
             player = ruffle.createPlayer();
             showSoundHint();
             startDayNight();
+            startHud();
             player.setAttribute("aria-label", "Social Empires");
             container.appendChild(player);
             player.addEventListener("loadedmetadata", applyAudio, { once: true });
