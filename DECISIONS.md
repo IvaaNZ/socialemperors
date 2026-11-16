@@ -621,3 +621,10 @@ Con el escenario del tamaño de la ventana, la pantalla de carga del juego (una 
 - Con "Más" abierto, el "Premio" quedaba sobre Clan y PvP: ver arriba, ahora se centra por su dibujo y la columna de Clan se aparta.
 - El panel del Menú se abre y se cierra con una animación corta (aparece y se desliza en 0,22 s y se va en 0,17 s antes de ocultarse). El botón se achica un poco mientras está abierto. Sin animación si el sistema pide menos movimiento.
 - Probado en la copia con el zoom del navegador al 80% (como el del dueño).
+
+## Botón de pantalla completa del juego (captura del dueño)
+
+Con el botón de pantalla completa del panel de opciones del juego (bajo "Más"), Ruffle ponía en pantalla completa solo el reproductor: quedaban afuera la barra de recursos, el reloj, los nombres, Menú y "Más", y el "Premio" con las opciones quedaban en el medio, donde los había dejado la página.
+
+- Ese botón ahora pone en pantalla completa **la página entera** (lo mismo que "Pantalla completa" del Menú), así el HUD sigue a la vista y se reacomoda solo. Sin interruptor: es un arreglo pedido.
+- Cómo: el `requestFullscreen` del reproductor se reemplaza por uno que pide la pantalla completa del contenedor del juego, o sale si ya está. Ruffle solo se entera de los cambios en el reproductor, así que la página le reenvía cada `fullscreenchange`: ve que el reproductor no está en pantalla completa y el botón del juego vuelve a pedirla, por eso cada toque alterna entrar y salir.

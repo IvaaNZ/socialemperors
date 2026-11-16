@@ -1089,6 +1089,19 @@
         try {
             const ruffle = window.RufflePlayer.newest();
             player = ruffle.createPlayer();
+            // The game's own fullscreen button (its options panel) puts the whole page in fullscreen, not the
+            // player alone: alone, the page's bar, clock, labels and "More" are left out, and the pieces the page
+            // moved stay where they were. Ruffle never sees the player itself in fullscreen, so each press of the
+            // button asks again: it toggles.
+            player.requestFullscreen = () => {
+                const request = document.fullscreenElement === shell ? document.exitFullscreen() : shell.requestFullscreen();
+                return Promise.resolve(request).catch(() => {
+                    status.textContent = t("O navegador não permitiu a tela cheia. Você pode continuar jogando aqui.");
+                });
+            };
+            // Ruffle hears of fullscreen changes on the player only: told of each one, it finds the player itself
+            // is not in fullscreen and the game's button goes back to asking for it (so the next press leaves).
+            document.addEventListener("fullscreenchange", () => player.dispatchEvent(new Event("fullscreenchange")));
             showSoundHint();
             startDayNight();
             startHud();
