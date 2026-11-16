@@ -594,3 +594,19 @@ El dueño eligió tres partes de los botones al estilo Empires Reborn: nombres e
 - **Bono diario**: un cofre (dibujo propio) con la cuenta regresiva a la próxima recompensa diaria del Tesoro (`next_claim_at`, que el servidor le pasa a la página al abrir el juego). Cuando ya se puede cobrar, brilla y dice "¡Cobrar!". Lleva al Tesoro, igual que el "+" del dinero.
 - **Más (+2)**: agrupa lo que se usa poco arriba a la derecha: el cofre "Premio" del juego (`_viralButtonPanel`) y su panel de opciones (`options_panel`: engranaje, música, sonido, pantalla completa, pausa). Cerrado, están ocultos. Abierto, el juego los muestra apilados debajo del botón, contra el borde derecho (`Base.__hudShow(nombre, visible, x, y)`, que solo acepta esas dos piezas). El estado se vuelve a aplicar cada 3 s por si un cambio de mapa las muestra de nuevo.
 - La columna de la derecha baja sola si el nombre del imperio llega hasta ella (escenario angosto, modo "Restaurar ventana"). Con una ventana del juego abierta, los nombres y la columna se atenúan como la barra.
+
+## Ajuste del HUD: todo a los bordes (captura del dueño)
+
+El dueño marcó en una captura lo que quedaba en el medio de una pantalla ancha. Eligió:
+
+- **El globo "mundo", el nombre y la población, al borde derecho**, al lado de la columna de Menú. **Clan, PvP y Pase** también van contra ese borde. El diseño de pantalla completa del juego los centraba junto con la interfaz.
+- **El libro "Lanzar hechizo" a la esquina de abajo a la izquierda**, solo si entra al lado de la barra de abajo.
+- **El "Premio" y las opciones, alineados y centrados bajo "Más".**
+
+Cómo funciona:
+
+- El juego mueve las piezas que la página le pide (`Base.__hudPlace`, solo el globo con su `ExperienceMeterMC`, la columna `__seButtonPanel` y `magicBox`) hasta una posición absoluta del escenario. Compara con dónde están, así que repetirlo no acumula corrimientos.
+- Antes de mover nada, la página guarda dónde las pone el juego respecto de su interfaz centrada. En un escenario de 760 o menos (celular vertical, "Restaurar ventana") vuelven ahí. En uno ancho nunca quedan más a la izquierda de ese lugar.
+- El nombre y la población siguen al globo. Sin el parche de clanes, la columna no existe y no se toca (se comprueba con `in`).
+- Para centrar el "Premio" se usa lo que se ve (`Base.__hudArt`, la unión de los límites de sus hijos visibles): sus límites incluyen botones ocultos del juego y por eso antes quedaba corrido. Las piezas nunca pasan del borde derecho.
+- Probado en la copia con una ventana de 1366 de ancho (escenario 1543×600) y en "Restaurar ventana".

@@ -3,9 +3,9 @@ from pathlib import Path
 
 from swf_abc import Abc, AbcError, disassemble
 from swf_duel_bridge import DO_ABC
-from swf_hud import (BAR_BUTTONS, BUTTONS_METHOD, CALLBACKS, CASH_METHOD, EXPERIENCE_PARTS, HIDDEN, HIDE_METHOD,
-                     REGISTER_METHOD, SHOW_METHOD, SIDE_BUTTONS, STATE_FIELDS, STATE_METHOD, TEXT_FIELDS, add_hud,
-                     add_hud_to_abc)
+from swf_hud import (ART_METHOD, BAR_BUTTONS, BUTTONS_METHOD, CALLBACKS, CASH_METHOD, EXPERIENCE_PARTS, HIDDEN,
+                     HIDE_METHOD, PLACE_METHOD, PLACED, REGISTER_METHOD, SHOW_METHOD, SIDE_BUTTONS, STATE_FIELDS,
+                     STATE_METHOD, TEXT_FIELDS, add_hud, add_hud_to_abc)
 from swf_localization import decode_swf, iter_tags
 
 MOVIE = Path('assets/flash/SocialEmpires0926bsec.swf')
@@ -55,9 +55,21 @@ class Hud(unittest.TestCase):
 
     def test_the_buttons_report_where_they_are_on_the_stage(self):
         names = self.names(BUTTONS_METHOD)
-        for name in ('bgBar',) + BAR_BUTTONS + SIDE_BUTTONS:
+        for name in ('bgBar', 'magicBox', '__seButtonPanel') + BAR_BUTTONS + SIDE_BUTTONS:
             self.assertIn(name, names)
-        self.assertEqual(names.count('getBounds 1'), 4 * len(('bgBar',) + BAR_BUTTONS + SIDE_BUTTONS))
+        self.assertEqual(names.count('getBounds 1'), 4 * len(('bgBar',) + BAR_BUTTONS + SIDE_BUTTONS + PLACED))
+
+    def test_the_globe_the_clan_column_and_the_spell_book_can_be_moved(self):
+        ops = disassemble(self.abc, self.abc.body_of(self.abc.method_of('Base', PLACE_METHOD))['code'])
+        self.assertEqual([str(op[2]).strip("'") for op in ops if op[1] == 'pushstring'],
+                         ['globe', 'clanPanel', '__seButtonPanel', 'magicBox'])
+        self.assertIn('in', [op[1] for op in ops])  # no clan patch: the column is left alone
+
+    def test_the_art_of_a_side_piece_is_its_visible_childrens_bounds(self):
+        names = self.names(ART_METHOD)
+        self.assertIn('numChildren', names)
+        self.assertIn('getChildAt 1', names)
+        self.assertIn('visible', names)
 
     def test_more_shows_and_places_only_the_side_pieces(self):
         ops = disassemble(self.abc, self.abc.body_of(self.abc.method_of('Base', SHOW_METHOD))['code'])

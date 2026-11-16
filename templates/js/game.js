@@ -325,6 +325,7 @@
     let viewScale = 1;
     let fittedSize = "";
     let stageWidth = 760;  // the game's stage, in its own pixels
+    let stageHeight = 600;
     const realPixelRatio = (() => {
         const own = Object.getOwnPropertyDescriptor(window, "devicePixelRatio");
         const inherited = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(window), "devicePixelRatio")
@@ -373,6 +374,7 @@
             player.seFit(!fittedSize);  // the first time, the map also centres on the buildings
             fittedSize = size;
             stageWidth = state.sw;
+            stageHeight = state.sh;
             placeHud();
         } catch (error) {
             // the game is loading or changing maps: the next round lays it out
@@ -571,7 +573,9 @@
             // Right of the World globe: 645 of the game's pixels into its top interface, which the game's
             // full-window layout centres on the stage (GuiManager.fullscreen: x = stage width / 2 - 380).
             hudEmpire.style.setProperty("--hud-scale", scale.toFixed(3));
-            hudEmpire.style.left = `${box.left - stage.left + (stageWidth / 2 - 380 + 645) * scale}px`;
+            const globe = hudButtons && hudButtons.globe;
+            const after = globe && globe.w > 0 ? globe.x + globe.w + 2 : stageWidth / 2 - 380 + 645;
+            hudEmpire.style.left = `${box.left - stage.left + after * scale}px`;
             hudEmpire.style.top = `${box.top - stage.top + 22 * scale}px`;
         }
     }
@@ -695,27 +699,91 @@
         if (moved && moreOpen) showSidePieces();  // the open pieces follow the column
     }
 
-    // Open, "More" shows the pieces stacked below it against the stage's right edge (the "Prize" box first).
+    // Open, "More" shows the pieces stacked below it, centred on the right column (the "Prize" box first). What
+    // shows of a piece (seHudArt) is centred, not its bounds, which also hold the game's hidden buttons.
     function showSidePieces() {
         const box = container.getBoundingClientRect();
         const scale = positionScale(box);
         const more = hudMore.getBoundingClientRect();
-        const rightEdge = (box.right - 8 - box.left) / scale;
+        const centre = (more.left + more.width / 2 - box.left) / scale;
         let top = (more.bottom + 6 - box.top) / scale;
         for (const name of ["_viralButtonPanel", "options_panel"]) {
             const piece = hudButtons && hudButtons[name];
             let x = NaN;
             let y = NaN;
             if (moreOpen && piece && piece.w > 0) {
-                x = rightEdge - piece.w;
-                y = top;
-                top += piece.h + 6;
+                let art = null;
+                try {
+                    art = player.seHudArt(name);
+                } catch (error) {
+                    art = null;
+                }
+                if (!art || !(art.w > 0)) art = piece;
+                const artLeft = Math.min(centre - art.w / 2, stageWidth - art.w - 3);  // whole on the stage
+                x = artLeft - (art.x - piece.x);
+                y = top - (art.y - piece.y);
+                top += art.h + 6 / scale;
             }
             try {
                 player.seHudShow(name, moreOpen, x, y);
             } catch (error) {
                 // the game is busy: the next round
             }
+        }
+    }
+
+    // On a stage wider than the game's 760 pixels, the World globe with the empire's name and the Clan, PvP and
+    // Pass column go against the right edge, beside the page's column (the game's layout centres them), and the
+    // spell book to the bottom left corner when it fits beside the bottom bar. Elsewhere they go back where the
+    // game puts them: their places relative to the centred interface are read once, before moving anything.
+    const pieceHome = {};
+
+    function placePiece(name, x, y) {
+        const piece = hudButtons[name];
+        const moveX = Number.isFinite(x) && Math.abs(x - piece.x) > 0.5;
+        const moveY = Number.isFinite(y) && Math.abs(y - piece.y) > 0.5;
+        if (!moveX && !moveY) return;
+        try {
+            player.seHudPlace(name, moveX ? x : NaN, moveY ? y : NaN);
+        } catch (error) {
+            // the game is busy: the next round
+        }
+    }
+
+    function layoutPieces() {
+        if (!fullView || !fittedSize) return;
+        const centred = stageWidth / 2 - 380;  // where the game's full-window layout puts its interface
+        for (const name of ["globe", "clanPanel", "magicBox"]) {
+            const piece = hudButtons[name];
+            if (piece && piece.w > 0 && !pieceHome[name]) {
+                pieceHome[name] = { x: piece.x - centred, y: piece.y - stageHeight };
+            }
+        }
+        const box = container.getBoundingClientRect();
+        const scale = positionScale(box);
+        const wide = stageWidth > 761;
+        const side = hudSide.getBoundingClientRect();
+        const dock = menuOverGame() ? controlsDock.getBoundingClientRect() : null;
+        const column = Math.max(side.width || 0, dock ? dock.width : 0) + 16;
+        const edge = stageWidth - column / scale;  // where the page's right column starts
+
+        const globe = hudButtons.globe;
+        if (globe && globe.w > 0 && pieceHome.globe) {
+            const home = centred + pieceHome.globe.x;
+            const empire = hudEmpire ? hudEmpire.getBoundingClientRect().width / scale : 0;
+            placePiece("globe", wide ? Math.max(home, edge - empire - 6 - globe.w) : home, NaN);
+        }
+        const clan = hudButtons.clanPanel;
+        if (clan && clan.w > 0 && pieceHome.clanPanel) {
+            const home = centred + pieceHome.clanPanel.x;
+            placePiece("clanPanel", wide ? Math.max(home, edge - 4 - clan.w) : home, NaN);
+        }
+        const book = hudButtons.magicBox;
+        const bar = hudButtons.bgBar;
+        if (book && book.w > 0 && pieceHome.magicBox) {
+            const fits = wide && bar && bar.x >= book.w + 12;
+            if (fits) placePiece("magicBox", 4, stageHeight - book.h - 4);
+            else placePiece("magicBox", centred + pieceHome.magicBox.x, stageHeight + pieceHome.magicBox.y);
         }
     }
 
@@ -733,6 +801,8 @@
             hudMore.querySelector(".hud-more-count").textContent = `+${present}`;
             hudMore.hidden = present === 0;
         }
+        layoutPieces();
+        placeHud();  // the empire's name follows the globe
         placeButtons();
     }
 
