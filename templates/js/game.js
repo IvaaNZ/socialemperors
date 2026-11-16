@@ -715,13 +715,15 @@
         if (moved && moreOpen) showSidePieces();  // the open pieces follow the column
     }
 
-    // What shows of a side piece, in its bounds (stage pixels): the "Prize" box's bounds (190 x 160) are mostly
-    // empty room for the game's other offers, its picture is a 62 x 88 box in them. Others: their bounds.
+    // What shows of a side piece, from its origin (stage pixels): its bounds change with what the game shows in it
+    // (the "Prize" box grows with offers such as "Get your Monday Bonus!"), its origin does not. The box's picture
+    // is 62 x 88 at (-66, -16) from it, the options panel 90 x 59 at its origin. Measured in the game.
+    const SIDE_ART = { _viralButtonPanel: [-66, -16, 62, 88], options_panel: [-1, 0, 90, 59] };
+
     function sidePieceArt(name, piece) {
-        if (name === "_viralButtonPanel" && Math.abs(piece.w - 190) < 4 && Math.abs(piece.h - 160) < 4) {
-            return { x: piece.x + 55, y: piece.y + 44, w: 62, h: 88 };
-        }
-        return piece;
+        const art = SIDE_ART[name];
+        if (!art || !Number.isFinite(piece.ox)) return piece;
+        return { x: piece.ox + art[0], y: piece.oy + art[1], w: art[2], h: art[3] };
     }
 
     // Open, "More" shows the pieces stacked below it, centred on the right column (the "Prize" box first).

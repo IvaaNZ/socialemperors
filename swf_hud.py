@@ -13,7 +13,7 @@ This edit adds, without changing any original instruction:
     everything inside experienceBar but the World globe);
   * Base.__hudCash(): a mouse press on the hidden "+ cash" button (addCashButton listens to MOUSE_DOWN), so the
     page's button does the same;
-  * Base.__hudButtons(): where the bottom bar's buttons (BAR_BUTTONS, in GuiMC.bgBar), the bar itself and the side
+  * Base.__hudButtons(): where the bottom bar's buttons (bounds and origin) (BAR_BUTTONS, in GuiMC.bgBar), the bar itself and the side
     pieces (SIDE_BUTTONS) are on the stage, and whether they show: the page writes the buttons' names under them;
   * Base.__hudShow(name, visible, x, y): one of SIDE_BUTTONS shown or hidden (the page's "More" button groups
     them) and, unless x is NaN, moved so its top left corner is at (x, y) of the stage (below the "More" button);
@@ -61,7 +61,7 @@ HIDDEN = ('coinText', 'woodText', 'foodText', 'stoneText', 'dollarText', 'addCas
 EXPERIENCE_PARTS = range(0, 9)
 NAMES = {'ExternalInterface': 'flash.external', 'available': '', 'addCallback': '', 'visible': '',
          'MouseEvent': 'flash.events', 'dispatchEvent': '', 'getChildAt': '', 'text': '', 'numChildren': '', 'getBounds': '', 'stage': '',
-         'x': '', 'y': '', 'width': '', 'height': ''}
+         'x': '', 'y': '', 'width': '', 'height': '', 'Point': 'flash.geom', 'localToGlobal': ''}
 TEXT_FIELDS = (('name', 'nameText'), ('popText', 'visitorsText'))
 
 
@@ -115,7 +115,7 @@ def add_hud_to_abc(abc):
     m = _used_names(abc, wanted)
     n = {name: _qname(abc, name, package) for name, package in NAMES.items()}
     s = {text: abc.add_string(text) for text in
-         [key for key, _ in STATE_FIELDS + TEXT_FIELDS] + ['mode', 'windows', 'mouseDown', 'x', 'y', 'w', 'h', 'v', 'on', 'bgBar']
+         [key for key, _ in STATE_FIELDS + TEXT_FIELDS] + ['mode', 'windows', 'mouseDown', 'x', 'y', 'w', 'h', 'v', 'on', 'ox', 'oy', 'bgBar']
          + list(CALLBACKS) + list(BAR_BUTTONS + SIDE_BUTTONS + PLACED) + [CLAN_PANEL_SLOT]}
     clan_panel = abc.add_qname('', CLAN_PANEL_SLOT)
     reference = abc.body_of(abc.method_of('Base', 'DebugUnitTiles'))
@@ -201,6 +201,8 @@ def add_hud_to_abc(abc):
 
     for number, name in enumerate(names):
         bounds = [('getlocal1',), ('getlocal1',), ('getproperty', n['stage']), ('callproperty', n['getBounds'], 1)]
+        origin = [('getlocal1',), ('findpropstrict', n['Point']), ('pushbyte', 0), ('pushbyte', 0),
+                  ('constructprop', n['Point'], 2), ('callproperty', n['localToGlobal'], 1)]
         program += [('pushstring', s[name])] + present(name, f'null{number}') + path(name) + [
             ('setlocal1',), ('getlocal1',), ('iffalse', f'null{number}'),
             ('pushstring', s['x'])] + bounds + [('getproperty', n['x']),
@@ -209,13 +211,16 @@ def add_hud_to_abc(abc):
             ('pushstring', s['h'])] + bounds + [('getproperty', n['height']),
             ('pushstring', s['v']), ('getlocal1',), ('getproperty', n['visible']),
             ('pushstring', s['on']), ('getlocal1',), ('getproperty', n['stage']), ('pushnull',), ('equals',), ('not',),
-            ('newobject', 6), ('jump', f'next{number}'),
+            # Its own origin on the stage: its bounds change with what it shows (the "Prize" box's offers), not this.
+            ('pushstring', s['ox'])] + origin + [('getproperty', n['x']),
+            ('pushstring', s['oy'])] + origin + [('getproperty', n['y']),
+            ('newobject', 8), ('jump', f'next{number}'),
             ('label:', f'null{number}'), ('pushnull',),
             ('label:', f'next{number}')]
     program += [('newobject', len(names)), ('returnvalue',),
                 ('label:', 'try_end'),
                 ('label:', 'catch'), ('getlocal0',), ('pushscope',), ('pop',), ('pushnull',), ('returnvalue',)]
-    buttons = method(BUTTONS_METHOD, 0, program, 2 * len(names) + 16, 2)
+    buttons = method(BUTTONS_METHOD, 0, program, 2 * len(names) + 26, 2)
 
     # Base.__hudShow(name, visible, x, y): locals 1 to 4 the arguments, 5 the piece.
     def moved(axis, local):
