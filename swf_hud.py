@@ -13,8 +13,13 @@ This edit adds, without changing any original instruction:
     everything inside experienceBar but the World globe);
   * Base.__hudCash(): a mouse press on the hidden "+ cash" button (addCashButton listens to MOUSE_DOWN), so the
     page's button does the same;
-  * Base.__registerHud(), called first in Base.init: ExternalInterface callbacks 'seHudState', 'seHudHide' and
-    'seHudCash' (the page, templates/js/game.js, polls the state and calls the others).
+  * Base.__hudButtons(): where the bottom bar's buttons (BAR_BUTTONS, in GuiMC.bgBar), the bar itself and the side
+    pieces (SIDE_BUTTONS) are on the stage, and whether they show: the page writes the buttons' names under them;
+  * Base.__hudShow(name, visible, x, y): one of SIDE_BUTTONS shown or hidden (the page's "More" button groups
+    them) and, unless x is NaN, moved so its top left corner is at (x, y) of the stage (below the "More" button);
+  * Base.__registerHud(), called first in Base.init: ExternalInterface callbacks 'seHudState', 'seHudHide',
+    'seHudCash', 'seHudButtons' and 'seHudShow' (the page, templates/js/game.js, polls the state and calls the
+    others).
 
 Every name is taken from an instruction the game already uses. Each method runs inside its own try/catch: an error
 leaves the game as it is (the page then keeps the game's own ribbon).
@@ -28,7 +33,14 @@ from swf_duel_bridge import DO_ABC, assemble, prepend
 from swf_range_overlay import OPCODE_BY_NAME, _qname
 
 STATE_METHOD, HIDE_METHOD, CASH_METHOD, REGISTER_METHOD = '__hudState', '__hudHide', '__hudCash', '__registerHud'
-CALLBACKS = {'seHudState': STATE_METHOD, 'seHudHide': HIDE_METHOD, 'seHudCash': CASH_METHOD}
+BUTTONS_METHOD, SHOW_METHOD = '__hudButtons', '__hudShow'
+CALLBACKS = {'seHudState': STATE_METHOD, 'seHudHide': HIDE_METHOD, 'seHudCash': CASH_METHOD,
+             'seHudButtons': BUTTONS_METHOD, 'seHudShow': SHOW_METHOD}
+# The bottom bar's buttons (children of GuiMC.bgBar) the page names, and the bar itself.
+BAR_BUTTONS = ('normalMouse', 'storeButton', 'gamesButton', 'herramientaCuadrado', 'achievementsButton', 'giftButton')
+# GuiManager's side buttons the page's "More" button may hide and show again (seHudShow takes only these).
+# options_panel: the gear, music, sound, full-screen and pause buttons; _viralButtonPanel: the "Prize" box.
+SIDE_BUTTONS = ('options_panel', '_viralButtonPanel')
 STATE_FIELDS = (('g', 'iGold'), ('w', 'iWood'), ('f', 'iFood'), ('s', 'iStone'), ('c', 'iCash'), ('lvl', 'iLevel'),
                 ('xp', 'iExperience'), ('xpMin', 'uiExpMin'), ('xpMax', 'uiExpMax'), ('pop', 'iPopulationCurrent'),
                 ('popMax', 'iPopulationMax'))
@@ -40,7 +52,8 @@ HIDDEN = ('coinText', 'woodText', 'foodText', 'stoneText', 'dollarText', 'addCas
 # (read here from nameText and visitorsText, which the game also fills for a neighbour or an enemy).
 EXPERIENCE_PARTS = range(0, 9)
 NAMES = {'ExternalInterface': 'flash.external', 'available': '', 'addCallback': '', 'visible': '',
-         'MouseEvent': 'flash.events', 'dispatchEvent': '', 'getChildAt': '', 'text': '', 'numChildren': ''}
+         'MouseEvent': 'flash.events', 'dispatchEvent': '', 'getChildAt': '', 'text': '', 'numChildren': '', 'getBounds': '', 'stage': '',
+         'x': '', 'y': '', 'width': '', 'height': ''}
 TEXT_FIELDS = (('name', 'nameText'), ('popText', 'visitorsText'))
 
 
@@ -89,11 +102,13 @@ def add_hud_to_abc(abc):
     wanted |= {('getproperty', field) for _, field in STATE_FIELDS}
     wanted |= {('getproperty', name) for name in HIDDEN + ('experienceBar',)}
     wanted |= {('getproperty', field) for _, field in TEXT_FIELDS}
-    wanted |= {('getproperty', 'PopUp'), ('getproperty', 'popupLayer')}
+    wanted |= {('getproperty', 'PopUp'), ('getproperty', 'popupLayer'), ('getproperty', 'bgBar')}
+    wanted |= {('getproperty', name) for name in BAR_BUTTONS + SIDE_BUTTONS}
     m = _used_names(abc, wanted)
     n = {name: _qname(abc, name, package) for name, package in NAMES.items()}
     s = {text: abc.add_string(text) for text in
-         [key for key, _ in STATE_FIELDS + TEXT_FIELDS] + ['mode', 'windows', 'mouseDown'] + list(CALLBACKS)}
+         [key for key, _ in STATE_FIELDS + TEXT_FIELDS] + ['mode', 'windows', 'mouseDown', 'x', 'y', 'w', 'h', 'v', 'on', 'bgBar']
+         + list(CALLBACKS) + list(BAR_BUTTONS + SIDE_BUTTONS)}
     reference = abc.body_of(abc.method_of('Base', 'DebugUnitTiles'))
 
     def method(name, params, program, max_stack, local_count):
@@ -153,9 +168,54 @@ def add_hud_to_abc(abc):
                      ('callpropvoid', n['dispatchEvent'], 1)]
     cash = method(CASH_METHOD, 0, guarded(program), 5, 1)
 
+    def path(name):
+        if name == 'bgBar':
+            return gui + [('getproperty', m[('getproperty', 'bgBar')])]
+        if name in BAR_BUTTONS:
+            return gui + [('getproperty', m[('getproperty', 'bgBar')]), ('getproperty', m[('getproperty', name)])]
+        return gui + [('getproperty', m[('getproperty', name)])]
+
+    # Base.__hudButtons(): {name: {x, y, w, h (bounds on the stage), v (visible), on (on the stage)} or null}.
+    names = ('bgBar',) + BAR_BUTTONS + SIDE_BUTTONS
+    program = [('getlocal0',), ('pushscope',), ('label:', 'try')]
+    for number, name in enumerate(names):
+        bounds = [('getlocal1',), ('getlocal1',), ('getproperty', n['stage']), ('callproperty', n['getBounds'], 1)]
+        program += [('pushstring', s[name])] + path(name) + [
+            ('setlocal1',), ('getlocal1',), ('iffalse', f'null{number}'),
+            ('pushstring', s['x'])] + bounds + [('getproperty', n['x']),
+            ('pushstring', s['y'])] + bounds + [('getproperty', n['y']),
+            ('pushstring', s['w'])] + bounds + [('getproperty', n['width']),
+            ('pushstring', s['h'])] + bounds + [('getproperty', n['height']),
+            ('pushstring', s['v']), ('getlocal1',), ('getproperty', n['visible']),
+            ('pushstring', s['on']), ('getlocal1',), ('getproperty', n['stage']), ('pushnull',), ('equals',), ('not',),
+            ('newobject', 6), ('jump', f'next{number}'),
+            ('label:', f'null{number}'), ('pushnull',),
+            ('label:', f'next{number}')]
+    program += [('newobject', len(names)), ('returnvalue',),
+                ('label:', 'try_end'),
+                ('label:', 'catch'), ('getlocal0',), ('pushscope',), ('pop',), ('pushnull',), ('returnvalue',)]
+    buttons = method(BUTTONS_METHOD, 0, program, 2 * len(names) + 16, 2)
+
+    # Base.__hudShow(name, visible, x, y): locals 1 to 4 the arguments, 5 the piece.
+    def moved(axis, local):
+        bounds = [('getlocal', 5), ('getlocal', 5), ('getproperty', n['stage']), ('callproperty', n['getBounds'], 1)]
+        return [('getlocal', 5), ('getlocal', 5), ('getproperty', n[axis]), ('getlocal', local)] + bounds + [
+            ('getproperty', n[axis]), ('subtract',), ('add',), ('setproperty', n[axis])]
+
+    program = []
+    for number, name in enumerate(SIDE_BUTTONS):
+        program += [('getlocal1',), ('pushstring', s[name]), ('ifne', f'skip{number}')] + path(name) + [
+            ('setlocal', 5), ('getlocal', 5), ('getlocal2',), ('convert_b',), ('setproperty', n['visible']),
+            # x is NaN (not equal to itself): only shown or hidden. Off the stage: no place to compare with.
+            ('getlocal3',), ('getlocal3',), ('ifne', f'skip{number}'),
+            ('getlocal', 5), ('getproperty', n['stage']), ('iffalse', f'skip{number}')] + moved('x', 3) + moved('y', 4) + [
+            ('label:', f'skip{number}')]
+    show = method(SHOW_METHOD, 4, guarded(program), 8, 6)
+
     # Base.__registerHud(): the page's way in.
     program = [('getlex', n['ExternalInterface']), ('getproperty', n['available']), ('iffalse', 'done')]
-    for callback, target in ((s['seHudState'], state), (s['seHudHide'], hide), (s['seHudCash'], cash)):
+    for callback, target in ((s['seHudState'], state), (s['seHudHide'], hide), (s['seHudCash'], cash),
+                             (s['seHudButtons'], buttons), (s['seHudShow'], show)):
         program += [('getlex', n['ExternalInterface']), ('pushstring', callback), ('getlocal0',),
                     ('getproperty', target), ('callpropvoid', n['addCallback'], 2)]
     register = method(REGISTER_METHOD, 0, guarded(program), 4, 1)

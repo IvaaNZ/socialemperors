@@ -165,8 +165,42 @@ body.tab-expanded .game-footer, body.tab-expanded .mobile-hint { display: none; 
 /* The whole tab is the game: no room kept for the menu button, which floats over the top left corner (also on a
    phone held upright, where the menu otherwise has its own space below the game). */
 .game-shell.view-full.is-expanded .game-stage, .game-shell.view-full:fullscreen .game-stage { left: 0; bottom: 0; }
-.game-shell.view-full.is-expanded .controls-dock, .game-shell.view-full:fullscreen .controls-dock { top: max(8px, env(safe-area-inset-top)); bottom: auto; left: max(8px, env(safe-area-inset-left)); width: auto; max-width: calc(100% - 16px); flex-direction: column; }
+/* Point 26: over the game, the menu is a round "Menu" button on the top right corner (game.js may lower it below the
+   empire's name on a narrow stage), and its panel opens below it. */
+.game-shell.view-full.is-expanded .controls-dock, .game-shell.view-full:fullscreen .controls-dock { top: max(8px, env(safe-area-inset-top)); bottom: auto; left: auto; right: max(8px, env(safe-area-inset-right)); width: 64px; max-width: calc(100% - 16px); flex-direction: column; align-items: flex-end; }
+.game-shell.view-full.is-expanded.controls-open .controls-dock, .game-shell.view-full.controls-open:fullscreen .controls-dock { width: 200px; }
+.game-shell.view-full.is-expanded .controls-panel, .game-shell.view-full:fullscreen .controls-panel { width: 200px; grid-template-columns: minmax(0, 1fr); }
+.controls-toggle-label { display: none; }
+.game-shell.view-full.is-expanded .controls-toggle, .game-shell.view-full:fullscreen .controls-toggle { width: 52px; height: 52px; margin-bottom: 14px; padding: 13px; border-radius: 50%; color: #6b3d00; background: radial-gradient(circle at 40% 35%, #ffe680, #e9a91c 70%, #b37400); border: 2px solid #fff3c4; box-shadow: 0 2px 6px #0008; }
+.game-shell.view-full.is-expanded .controls-toggle:hover, .game-shell.view-full:fullscreen .controls-toggle:hover { filter: brightness(1.08); }
+.game-shell.view-full.is-expanded .controls-toggle-label, .game-shell.view-full:fullscreen .controls-toggle-label { display: block; position: absolute; left: 50%; top: 100%; transform: translateX(-50%); margin-top: 1px; color: #fff; font-weight: 800; font-size: 12px; line-height: 1; white-space: nowrap; text-shadow: 0 1px 0 #000, 0 0 2px #000, 0 0 3px #000; }
 /* While one of the game's windows is open, the page's overlays fade and let every click through to it. */
 .hud-bar, .hud-empire, .hud-clock { transition: opacity .25s ease; }
 body.hud-dimmed .hud-bar, body.hud-dimmed .hud-empire, body.hud-dimmed .hud-clock { opacity: .12; pointer-events: none; }
 body.hud-dimmed .hud-bar > * { pointer-events: none; }
+/* Point 26: the bottom bar's buttons get their names, written over the lower edge of each button (game.js places them
+   from the game's own positions, Base.__hudButtons). */
+.hud-labels { position: absolute; inset: 0; z-index: 3; pointer-events: none; overflow: hidden; }
+.hud-labels[hidden] { display: none; }
+.hud-labels span { position: absolute; transform: translate(-50%, -100%); color: #fff; font-weight: 800; font-size: calc(10px * var(--hud-scale, 1)); line-height: 1; white-space: nowrap; text-shadow: 0 1px 0 #000, 1px 0 0 #000, -1px 0 0 #000, 0 -1px 0 #000, 0 0 3px #000; }
+.hud-labels span[hidden] { display: none; }
+/* The right column: the daily bonus chest and the "More" button, below the menu button. */
+.hud-side { position: absolute; z-index: 3; display: flex; flex-direction: column; align-items: center; gap: calc(8px * var(--hud-scale, 1)); color: #fff; font-weight: 800; line-height: 1.05; text-align: center; text-shadow: 0 1px 0 #000, 0 0 2px #000, 0 0 3px #000; user-select: none; }
+.hud-side[hidden] { display: none; }
+.hud-daily { display: flex; flex-direction: column; align-items: center; color: inherit; text-decoration: none; font-size: calc(11px * var(--hud-scale, 1)); }
+.hud-daily-chest { display: block; width: calc(46px * var(--hud-scale, 1)); height: calc(42px * var(--hud-scale, 1)); filter: drop-shadow(0 2px 3px #0009); }
+.hud-daily-chest svg { width: 100%; height: 100%; display: block; }
+.hud-daily.is-ready .hud-daily-chest { animation: hud-daily-glow 1.4s ease-in-out infinite; }
+@keyframes hud-daily-glow { 50% { filter: drop-shadow(0 0 8px #ffe066) drop-shadow(0 2px 3px #0009); transform: scale(1.06); } }
+.hud-daily-time { margin-top: 2px; padding: 2px 6px; border-radius: 999px; background: #182a52d9; border: 1px solid #d9b25a; font-size: calc(10px * var(--hud-scale, 1)); font-variant-numeric: tabular-nums; }
+.hud-daily.is-ready .hud-daily-time { background: #2f9a20; }
+.hud-more { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 0; border: 0; background: none; color: inherit; font: inherit; font-size: calc(11px * var(--hud-scale, 1)); text-shadow: inherit; cursor: pointer; }
+.hud-more[hidden] { display: none; }
+.hud-more-count { display: grid; place-items: center; min-width: calc(44px * var(--hud-scale, 1)); height: calc(34px * var(--hud-scale, 1)); padding: 0 calc(6px * var(--hud-scale, 1)); border-radius: calc(9px * var(--hud-scale, 1)); background: linear-gradient(#fff3c4, #e9c46a); border: 2px solid #8a5a14; color: #6b3d00; font-size: calc(15px * var(--hud-scale, 1)); text-shadow: none; box-shadow: 0 2px 5px #0008; }
+.hud-more[aria-expanded="true"] .hud-more-count { background: linear-gradient(#e9c46a, #c99a2e); }
+body.hud-dimmed .hud-labels, body.hud-dimmed .hud-side { opacity: .12; pointer-events: none; }
+body.hud-dimmed .hud-side * { pointer-events: none; }
+.hud-labels, .hud-side { transition: opacity .25s ease; }
+/* The menu's panel opens over the right column: the column steps aside meanwhile. */
+.game-shell.controls-open .hud-side { opacity: 0; pointer-events: none; }
+.game-shell.controls-open .hud-side * { pointer-events: none; }

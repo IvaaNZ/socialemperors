@@ -3,8 +3,9 @@ from pathlib import Path
 
 from swf_abc import Abc, AbcError, disassemble
 from swf_duel_bridge import DO_ABC
-from swf_hud import (CALLBACKS, CASH_METHOD, EXPERIENCE_PARTS, HIDDEN, HIDE_METHOD, REGISTER_METHOD, STATE_FIELDS,
-                     STATE_METHOD, TEXT_FIELDS, add_hud, add_hud_to_abc)
+from swf_hud import (BAR_BUTTONS, BUTTONS_METHOD, CALLBACKS, CASH_METHOD, EXPERIENCE_PARTS, HIDDEN, HIDE_METHOD,
+                     REGISTER_METHOD, SHOW_METHOD, SIDE_BUTTONS, STATE_FIELDS, STATE_METHOD, TEXT_FIELDS, add_hud,
+                     add_hud_to_abc)
 from swf_localization import decode_swf, iter_tags
 
 MOVIE = Path('assets/flash/SocialEmpires0926bsec.swf')
@@ -51,6 +52,20 @@ class Hud(unittest.TestCase):
         first = disassemble(self.abc, self.abc.body_of(self.abc.method_of('Base', 'init'))['code'])[:2]
         self.assertEqual([op[1] for op in first], ['getlocal0', 'callpropvoid'])
         self.assertIn(REGISTER_METHOD, str(first[1][2]))
+
+    def test_the_buttons_report_where_they_are_on_the_stage(self):
+        names = self.names(BUTTONS_METHOD)
+        for name in ('bgBar',) + BAR_BUTTONS + SIDE_BUTTONS:
+            self.assertIn(name, names)
+        self.assertEqual(names.count('getBounds 1'), 4 * len(('bgBar',) + BAR_BUTTONS + SIDE_BUTTONS))
+
+    def test_more_shows_and_places_only_the_side_pieces(self):
+        ops = disassemble(self.abc, self.abc.body_of(self.abc.method_of('Base', SHOW_METHOD))['code'])
+        compared = [str(op[2]).strip("'") for op in ops if op[1] == 'pushstring']
+        self.assertEqual(compared, list(SIDE_BUTTONS))
+        names = [str(op[2]) for op in ops if len(op) > 2]
+        self.assertEqual(names.count('visible'), len(SIDE_BUTTONS))
+        self.assertIn('getBounds 1', names)
 
     def test_it_is_added_once(self):
         with self.assertRaises(AbcError):

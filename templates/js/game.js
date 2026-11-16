@@ -341,8 +341,7 @@
 
     // The page's overlays start right of the menu button when the game reaches the tab's left edge.
     function overlayLeft(box, stage, scale) {
-        const left = box.left - stage.left + 6 * scale;
-        return fullView ? Math.max(left, 58) : left;
+        return box.left - stage.left + 6 * scale;
     }
 
     function sizeView() {
@@ -589,6 +588,7 @@
         if (!hudShown || now - hudHiddenAt > 3000) {  // again now and then: a map change may show the ribbon again
             try {
                 player.seHudHide();
+                if (hudSide) showSidePieces();
                 hudHiddenAt = now;
             } catch (error) {
                 return;  // keep the game's own ribbon
@@ -631,8 +631,144 @@
         }
     }
 
+    // Point 26: the bottom bar's names, the right column (daily bonus chest, "More") and the menu button above it.
+    const hudLabels = document.getElementById("hud-labels");
+    const hudSide = document.getElementById("hud-side");
+    const hudDaily = document.getElementById("hud-daily");
+    const hudMore = document.getElementById("hud-more");
+    const SIDE_PIECES = ["options_panel", "_viralButtonPanel"];  // swf_hud.SIDE_BUTTONS
+    let moreOpen = false;
+    let morePieces = 0;
+    let hudButtons = null;
+    const clockOffset = (Number(config.serverTime) || Date.now() / 1000) * 1000 - Date.now();
+
+    // The game's pixels to the page's, for positions (not floored like the overlays' size).
+    function positionScale(box) {
+        return fullView ? viewScale : box.width / 760;
+    }
+
+    function menuOverGame() {
+        return fullView && (shell.classList.contains("is-expanded") || document.fullscreenElement === shell);
+    }
+
+    function placeButtons() {
+        if (!hudButtons) return;
+        const stage = hudBar.parentElement.getBoundingClientRect();
+        const box = container.getBoundingClientRect();
+        const scale = positionScale(box);
+        const left = box.left - stage.left;
+        const top = box.top - stage.top;
+        const bar = hudButtons.bgBar;
+        const barShown = Boolean(bar && bar.v && bar.on);
+        hudLabels.style.setProperty("--hud-scale", overlayScale(box).toFixed(3));
+        for (const label of hudLabels.querySelectorAll("[data-button]")) {
+            const button = hudButtons[label.dataset.button];
+            const shown = barShown && button && button.v && button.on && button.w > 0;
+            label.hidden = !shown;
+            if (!shown) continue;
+            label.style.left = `${left + (button.x + button.w / 2) * scale}px`;
+            label.style.top = `${top + (button.y + button.h - 1) * scale}px`;
+        }
+        hudLabels.hidden = false;
+
+        // The right column: below the menu button when it is over the game, else on the stage's top right; lower
+        // when the empire's name reaches it (a narrow stage).
+        hudSide.style.setProperty("--hud-scale", overlayScale(box).toFixed(3));
+        const right = stage.right - box.right + 8;
+        let columnTop = top + 8;
+        if (menuOverGame()) {
+            const empire = hudEmpire && !hudEmpire.hidden ? hudEmpire.getBoundingClientRect() : null;
+            let dockTop = 8;
+            if (empire && empire.right > stage.right - right - 64) dockTop = empire.bottom - stage.top + 6;
+            controlsDock.style.top = `${dockTop}px`;
+            columnTop = dockTop + 52 + 22;
+        } else {
+            controlsDock.style.top = "";
+            const empire = hudEmpire && !hudEmpire.hidden ? hudEmpire.getBoundingClientRect() : null;
+            if (empire && empire.right > stage.right - right - 64) columnTop = empire.bottom - stage.top + 6;
+        }
+        hudSide.style.right = `${right}px`;
+        hudSide.style.top = `${columnTop}px`;
+        const moved = hudSide.dataset.place !== `${right},${columnTop}`;
+        hudSide.dataset.place = `${right},${columnTop}`;
+        hudSide.hidden = false;
+        if (moved && moreOpen) showSidePieces();  // the open pieces follow the column
+    }
+
+    // Open, "More" shows the pieces stacked below it against the stage's right edge (the "Prize" box first).
+    function showSidePieces() {
+        const box = container.getBoundingClientRect();
+        const scale = positionScale(box);
+        const more = hudMore.getBoundingClientRect();
+        const rightEdge = (box.right - 8 - box.left) / scale;
+        let top = (more.bottom + 6 - box.top) / scale;
+        for (const name of ["_viralButtonPanel", "options_panel"]) {
+            const piece = hudButtons && hudButtons[name];
+            let x = NaN;
+            let y = NaN;
+            if (moreOpen && piece && piece.w > 0) {
+                x = rightEdge - piece.w;
+                y = top;
+                top += piece.h + 6;
+            }
+            try {
+                player.seHudShow(name, moreOpen, x, y);
+            } catch (error) {
+                // the game is busy: the next round
+            }
+        }
+    }
+
+    function readButtons() {
+        try {
+            hudButtons = player && typeof player.seHudButtons === "function" ? player.seHudButtons() : null;
+        } catch (error) {
+            hudButtons = null;
+        }
+        if (!hudButtons) return;
+        // "More" holds the side pieces the game has (the gear panel, the "Prize" box).
+        const present = SIDE_PIECES.filter(name => hudButtons[name] && hudButtons[name].on).length;
+        if (present !== morePieces) {
+            morePieces = present;
+            hudMore.querySelector(".hud-more-count").textContent = `+${present}`;
+            hudMore.hidden = present === 0;
+        }
+        placeButtons();
+    }
+
+    function updateDaily() {
+        if (!hudDaily) return;
+        const next = Number(config.dailyNext);
+        if (config.dailyNext === null || config.dailyNext === undefined || !Number.isFinite(next)) {
+            hudDaily.hidden = true;
+            return;
+        }
+        const left = Math.max(0, Math.round(next - (Date.now() + clockOffset) / 1000));
+        const ready = left === 0;
+        hudDaily.classList.toggle("is-ready", ready);
+        const hours = Math.floor(left / 3600);
+        const minutes = Math.floor((left % 3600) / 60);
+        hudDaily.querySelector(".hud-daily-time").textContent = ready ? t("Coletar!")
+            : hours > 0 ? `${hours}h ${String(minutes).padStart(2, "0")}m` : `${minutes}m ${String(left % 60).padStart(2, "0")}s`;
+    }
+
+    function startSide() {
+        if (!hudSide) return;
+        hudMore.addEventListener("click", () => {
+            moreOpen = !moreOpen;
+            hudMore.setAttribute("aria-expanded", String(moreOpen));
+            showSidePieces();
+        });
+        updateDaily();
+        setInterval(updateDaily, 1000);
+        setInterval(readButtons, 500);
+        window.addEventListener("resize", () => setTimeout(placeButtons, 60));
+        document.addEventListener("fullscreenchange", () => setTimeout(placeButtons, 60));
+    }
+
     function startHud() {
         if (!config.hudBar || !hudBar) return;
+        startSide();
         hudBar.querySelector(".hud-add").addEventListener("click", () => {
             try {
                 player.seHudCash();

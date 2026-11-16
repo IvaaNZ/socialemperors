@@ -722,7 +722,13 @@ def play():
         last_login = village_session(USERID)['playerInfo'].get('last_logged_in', -1)
         if not isinstance(last_login, int) or last_login < 0:
             last_login = server_time
-        return render_template("play.html", script_texts=game_script_texts(), save_info=save_info(USERID), serverTime=server_time, last_logged_in=last_login, friendsInfo=fb_friends_str(USERID), version=version_name, GAMEVERSION=GAME_VERSION, raid_revision=village_revision(USERID), game_user_key=game_session_key(USERID),
+        daily_next = None
+        if HUD_ENABLED:  # the HUD's "Daily bonus" chest counts down to the treasury's next daily reward
+            try:
+                daily_next = economy().overview(USERID)['next_claim_at']
+            except Exception:
+                app.logger.exception('The daily bonus chest could not read the treasury.')
+        return render_template("play.html", script_texts=game_script_texts(), daily_next=daily_next, save_info=save_info(USERID), serverTime=server_time, last_logged_in=last_login, friendsInfo=fb_friends_str(USERID), version=version_name, GAMEVERSION=GAME_VERSION, raid_revision=village_revision(USERID), game_user_key=game_session_key(USERID),
                                webgl_renderer=RUFFLE_SETTINGS['renderer'] == 'webgl', ruffle_settings=RUFFLE_SETTINGS,
                                push_time=QUICK_SAVE_SECONDS if QUICK_SAVE_ENABLED else None, sound_hint=SOUND_FIX_ENABLED,
                                day_night=DAY_NIGHT_ENABLED, hud_clock=HUD_ENABLED and DAY_NIGHT_ENABLED, hud_bar=HUD_ENABLED, full_view=VIEW_ENABLED,
