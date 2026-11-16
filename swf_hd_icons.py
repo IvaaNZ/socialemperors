@@ -302,3 +302,11 @@ def _rebuild(data, body, header_length, tags, replaced):
     patched = body[:header_length] + b''.join(out)
     header = data[:4] + struct.pack('<I', len(patched) + 8)
     return header + (zlib.compress(patched) if data[:3] == b'CWS' else patched)
+
+
+def resource_sprite_names(items):
+    """img_names of the map's resources (SE_HD_SPRITES=recursos): the game's own "Resources" category (mills, crops,
+    ranches, gold and stone mines, trees: subcategory 12) and anything else that gives wood or stone when collected
+    (the trees and rocks of the map), but not the Wonders (they produce resources too, but they are buildings)."""
+    return {item['img_name'] for item in items if item.get('type') == 'b' and item.get('subcategory_id') != '51'
+            and (item.get('subcategory_id') == '12' or item.get('collect_type') in ('w', 's'))}

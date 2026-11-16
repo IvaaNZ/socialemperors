@@ -84,6 +84,17 @@ class HdIcons(unittest.TestCase):
         self.assertEqual(hd.hd_path(147, 'en'), hd.HD_DIR / '147.png')
         self.assertIsNone(hd.hd_path(999999, 'es'))
 
+    def test_map_resources_are_the_resources_category_and_what_gives_wood_or_stone(self):
+        items = [
+            {'type': 'b', 'img_name': 'molino1', 'subcategory_id': '12', 'collect_type': 'f'},
+            {'type': 'b', 'img_name': 'arbol', 'subcategory_id': '101', 'collect_type': 'w'},
+            {'type': 'b', 'img_name': 'roca', 'subcategory_id': '45', 'collect_type': 's'},
+            {'type': 'b', 'img_name': 'casa1', 'subcategory_id': '11', 'collect_type': 'g'},
+            {'type': 'b', 'img_name': 'tajmahal', 'subcategory_id': '51', 'collect_type': 's'},  # a Wonder
+            {'type': 'u', 'img_name': 'aldeano', 'subcategory_id': '12', 'collect_type': 'w'},
+        ]
+        self.assertEqual(hd.resource_sprite_names(items), {'molino1', 'arbol', 'roca'})
+
     def test_the_switch(self):
         previous = os.environ.get('SE_HD_ICONS')
         try:

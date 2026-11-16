@@ -554,3 +554,7 @@ Probado en la copia con una pantalla de alta resolución simulada: el juego HD y
 ### HD prendido de nuevo
 
 El dueño pidió dejarlos prendidos: `SE_HD_ICONS=on` y `SE_HD_SPRITES=on` en `server.env`, y se retomó la generación de los edificios (`tools/make_hd_sprites.py` sigue donde quedó; el servidor usa los que ya están hechos).
+
+### Solo los recursos del mapa en HD (`SE_HD_SPRITES=recursos`)
+
+El dueño vio HD en partes del HUD y pidió los **recursos** en HD, no los edificios por ahora. Eligió las tres clases de recursos: los del mapa, lo que salta al recolectar y los de las ventanas. Los dos últimos ya están en el juego principal y los cubren los íconos HD (`SE_HD_ICONS`). Para el mapa, `swf_hd_icons.resource_sprite_names`: la categoría "Recursos" del propio juego (subcategoría 12: molinos, cultivos, ranchos, minas de oro y piedra, árboles) más lo que da madera o piedra al recolectarlo (árboles y rocas del mapa), sin las Maravillas (también producen, pero son edificios): 66 dibujos. `tools/make_hd_sprites.py --recursos` los generó en unos 3 minutos. `SE_HD_SPRITES` acepta `off`, `recursos` (solo esos, aunque haya edificios HD ya hechos en `assets_hd`) y `on`/`todo` (todo lo hecho). La generación de los demás edificios quedó parada (unos 130 de 896 hechos).

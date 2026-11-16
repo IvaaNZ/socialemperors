@@ -12,6 +12,7 @@ Progress goes to assets_hd/progreso.txt.
     .venv/Scripts/python tools/make_hd_sprites.py            # everything still to do
     .venv/Scripts/python tools/make_hd_sprites.py --limit 20 # only 20 sprites (to try)
     .venv/Scripts/python tools/make_hd_sprites.py casa1 molino1
+    .venv/Scripts/python tools/make_hd_sprites.py --recursos    # only the map's resources (SE_HD_SPRITES=recursos)
 """
 
 from pathlib import Path
@@ -40,13 +41,17 @@ MAX_SIDE = 1024
 BATCH_SPRITES = 25
 
 
-def building_sprites():
+def building_sprites(resources_only=False):
     import contextlib
     import io
+    from swf_hd_icons import resource_sprite_names
     with contextlib.redirect_stdout(io.StringIO()):
         from get_game_config import get_game_config
         items = get_game_config()['items']
-    names = sorted({item['img_name'] for item in items if item.get('type') == 'b'})
+    if resources_only:
+        names = sorted(resource_sprite_names(items))
+    else:
+        names = sorted({item['img_name'] for item in items if item.get('type') == 'b'})
     return [SOURCE / f'{name}.swf' for name in names if (SOURCE / f'{name}.swf').exists()]
 
 
@@ -127,9 +132,11 @@ def main():
         raise SystemExit(f'Real-ESRGAN is missing: {ENGINE}')
     arguments = sys.argv[1:]
     limit = None
+    resources_only = '--recursos' in arguments
+    arguments = [argument for argument in arguments if argument != '--recursos']
     if arguments[:1] == ['--limit']:
         limit, arguments = int(arguments[1]), arguments[2:]
-    todo = [SOURCE / f'{name}.swf' for name in arguments] if arguments else building_sprites()
+    todo = [SOURCE / f'{name}.swf' for name in arguments] if arguments else building_sprites(resources_only)
     TARGET.mkdir(parents=True, exist_ok=True)
     todo = [path for path in todo if not (TARGET / path.name).exists()]
     if limit:

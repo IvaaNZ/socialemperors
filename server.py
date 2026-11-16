@@ -873,12 +873,25 @@ def static_assets_loader(path):
         response.headers['Cache-Control'] = 'private, no-cache'
         response.headers['Vary'] = 'Cookie'
         return response
-    if HD_SPRITES_ENABLED and path.startswith('buildingsprites/'):
+    if HD_SPRITES_ENABLED and path.startswith('buildingsprites/') and hd_sprite_allowed(path):
         # SE_HD_SPRITES: the HD version of a building's picture when it was made (tools/make_hd_sprites.py)
         hd_folder = Path(ASSETS_DIR).resolve().parent / 'assets_hd'
         if (hd_folder / path).is_file():
             return send_from_directory(hd_folder, path)
     return send_from_directory(ASSETS_DIR, path)
+
+
+@lru_cache(maxsize=1)
+def hd_resource_sprites():
+    from swf_hd_icons import resource_sprite_names
+    return frozenset(name.lower() for name in resource_sprite_names(get_game_config()['items']))
+
+
+def hd_sprite_allowed(path):
+    """SE_HD_SPRITES=recursos: only the map's resources; on / todo: every sprite that has its HD version."""
+    if HD_SPRITES_MODE != 'recursos':
+        return True
+    return Path(path).stem.lower() in hd_resource_sprites()
 
 
 @lru_cache(maxsize=None)
@@ -1126,7 +1139,9 @@ QUICK_SAVE_ENABLED = os.environ.get('SE_QUICK_SAVE', 'on').strip().lower() in ('
 QUICK_SAVE_SECONDS = 3
 # HD buildings, decorations and map resources (assets_hd/buildingsprites, made by tools/make_hd_sprites.py, not in git):
 # served instead of the originals when they exist. Off, or for a sprite without its HD version: the original.
-HD_SPRITES_ENABLED = os.environ.get('SE_HD_SPRITES', 'on').strip().lower() in ('on', '1', 'true', 'yes')
+# SE_HD_SPRITES=recursos serves only the map's resources in HD (swf_hd_icons.resource_sprite_names); on: everything made.
+HD_SPRITES_MODE = os.environ.get('SE_HD_SPRITES', 'on').strip().lower()
+HD_SPRITES_ENABLED = HD_SPRITES_MODE in ('on', '1', 'true', 'yes', 'todo', 'recursos')
 # Updates: every start of the server has its own build (updater.py sets SE_BUILD; a server started by hand makes one).
 # The game page asks /version and, when it changed, shows "There is an update available" with a Restart button and
 # reloads by itself after 10 s, so nobody keeps playing an old server's game (SE_UPDATE_NOTICE, on).
