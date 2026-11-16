@@ -20,6 +20,9 @@
         'pushTime': push_time | default(none),
         'soundHint': sound_hint | default(false),
         'dayNight': day_night | default(false),
+        'updateNotice': update_notice | default(false),
+        'build': server_build | default(''),
+        'versionUrl': url_for('server_version'),
         'eventsUrl': url_for('village_events'),
         'texts': script_texts | default({}),
         'webglRenderer': webgl_renderer | default(false),
@@ -99,6 +102,14 @@
             <span>{{ version }}</span>
         </div>
         <p class="mobile-hint">{{ _('Para ver melhor sua vila no celular, use a tela na horizontal.') }}</p>
-    </main>{% if duel_config %}{% include '_duels.html' %}{% endif %}{% if clan_overlay %}{% include '_clan_overlay.html' %}{% endif %}{% if pvp_overlay %}{% include '_pvp_overlay.html' %}{% endif %}
+    </main>
+    <div id="update-notice" class="update-notice" role="alertdialog" aria-modal="true" aria-labelledby="update-title" aria-describedby="update-text" hidden>
+        <div class="update-card">
+            <h2 id="update-title">{{ _('Há uma atualização disponível') }}</h2>
+            <p id="update-text">{{ _('Reinicie para carregar as mudanças. Seu progresso está salvo.') }}</p>
+            <button id="update-restart" class="primary-button" type="button">{{ _('Reiniciar o jogo') }}</button>
+            <p id="update-countdown" class="update-countdown" aria-live="polite"></p>
+        </div>
+    </div>{% if duel_config %}{% include '_duels.html' %}{% endif %}{% if clan_overlay %}{% include '_clan_overlay.html' %}{% endif %}{% if pvp_overlay %}{% include '_pvp_overlay.html' %}{% endif %}
 </body>
 </html>

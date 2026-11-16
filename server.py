@@ -1,10 +1,16 @@
 print (" [+] Loading basics...")
 import os
 if __name__ == '__main__':
+    _console_env = dict(os.environ)  # before server.env: the update watcher hands this to each new server
     # The switches in server.env (SE_DUELS, SE_PVP...), before any module reads them; console variables win.
     from server_settings import SETTINGS_FILE, describe, load_settings_file
     _settings = load_settings_file()
     print(f" [+] Settings from {SETTINGS_FILE}: {describe(_settings) or 'none (file missing), built-in defaults'}")
+    if (os.environ.get('SE_AUTO_UPDATE', 'on').lower() in ('on', '1', 'true', 'yes')
+            and not os.environ.get('SE_SERVER_CHILD')):
+        # SE_AUTO_UPDATE: this process only watches for new commits and runs the server as a child (updater.py)
+        import updater
+        raise SystemExit(updater.supervise(_console_env))
 import json
 import secrets
 import threading
@@ -38,7 +44,7 @@ from village_stats import catalog as stats_catalog, summary as stats_summary, vi
 load_saved_villages()
 
 print (" [+] Loading server...")
-from flask import Flask, render_template, send_from_directory, send_file, request, redirect, session, g, abort, flash, url_for
+from flask import Flask, render_template, send_from_directory, send_file, request, redirect, session, g, abort, flash, url_for, Response
 from auth import AccountStore, AccountError, csrf_token, validate_csrf
 from command import command
 from engine import timestamp_now
@@ -718,7 +724,8 @@ def play():
         return render_template("play.html", script_texts=game_script_texts(), save_info=save_info(USERID), serverTime=server_time, last_logged_in=last_login, friendsInfo=fb_friends_str(USERID), version=version_name, GAMEVERSION=GAME_VERSION, raid_revision=village_revision(USERID), game_user_key=game_session_key(USERID),
                                webgl_renderer=RUFFLE_SETTINGS['renderer'] == 'webgl', ruffle_settings=RUFFLE_SETTINGS,
                                push_time=QUICK_SAVE_SECONDS if QUICK_SAVE_ENABLED else None, sound_hint=SOUND_FIX_ENABLED,
-                               day_night=DAY_NIGHT_ENABLED)
+                               day_night=DAY_NIGHT_ENABLED,
+                               update_notice=UPDATE_NOTICE_ENABLED, server_build=SERVER_BUILD)
 
 
 @app.route('/village', methods=['GET', 'POST'])
@@ -741,6 +748,14 @@ def village_settings():
                 flash('Nome da vila atualizado.', 'success')
                 return redirect(url_for('village_settings'), code=303)
     return render_template('village.html', village=info, village_name=name, error=error, name_max_length=MAX_VILLAGE_NAME_LENGTH), 400 if error else 200
+
+
+@app.get('/version')
+def server_version():
+    """The running server's build (public: the page asks it to know when the server was updated)."""
+    response = Response(json.dumps({'build': SERVER_BUILD}), mimetype='application/json')
+    response.headers['Cache-Control'] = 'no-store'
+    return response
 
 
 @app.get('/village/events')
@@ -1083,6 +1098,11 @@ app.jinja_env.globals['empire_name_enabled'] = EMPIRE_NAME_ENABLED
 # to the gifts. SE_QUICK_SAVE (on) asks for 3 s, the game's minimum; an empty queue sends nothing.
 QUICK_SAVE_ENABLED = os.environ.get('SE_QUICK_SAVE', 'on').strip().lower() in ('on', '1', 'true', 'yes')
 QUICK_SAVE_SECONDS = 3
+# Updates: every start of the server has its own build (updater.py sets SE_BUILD; a server started by hand makes one).
+# The game page asks /version and, when it changed, shows "There is an update available" with a Restart button and
+# reloads by itself after 10 s, so nobody keeps playing an old server's game (SE_UPDATE_NOTICE, on).
+UPDATE_NOTICE_ENABLED = os.environ.get('SE_UPDATE_NOTICE', 'on').strip().lower() in ('on', '1', 'true', 'yes')
+SERVER_BUILD = os.environ.get('SE_BUILD') or f'{int(datetime.now(timezone.utc).timestamp())}-{os.getpid()}'
 # Ruffle's renderer and quality for the game page ("default" lets Ruffle choose its renderer). With SE_ABILITIES=on
 # the quality is "high": at "16x16" Ruffle's wgpu renderer crashed building the ability effects' colour-filter
 # shader; its own WebGL renderer does not crash but draws no filters (no outlines, dotted hover highlights).

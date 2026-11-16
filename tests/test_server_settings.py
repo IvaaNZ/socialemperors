@@ -39,7 +39,12 @@ class ServerSettingsFile(unittest.TestCase):
         load = source.index('load_settings_file()')
         self.assertLess(load, source.index("os.environ.get('SE_"))
         self.assertLess(load, source.index('from get_game_config import'))
-        self.assertIn("if __name__ == '__main__':\n    # The switches in server.env", source)
+        main = source.index("if __name__ == '__main__':")
+        self.assertLess(main, source.index('# The switches in server.env'))
+        self.assertLess(main, load)
+        # the update watcher (SE_AUTO_UPDATE) takes over after server.env and before the game is loaded
+        self.assertLess(load, source.index('updater.supervise(_console_env)'))
+        self.assertLess(source.index('updater.supervise(_console_env)'), source.index('from get_game_config import'))
         # A plain import (the tests, "flask --app server ...") keeps the built-in defaults.
         script = ("import contextlib, io, os, sys; sys.path.insert(0, '.');"
                   "f = io.StringIO();\n"

@@ -142,6 +142,62 @@
         document.addEventListener("keydown", hide, true);
     }
 
+    // Updates (SE_UPDATE_NOTICE): every start of the server has its own build. When /version answers another one,
+    // the server was updated: a notice asks to restart and the page reloads by itself after 10 seconds, so nobody
+    // keeps playing against an old server. The game sends what the player did every few seconds (SE_QUICK_SAVE);
+    // the Restart button waits that long before reloading, so the last actions are saved too.
+    const UPDATE_SECONDS = 10;
+    const UPDATE_CHECK_MS = 5000;
+    let updateShown = false;
+
+    function watchServerVersion() {
+        if (!config.updateNotice || !config.build || !config.versionUrl) return;
+        const check = async () => {
+            if (updateShown) return;
+            try {
+                const response = await fetch(config.versionUrl, { credentials: "same-origin", cache: "no-store" });
+                if (!response.ok) return;
+                const answer = await response.json();
+                if (answer && typeof answer.build === "string" && answer.build && answer.build !== config.build) {
+                    showUpdateNotice();
+                }
+            } catch {
+                // While the server restarts nothing answers: try again on the next check.
+            }
+        };
+        setInterval(check, UPDATE_CHECK_MS);
+        document.addEventListener("visibilitychange", check);
+    }
+
+    function showUpdateNotice() {
+        const notice = document.getElementById("update-notice");
+        const restart = document.getElementById("update-restart");
+        const countdown = document.getElementById("update-countdown");
+        if (!notice || updateShown) return;
+        updateShown = true;
+        notice.hidden = false;
+        restart.focus();
+        const savingMs = (Number(config.pushTime) || 3) * 1000 + 500;
+        let left = UPDATE_SECONDS;
+        let reloading = false;
+        const reload = (delay) => {
+            if (reloading) return;
+            reloading = true;
+            clearInterval(timer);
+            restart.disabled = true;
+            countdown.textContent = t("Salvando seu progresso…");
+            setTimeout(() => window.location.reload(), delay);
+        };
+        const tick = () => {
+            countdown.textContent = t("Reiniciando em {seconds} s", { seconds: left });
+            if (left <= 0) reload(0);
+            left -= 1;
+        };
+        const timer = setInterval(tick, 1000);
+        tick();
+        restart.addEventListener("click", () => reload(Math.min(savingMs, left * 1000)));
+    }
+
     // Point 23 (SE_DAY_NIGHT): the village follows Argentina's hour. The game tints only its map layer
     // (Base.__setDayLight, swf_daylight.py); rain or snow falls now and then by season, drawn over the game.
     // ?hora=22.5 and ?clima=lluvia|nieve|despejado on the page's address show a given hour or weather.
@@ -346,6 +402,7 @@
     fullscreen.hidden = !document.fullscreenEnabled;
     applyAudio();
     setExpanded(true);
+    watchServerVersion();
 
     volume.addEventListener("input", () => {
         preferences.volume = Math.round(Math.max(0, Math.min(100, volume.valueAsNumber || 0)));
