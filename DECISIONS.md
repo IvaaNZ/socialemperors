@@ -518,3 +518,13 @@ El punto decía solo "Pase de temporada gratuito". El dueño eligió: temporadas
 - **Ventana y botón:** botón "Pase" (escudo azul con estrella, `tools/make_season_pass_button.py`) que abre una ventana con el aspecto de la del clan: nivel, barra de progreso, días que faltan, pestaña Recompensas (cobrar uno o todos) y pestaña Desafíos (progreso, puntos y cuándo cambian).
 - **Botones del juego en su propia columna:** el panel de íconos del juego (`GuiManager.createViralButtons`: `new IconPanel(100, SIDE_RIGHT, 200)`) muestra solo 2 íconos y no dibuja los demás: los lunes su cofre ocupaba un lugar y PvP no aparecía, y un tercer botón nunca se habría visto. Clan, PvP y Pase van ahora a un panel propio igual (`GuiManager.__seButtonPanel`, a la izquierda del del juego, para 3 íconos); la barra de zoom del juego queda libre.
 - **Probado en la copia (5051):** los tres botones se ven; el Pase abre "Pase de Primavera 2026" con los 40 niveles y los desafíos; con 10 niveles cobrados de una vez, el juego avisó que la aldea cambió y, al recargar, tenía 4.500 de oro y 5 de dinero más, y el Arquero elfo en Regalos (6 regalos en lugar de 5). Pruebas en `tests/test_season_pass.py` y `tests/test_season_pass_web.py`.
+
+### Pase de temporada: íconos de las recompensas
+
+Pedido del dueño. Cada nivel de la ventana muestra la imagen de su premio (`templates/img/season_pass/*.png`, 64 × 64 transparentes, hechas por `tools/make_season_pass_icons.py`):
+
+- **Oro, madera, comida y piedra:** las imágenes del propio juego en el SWF del cliente (bitmaps 156, 329, 782 y 783). Los símbolos `icoGoldMC`, `icoWoodMC`… de la barra de recursos son solo rectángulos grises de reemplazo que el juego llena al jugar, por eso se usan los bitmaps.
+- **Dinero:** los billetes del juego (`CashMC`, formas vectoriales dibujadas con `tools/swf_raster.py`).
+- **Unidades:** su dibujo en el mapa, de frente (lector del World Editor, `WorldEditor/sprites.py`); el Yeti negro, hecho solo de formas vectoriales, se dibuja con `swf_raster.py`.
+
+El servidor agrega la dirección de la imagen a cada premio; una prueba revisa que existan las imágenes de los premios de las cuatro temporadas.

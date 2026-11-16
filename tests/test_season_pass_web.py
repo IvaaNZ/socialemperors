@@ -51,6 +51,10 @@ class SeasonPassApi(unittest.TestCase):
         @app.get('/play.html', endpoint='play')
         def play():
             return ''
+
+        @app.get('/img/<path:path>', endpoint='images')
+        def images(path):
+            return ''
         self.record_for = install_season_pass(app, threading.RLock(), self.saves.get, self.saved.append,
                                               lambda item: f'Unidad {item}', lambda: self.accounts)
         self.app = app
@@ -62,6 +66,11 @@ class SeasonPassApi(unittest.TestCase):
         state = self.client.get('/season-pass/api/state').get_json()
         self.assertEqual((state['level'], state['levels'], len(state['rewards'])), (0, sp.LEVELS, sp.LEVELS))
         self.assertEqual(state['rewards'][9]['reward']['name'], f"Unidad {state['rewards'][9]['reward']['unit']}")
+        # every reward has its picture, and the pictures exist
+        for row in state['rewards']:
+            icon = row['reward']['icon']
+            self.assertTrue(icon.startswith('/img/season_pass/'), icon)
+            self.assertTrue((ROOT / 'templates' / 'img' / icon[len('/img/'):]).exists(), icon)
         self.assertEqual(self.saved, ['v1'])  # the new season was set up and kept
         self.saves['v1']['privateState']['seasonPass']['points'] = 2 * sp.POINTS_PER_LEVEL
         refused = self.client.post('/season-pass/api/claim', data={'level': 'all', 'csrf_token': 'otro'})
@@ -86,6 +95,16 @@ class SeasonPassApi(unittest.TestCase):
         self.assertIn('duel_win:7', self.saves['v2']['privateState']['seasonPass']['seen'])
         self.assertNotIn('duel_win:7', self.saves['v1']['privateState']['seasonPass']['seen'])
         self.assertEqual(self.saves['v2']['privateState']['seasonPass']['seen'].count('duel_play:7'), 1)
+
+
+class SeasonPassIcons(unittest.TestCase):
+    def test_every_reward_of_every_season_has_its_picture(self):
+        folder = ROOT / 'templates' / 'img' / 'season_pass'
+        for name in ('coins', 'wood', 'food', 'stone', 'cash'):
+            self.assertTrue((folder / f'{name}.png').exists(), name)
+        for units in sp.SEASON_UNITS.values():
+            for unit in units:
+                self.assertTrue((folder / f'unit_{unit}.png').exists(), unit)
 
 
 class SeasonPassMovie(unittest.TestCase):

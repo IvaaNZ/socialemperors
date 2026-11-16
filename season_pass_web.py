@@ -76,11 +76,18 @@ def install_season_pass(app, village_lock, village_session, save_village, unit_n
             'play': url_for('play'), 'texts': overlay_texts(),
         }}
 
+    def icon_of(reward):
+        """The reward's picture (templates/img/season_pass, drawn by tools/make_season_pass_icons.py)."""
+        name = (f"unit_{reward['unit']}" if 'unit' in reward else 'cash' if 'cash' in reward else reward['resource'])
+        return url_for('images', path=f'season_pass/{name}.png')
+
     def state_of(userid):
         view = SeasonPass(village_session(userid)).view()
         for row in view['rewards']:
+            extra = {'icon': icon_of(row['reward'])}
             if 'unit' in row['reward']:
-                row['reward'] = {**row['reward'], 'name': unit_name(row['reward']['unit'])}
+                extra['name'] = unit_name(row['reward']['unit'])
+            row['reward'] = {**row['reward'], **extra}
         return view
 
     @app.get('/season-pass/api/state', endpoint='season_pass_api_state')

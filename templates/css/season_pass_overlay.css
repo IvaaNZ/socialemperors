@@ -22,3 +22,6 @@
 .spx-challenge.is-done .spx-bar > span { background: linear-gradient(#ffd66b, #d9a637); }
 .spx-points { flex: none; font-weight: 700; color: #4c8f2c; }
 .spx-reload { margin-left: 8px; }
+.spx-icon { flex: none; width: 40px; height: 40px; margin-right: 10px; object-fit: contain; }
+.spx-ladder li.is-unit .spx-icon { width: 48px; height: 48px; margin: -4px 6px -4px -4px; filter: drop-shadow(0 1px 1px #0004); }
+.spx-ladder li.is-claimed .spx-icon { opacity: .6; }

@@ -62,8 +62,10 @@
                 const action = row.claimed ? '<span class="clanx-chip">' + esc(T.claimed) + "</span>"
                     : row.reached ? '<button type="button" class="clanx-btn clanx-btn-green" data-action="claim" data-level="' + row.level + '">' + esc(T.claim) + "</button>"
                         : '<span class="clanx-muted">' + esc(T.locked) + "</span>";
+                const icon = row.reward.icon ? '<img class="spx-icon" src="' + esc(row.reward.icon) + '" alt="" width="40" height="40" loading="lazy">'
+                    : '<span class="spx-icon"></span>';
                 return '<li class="' + kind + (row.reward.unit ? " is-unit" : "") + '"><span class="spx-level">' + row.level +
-                    '</span><span class="spx-reward">' + View.rewardText(T, row.reward, lang) + "</span><span>" + action + "</span></li>";
+                    "</span>" + icon + '<span class="spx-reward">' + View.rewardText(T, row.reward, lang) + "</span><span>" + action + "</span></li>";
             }).join("") + "</ul>";
         },
 
