@@ -30,8 +30,9 @@ class Hud(unittest.TestCase):
         for _, field in STATE_FIELDS + TEXT_FIELDS:
             self.assertIn(field, names)
         self.assertIn('gameMode', names)
+        self.assertIn('popupLayer', names)
         ops = disassemble(self.abc, self.abc.body_of(self.abc.method_of('Base', STATE_METHOD))['code'])
-        self.assertIn(str(len(STATE_FIELDS) + len(TEXT_FIELDS) + 1), [op[2] for op in ops if op[1] == 'newobject'])
+        self.assertIn(str(len(STATE_FIELDS) + len(TEXT_FIELDS) + 2), [op[2] for op in ops if op[1] == 'newobject'])
 
     def test_the_ribbon_goes_but_the_world_globe_stays(self):
         names = self.names(HIDE_METHOD)

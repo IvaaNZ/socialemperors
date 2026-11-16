@@ -151,9 +151,22 @@ body.tab-expanded .game-footer, body.tab-expanded .mobile-hint { display: none; 
 .hud-res.is-down b { color: #ffb08a; }
 .hud-add { display: grid; place-items: center; width: calc(18px * var(--hud-scale, 1)); height: calc(18px * var(--hud-scale, 1)); margin: 0 calc(-6px * var(--hud-scale, 1)) 0 calc(3px * var(--hud-scale, 1)); padding: 0; border: calc(1.5px * var(--hud-scale, 1)) solid #fff; border-radius: 50%; background: radial-gradient(circle at 40% 35%, #8ef06a, #2f9a20); color: #fff; font: 900 calc(15px * var(--hud-scale, 1))/1 sans-serif; text-shadow: 0 1px 0 #145a0c; cursor: pointer; }
 .hud-add:hover { filter: brightness(1.12); }
-/* The empire's name and population, right of the game's World globe (their plates were part of the hidden ribbon). */
-.hud-empire { position: absolute; z-index: 3; display: flex; flex-direction: column; align-items: flex-end; gap: calc(6px * var(--hud-scale, 1)); color: #fff; font-weight: 800; line-height: 1; white-space: nowrap; text-shadow: 0 1px 0 #000, 0 0 2px #000; pointer-events: none; user-select: none; }
+/* The empire's name and population, right of the game's World globe (their plates were part of the hidden ribbon).
+   The globe moves with the game's layout: game.js places them by the stage's width. */
+.hud-empire { position: absolute; z-index: 3; display: flex; flex-direction: column; align-items: flex-start; gap: calc(6px * var(--hud-scale, 1)); color: #fff; font-weight: 800; line-height: 1; white-space: nowrap; text-shadow: 0 1px 0 #000, 0 0 2px #000; pointer-events: none; user-select: none; }
 .hud-empire[hidden] { display: none; }
-.hud-name { max-width: calc(118px * var(--hud-scale, 1)); overflow: hidden; text-overflow: ellipsis; padding: calc(4px * var(--hud-scale, 1)) calc(10px * var(--hud-scale, 1)) calc(4px * var(--hud-scale, 1)) calc(18px * var(--hud-scale, 1)); border-radius: 999px 0 0 999px; background: linear-gradient(#f3d27a, #c9952e); border: calc(2px * var(--hud-scale, 1)) solid #fff3c4; border-right: 0; color: #4a2a00; text-shadow: 0 1px 0 #ffe9b0; font-size: calc(13px * var(--hud-scale, 1)); }
-.hud-pop { display: flex; align-items: center; gap: calc(4px * var(--hud-scale, 1)); height: calc(22px * var(--hud-scale, 1)); padding: 0 calc(10px * var(--hud-scale, 1)) 0 calc(4px * var(--hud-scale, 1)); border-radius: 999px 0 0 999px; background: linear-gradient(#2a3f73e6, #182a52e6); border: calc(2px * var(--hud-scale, 1)) solid #d9b25a; border-right: 0; font-size: calc(13px * var(--hud-scale, 1)); }
+.hud-name { max-width: calc(118px * var(--hud-scale, 1)); overflow: hidden; text-overflow: ellipsis; padding: calc(4px * var(--hud-scale, 1)) calc(10px * var(--hud-scale, 1)) calc(4px * var(--hud-scale, 1)) calc(18px * var(--hud-scale, 1)); border-radius: 999px; background: linear-gradient(#f3d27a, #c9952e); border: calc(2px * var(--hud-scale, 1)) solid #fff3c4; color: #4a2a00; text-shadow: 0 1px 0 #ffe9b0; font-size: calc(13px * var(--hud-scale, 1)); }
+.hud-pop { display: flex; align-items: center; gap: calc(4px * var(--hud-scale, 1)); height: calc(22px * var(--hud-scale, 1)); padding: 0 calc(10px * var(--hud-scale, 1)) 0 calc(4px * var(--hud-scale, 1)); border-radius: 999px; background: linear-gradient(#2a3f73e6, #182a52e6); border: calc(2px * var(--hud-scale, 1)) solid #d9b25a; font-size: calc(13px * var(--hud-scale, 1)); }
 .hud-pop img { width: calc(22px * var(--hud-scale, 1)); height: calc(22px * var(--hud-scale, 1)); object-fit: contain; }
+/* SE_VIEW: the game's stage as big as its place on the page (game.js sizes the player and scales it by
+   --view-scale, so the interface keeps its size and more of the map shows). */
+.game-player.is-view { top: 0; left: 0; width: 100%; height: 100%; transform: none; overflow: hidden; touch-action: none; }
+.game-player.is-view ruffle-player { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+/* The whole tab is the game: no room kept for the menu button, which floats over the top left corner (also on a
+   phone held upright, where the menu otherwise has its own space below the game). */
+.game-shell.view-full.is-expanded .game-stage, .game-shell.view-full:fullscreen .game-stage { left: 0; bottom: 0; }
+.game-shell.view-full.is-expanded .controls-dock, .game-shell.view-full:fullscreen .controls-dock { top: max(8px, env(safe-area-inset-top)); bottom: auto; left: max(8px, env(safe-area-inset-left)); width: auto; max-width: calc(100% - 16px); flex-direction: column; }
+/* While one of the game's windows is open, the page's overlays fade and let every click through to it. */
+.hud-bar, .hud-empire, .hud-clock { transition: opacity .25s ease; }
+body.hud-dimmed .hud-bar, body.hud-dimmed .hud-empire, body.hud-dimmed .hud-clock { opacity: .12; pointer-events: none; }
+body.hud-dimmed .hud-bar > * { pointer-events: none; }

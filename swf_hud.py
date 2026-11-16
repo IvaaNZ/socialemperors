@@ -6,7 +6,8 @@ This edit adds, without changing any original instruction:
   * Base.__hudState(): an Object with the player's gold, wood, food, stone and cash (Base.Player.iGold, iWood, iFood,
     iStone, iCash), level and experience (iLevel, iExperience, uiExpMin, uiExpMax), population (iPopulationCurrent,
     iPopulationMax), the name and population the game shows (experienceBar's nameText and visitorsText) and
-    Base.Main.gameMode (1: the player's own village). null while the game is loading;
+    Base.Main.gameMode (1: the player's own village) and how many of the game's windows are open
+    (Base.PopUp.popupLayer.numChildren: the page dims its bar over them). null while the game is loading;
   * Base.__hudHide(): hides the game's top ribbon pieces the page replaces (GuiMC's coinText, woodText, foodText,
     stoneText, dollarText, addCashButton, parteArribaGui (the ribbon's background), GuiManager.fondoBotonDollar, and
     everything inside experienceBar but the World globe);
@@ -39,7 +40,7 @@ HIDDEN = ('coinText', 'woodText', 'foodText', 'stoneText', 'dollarText', 'addCas
 # (read here from nameText and visitorsText, which the game also fills for a neighbour or an enemy).
 EXPERIENCE_PARTS = range(0, 9)
 NAMES = {'ExternalInterface': 'flash.external', 'available': '', 'addCallback': '', 'visible': '',
-         'MouseEvent': 'flash.events', 'dispatchEvent': '', 'getChildAt': '', 'text': ''}
+         'MouseEvent': 'flash.events', 'dispatchEvent': '', 'getChildAt': '', 'text': '', 'numChildren': ''}
 TEXT_FIELDS = (('name', 'nameText'), ('popText', 'visitorsText'))
 
 
@@ -62,7 +63,8 @@ def _used_names(abc, wanted):
                         r.s24()
                 else:
                     value = r.u30()
-                    if position == 0 and op_name in ('getproperty', 'getlex', 'findpropstrict', 'constructprop'):
+                    if position == 0 and op_name in ('getproperty', 'getlex', 'findpropstrict', 'constructprop',
+                                                     'callproperty', 'callpropvoid', 'setproperty'):
                         try:
                             name = abc.multiname_name(value)
                         except (AbcError, IndexError, KeyError):
@@ -74,7 +76,7 @@ def _used_names(abc, wanted):
             break
     missing = set(wanted) - set(found)
     if missing:
-        raise AbcError(f'HUD names not found in the game code: {sorted(missing)}')
+        raise AbcError(f'Names not found in the game code: {sorted(missing)}')
     return found
 
 
@@ -87,10 +89,11 @@ def add_hud_to_abc(abc):
     wanted |= {('getproperty', field) for _, field in STATE_FIELDS}
     wanted |= {('getproperty', name) for name in HIDDEN + ('experienceBar',)}
     wanted |= {('getproperty', field) for _, field in TEXT_FIELDS}
+    wanted |= {('getproperty', 'PopUp'), ('getproperty', 'popupLayer')}
     m = _used_names(abc, wanted)
     n = {name: _qname(abc, name, package) for name, package in NAMES.items()}
     s = {text: abc.add_string(text) for text in
-         [key for key, _ in STATE_FIELDS + TEXT_FIELDS] + ['mode', 'mouseDown'] + list(CALLBACKS)}
+         [key for key, _ in STATE_FIELDS + TEXT_FIELDS] + ['mode', 'windows', 'mouseDown'] + list(CALLBACKS)}
     reference = abc.body_of(abc.method_of('Base', 'DebugUnitTiles'))
 
     def method(name, params, program, max_stack, local_count):
@@ -121,10 +124,12 @@ def add_hud_to_abc(abc):
                     ('getproperty', n['text'])]
     program += [('pushstring', s['mode']), ('getlex', m[('getlex', 'Base')]), ('getproperty', m[('getproperty', 'Main')]),
                 ('getproperty', m[('getproperty', 'gameMode')]),
-                ('newobject', len(STATE_FIELDS) + len(TEXT_FIELDS) + 1), ('returnvalue',),
+                ('pushstring', s['windows']), ('getlex', m[('getlex', 'Base')]), ('getproperty', m[('getproperty', 'PopUp')]),
+                ('getproperty', m[('getproperty', 'popupLayer')]), ('getproperty', n['numChildren']),
+                ('newobject', len(STATE_FIELDS) + len(TEXT_FIELDS) + 2), ('returnvalue',),
                 ('label:', 'try_end'),
                 ('label:', 'catch'), ('getlocal0',), ('pushscope',), ('pop',), ('pushnull',), ('returnvalue',)]
-    state = method(STATE_METHOD, 0, program, 2 * (len(STATE_FIELDS) + len(TEXT_FIELDS)) + 6, 1)
+    state = method(STATE_METHOD, 0, program, 2 * (len(STATE_FIELDS) + len(TEXT_FIELDS)) + 8, 1)
 
     def guarded(body):
         return [('getlocal0',), ('pushscope',), ('label:', 'try')] + body + [

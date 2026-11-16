@@ -1,0 +1,154 @@
+"""The game's side of the full-window view and the smooth zoom (block E, SE_VIEW).
+
+The page (templates/js/game.js) makes the game's stage as big as the browser window, no longer a 760 x 600 picture
+with green bands at its sides, and zooms the map continuously with the mouse wheel or two fingers. This edit adds,
+without changing any original instruction:
+
+  * Base.__seView(): an Object with the map's zoom (Base.currentZoom), its limits (MIN_ZOOM, MAX_ZOOM) and the
+    stage's size (stageWidth, stageHeight); null while the game is loading;
+  * Base.__seFit(center): lays the interface out for the stage's present size with the game's own full-screen
+    layout (GuiManager.fullscreen, the one the Facebook game used: the bottom bar centred, the side buttons on the
+    edges), after undoing a previous one (GuiManager.normalscreen); hides the zoom slider on the right
+    (GuiManager.zoomSlider); and, when `center`, centres the map on the buildings (Base.centerBuildings);
+  * Base.__seZoom(zoom, x, y, fast): the map's zoom set to `zoom` (the page keeps it within the limits) with the map
+    point under (x, y) of the stage left where it was. `fast` skips the buildings' re-smoothing (Base.setZoom's own
+    second argument) for the frames of a zoom in progress; the last call, not fast, re-smooths them and keeps the
+    zoom in the game's settings (GuiManager.setZoom). Nothing happens in the tutorial, with the map locked or while
+    placing a building, like the game's own zoom (Base.zoomMap);
+  * Base.__seMove(dx, dy): the map moved by the game's own Base.moveMap (two fingers drag it while they zoom);
+  * Base.__registerView(), called first in Base.init: ExternalInterface callbacks seView, seFit, seZoom and seMove.
+
+Every name is taken from an instruction the game already uses; each method runs inside a try/catch.
+"""
+
+import struct
+import zlib
+
+from swf_abc import AbcError, u30
+from swf_duel_bridge import DO_ABC, assemble, prepend
+from swf_hud import _used_names
+from swf_range_overlay import OPCODE_BY_NAME, _qname
+
+VIEW_METHOD, FIT_METHOD, ZOOM_METHOD, MOVE_METHOD, REGISTER_METHOD = (
+    '__seView', '__seFit', '__seZoom', '__seMove', '__registerView')
+CALLBACKS = (('seView', VIEW_METHOD), ('seFit', FIT_METHOD), ('seZoom', ZOOM_METHOD), ('seMove', MOVE_METHOD))
+NAMES = {'ExternalInterface': 'flash.external', 'available': '', 'addCallback': '', 'visible': '', 'x': '', 'y': '',
+         'Point': 'flash.geom', 'globalToLocal': '', 'localToGlobal': '', 'stageWidth': '', 'stageHeight': ''}
+
+
+def add_view_to_abc(abc):
+    base = abc.instances[abc.class_index('Base')]
+    if any(abc.multiname_name(t['name']) == VIEW_METHOD for t in base['traits']):
+        raise AbcError('The view bridge is already present')
+    wanted = {('getlex', 'Base'), ('getproperty', 'Main'), ('getproperty', 'Gui'), ('getproperty', 'currentZoom'),
+              ('getproperty', 'MIN_ZOOM'), ('getproperty', 'MAX_ZOOM'), ('callproperty', 'getStage'),
+              ('callpropvoid', 'normalscreen'), ('callpropvoid', 'fullscreen'), ('getproperty', 'zoomSlider'),
+              ('callpropvoid', 'centerBuildings'), ('getproperty', 'buildingLayer'), ('callpropvoid', 'setZoom'),
+              ('callpropvoid', 'moveMap'), ('getproperty', 'tutorialMode'), ('getproperty', 'mapLocked'),
+              ('getproperty', 'addingBuildings')}
+    m = _used_names(abc, wanted)
+    n = {name: _qname(abc, name, package) for name, package in NAMES.items()}
+    s = {text: abc.add_string(text) for text in ['zoom', 'zMin', 'zMax', 'sw', 'sh'] + [c for c, _ in CALLBACKS]}
+    reference = abc.body_of(abc.method_of('Base', 'DebugUnitTiles'))
+
+    def method(name, params, program, max_stack, local_count, value=False):
+        if value:
+            program = [('getlocal0',), ('pushscope',), ('label:', 'try')] + program + [
+                ('label:', 'try_end'),
+                ('label:', 'catch'), ('getlocal0',), ('pushscope',), ('pop',), ('pushnull',), ('returnvalue',)]
+        else:
+            program = [('getlocal0',), ('pushscope',), ('label:', 'try')] + program + [
+                ('label:', 'try_end'), ('jump', 'done'),
+                ('label:', 'catch'), ('getlocal0',), ('pushscope',), ('pop',),
+                ('label:', 'done'), ('returnvoid',)]
+        code, labels = assemble(program)
+        index = len(abc.methods)
+        abc.methods.append({'return_type': 0, 'param_types': [0] * params, 'name': abc.add_string(name), 'flags': 0,
+                            'options': None, 'param_names': None})
+        abc.bodies.append({'method': index, 'max_stack': max_stack, 'local_count': local_count,
+                           'init_scope_depth': reference['init_scope_depth'],
+                           'max_scope_depth': reference['init_scope_depth'] + 1,
+                           'code': code, 'exceptions': [[labels['try'], labels['try_end'], labels['catch'], 0, 0]],
+                           'traits': []})
+        qname = abc.add_qname('', name)
+        base['traits'].append({'name': qname, 'kind': 1, 'data': [0, index], 'metadata': None})
+        return qname
+
+    gui = [('getlex', m[('getlex', 'Base')]), ('getproperty', m[('getproperty', 'Gui')])]
+    stage = [('getlex', m[('getlex', 'Base')]), ('getproperty', m[('getproperty', 'Main')]),
+             ('callproperty', m[('callproperty', 'getStage')], 0)]
+
+    # Base.__seView(): {zoom, zMin, zMax, sw, sh}
+    program = [('pushstring', s['zoom']), ('getlocal0',), ('getproperty', m[('getproperty', 'currentZoom')]),
+               ('pushstring', s['zMin']), ('getlocal0',), ('getproperty', m[('getproperty', 'MIN_ZOOM')]),
+               ('pushstring', s['zMax']), ('getlocal0',), ('getproperty', m[('getproperty', 'MAX_ZOOM')]),
+               ('pushstring', s['sw'])] + stage + [('getproperty', n['stageWidth']),
+               ('pushstring', s['sh'])] + stage + [('getproperty', n['stageHeight']),
+               ('newobject', 5), ('returnvalue',)]
+    view = method(VIEW_METHOD, 0, program, 14, 1, value=True)
+
+    # Base.__seFit(center)
+    program = (gui + [('getproperty', n['x']), ('pushbyte', 0), ('ifne', 'normal')]
+               + gui + [('getproperty', n['y']), ('pushshort', 525), ('ifeq', 'laid')]
+               + [('label:', 'normal')] + gui + [('callpropvoid', m[('callpropvoid', 'normalscreen')], 0)]
+               + [('label:', 'laid')] + gui + [('callpropvoid', m[('callpropvoid', 'fullscreen')], 0)]
+               + gui + [('getproperty', m[('getproperty', 'zoomSlider')]), ('pushfalse',), ('setproperty', n['visible'])]
+               + [('getlocal1',), ('iffalse', 'done'),
+                  ('getlocal0',), ('callpropvoid', m[('callpropvoid', 'centerBuildings')], 0)])
+    fit = method(FIT_METHOD, 1, program, 3, 2)
+
+    # Base.__seZoom(zoom, x, y, fast); local 5: the anchor point in the map layer's own coordinates.
+    layer = [('getlocal0',), ('getproperty', m[('getproperty', 'buildingLayer')])]
+    program = ([('getlex', m[('getlex', 'Base')]), ('getproperty', m[('getproperty', 'Main')]),
+                ('getproperty', m[('getproperty', 'tutorialMode')]), ('iftrue', 'done'),
+                ('getlocal0',), ('getproperty', m[('getproperty', 'mapLocked')]), ('iftrue', 'done'),
+                ('getlocal0',), ('getproperty', m[('getproperty', 'addingBuildings')]), ('iftrue', 'done')]
+               + layer + [('findpropstrict', n['Point']), ('getlocal2',), ('getlocal3',),
+                          ('constructprop', n['Point'], 2), ('callproperty', n['globalToLocal'], 1), ('setlocal', 5),
+                          ('getlocal0',), ('getlocal1',), ('getlocal', 4),
+                          ('callpropvoid', m[('callpropvoid', 'setZoom')], 2),
+                          ('getlocal', 4), ('iftrue', 'kept')]
+               + gui + [('getlocal1',), ('callpropvoid', m[('callpropvoid', 'setZoom')], 1),
+                        ('label:', 'kept')]
+               + layer + [('getlocal', 5), ('callproperty', n['localToGlobal'], 1), ('setlocal', 5),
+                          ('getlocal0',),
+                          ('getlocal2',), ('getlocal', 5), ('getproperty', n['x']), ('subtract',),
+                          ('getlocal3',), ('getlocal', 5), ('getproperty', n['y']), ('subtract',),
+                          ('callpropvoid', m[('callpropvoid', 'moveMap')], 2)])
+    zoom = method(ZOOM_METHOD, 4, program, 5, 6)
+
+    # Base.__seMove(dx, dy)
+    program = [('getlocal0',), ('getlocal1',), ('getlocal2',), ('callpropvoid', m[('callpropvoid', 'moveMap')], 2)]
+    move = method(MOVE_METHOD, 2, program, 3, 3)
+
+    # Base.__registerView()
+    program = [('getlex', n['ExternalInterface']), ('getproperty', n['available']), ('iffalse', 'done')]
+    for (callback, _), target in zip(CALLBACKS, (view, fit, zoom, move)):
+        program += [('getlex', n['ExternalInterface']), ('pushstring', s[callback]), ('getlocal0',),
+                    ('getproperty', target), ('callpropvoid', n['addCallback'], 2)]
+    register = method(REGISTER_METHOD, 0, program, 4, 1)
+
+    body = abc.body_of(abc.method_of('Base', 'init'))
+    prepend(body, bytes([OPCODE_BY_NAME['getlocal0'], OPCODE_BY_NAME['callpropvoid']]) + u30(register) + u30(0))
+    body['max_stack'] = max(body['max_stack'], 1)
+    return abc
+
+
+def add_view(data):
+    """Return the movie with the view bridge added to its DoABC block."""
+    from swf_abc import Abc
+    from swf_localization import decode_swf, encode_tag, iter_tags
+    body, header_length = decode_swf(data)
+    tags = []
+    count = 0
+    for code, payload, long_length in iter_tags(body, header_length):
+        if code == DO_ABC:
+            count += 1
+            offset = payload.index(b'\0', 4) + 1
+            payload = payload[:offset] + add_view_to_abc(Abc(payload[offset:])).serialize()
+        tags.append(encode_tag(code, payload, long_length))
+    if count != 1:
+        raise AbcError('Expected exactly one DoABC tag')
+    patched = body[:header_length] + b''.join(tags)
+    header = data[:4] + struct.pack('<I', len(patched) + 8)
+    return header + (zlib.compress(patched) if data[:3] == b'CWS' else patched)

@@ -725,7 +725,7 @@ def play():
         return render_template("play.html", script_texts=game_script_texts(), save_info=save_info(USERID), serverTime=server_time, last_logged_in=last_login, friendsInfo=fb_friends_str(USERID), version=version_name, GAMEVERSION=GAME_VERSION, raid_revision=village_revision(USERID), game_user_key=game_session_key(USERID),
                                webgl_renderer=RUFFLE_SETTINGS['renderer'] == 'webgl', ruffle_settings=RUFFLE_SETTINGS,
                                push_time=QUICK_SAVE_SECONDS if QUICK_SAVE_ENABLED else None, sound_hint=SOUND_FIX_ENABLED,
-                               day_night=DAY_NIGHT_ENABLED, hud_clock=HUD_ENABLED and DAY_NIGHT_ENABLED, hud_bar=HUD_ENABLED,
+                               day_night=DAY_NIGHT_ENABLED, hud_clock=HUD_ENABLED and DAY_NIGHT_ENABLED, hud_bar=HUD_ENABLED, full_view=VIEW_ENABLED,
                                update_notice=UPDATE_NOTICE_ENABLED, server_build=SERVER_BUILD)
 
 
@@ -910,6 +910,9 @@ def localized_game_movie(language=None):
     if HUD_ENABLED:  # the page reads the player's numbers and draws its own resource bar (swf_hud.py)
         from swf_hud import add_hud
         translated = add_hud(translated)
+    if VIEW_ENABLED:  # the game fills the browser window and the page zooms the map smoothly (swf_view.py)
+        from swf_view import add_view
+        translated = add_view(translated)
     if READABLE_UI_ENABLED:  # white lettering with a black outline; no "x0" units in the team window
         from swf_readable_text import make_text_readable
         translated = make_text_readable(translated)
@@ -1132,6 +1135,9 @@ SOUND_FIX_ENABLED = os.environ.get('SE_SOUND_FIX', 'on').strip().lower() in ('on
 DAY_NIGHT_ENABLED = os.environ.get('SE_DAY_NIGHT', 'on').strip().lower() in ('on', '1', 'true', 'yes')
 # Point 26: the improved HUD over the game (the hour and weather clock, ...). The clock follows the day and night cycle.
 HUD_ENABLED = os.environ.get('SE_HUD', 'on').strip().lower() in ('on', '1', 'true', 'yes')
+# The game fills the whole browser window (no green bands), without the zoom slider, and the map zooms smoothly
+# with the mouse wheel or two fingers (swf_view.py, game.js).
+VIEW_ENABLED = os.environ.get('SE_VIEW', 'on').strip().lower() in ('on', '1', 'true', 'yes')
 READABLE_UI_ENABLED = os.environ.get('SE_READABLE_UI', 'on').strip().lower() in ('on', '1', 'true', 'yes')
 # New accounts: the player name is letters and digits only and names the new empire; registering signs out
 # whoever was signed in in that browser. Off: the earlier registration.

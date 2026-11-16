@@ -315,6 +315,199 @@
         if (kind) weatherFrame = requestAnimationFrame(drawWeather);
     }
 
+    // SE_VIEW: the game's stage fills its place on the page (the whole tab when expanded) instead of a 760 x 600
+    // picture with bands at its sides. Ruffle draws the stage without scaling it ("noScale"); the page makes the
+    // player 1/k of its place and scales it by k with CSS, k fitting 760 x 600 in it, so the interface keeps its
+    // size and the rest of the room shows more map. The game lays its interface out for that size with its own
+    // full-screen layout (Base.__seFit, swf_view.py). Ruffle is told the screen is k times denser
+    // (devicePixelRatio), so it draws as many pixels as the screen has and the picture stays sharp.
+    const fullView = Boolean(config.fullView);
+    let viewScale = 1;
+    let fittedSize = "";
+    let stageWidth = 760;  // the game's stage, in its own pixels
+    const realPixelRatio = (() => {
+        const own = Object.getOwnPropertyDescriptor(window, "devicePixelRatio");
+        const inherited = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(window), "devicePixelRatio")
+            || Object.getOwnPropertyDescriptor(Window.prototype, "devicePixelRatio");
+        const descriptor = own && own.get ? own : inherited;
+        if (descriptor && descriptor.get) return () => descriptor.get.call(window) || 1;
+        const fixed = window.devicePixelRatio || 1;
+        return () => fixed;
+    })();
+
+    function overlayScale(box) {
+        return fullView ? viewScale : Math.max(0.6, box.width / 760);
+    }
+
+    // The page's overlays start right of the menu button when the game reaches the tab's left edge.
+    function overlayLeft(box, stage, scale) {
+        const left = box.left - stage.left + 6 * scale;
+        return fullView ? Math.max(left, 58) : left;
+    }
+
+    function sizeView() {
+        if (!fullView || !player) return;
+        const width = Math.max(1, container.clientWidth);
+        const height = Math.max(1, container.clientHeight);
+        viewScale = Math.min(width / 760, height / 600);
+        player.style.width = `${width / viewScale}px`;
+        player.style.height = `${height / viewScale}px`;
+        player.style.transform = `scale(${viewScale})`;
+        placeHud();
+        placeClock();
+    }
+
+    function viewState() {
+        try {
+            return player && typeof player.seView === "function" ? player.seView() : null;
+        } catch (error) {
+            return null;
+        }
+    }
+
+    function fitView() {
+        const state = viewState();
+        if (!state || !state.sw) return;
+        const size = `${state.sw}x${state.sh}`;
+        if (size === fittedSize) return;
+        try {
+            player.seFit(!fittedSize);  // the first time, the map also centres on the buildings
+            fittedSize = size;
+            stageWidth = state.sw;
+            placeHud();
+        } catch (error) {
+            // the game is loading or changing maps: the next round lays it out
+        }
+    }
+
+    // The map zooms smoothly: the page eases the zoom toward where the wheel or the fingers ask, frame by frame
+    // (Base.__seZoom, fast), keeping the map point under the pointer in place, and lets the game re-smooth the
+    // buildings once at the end.
+    const zoomMotion = { current: 0, target: 0, x: 0, y: 0, frame: 0, min: 0.15, max: 1.4 };
+
+    function stagePoint(clientX, clientY) {
+        const box = player.getBoundingClientRect();
+        return { x: (clientX - box.left) / viewScale, y: (clientY - box.top) / viewScale };
+    }
+
+    function zoomStart() {
+        if (zoomMotion.frame) return true;
+        const state = viewState();
+        if (!state || !state.zoom) return false;
+        zoomMotion.current = zoomMotion.target = state.zoom;
+        zoomMotion.min = state.zMin || 0.15;
+        zoomMotion.max = state.zMax || 1.4;
+        return true;
+    }
+
+    function zoomCall(fast) {
+        try {
+            player.seZoom(zoomMotion.current, zoomMotion.x, zoomMotion.y, fast);
+        } catch (error) {
+            // the game is busy: the next frame tries again
+        }
+    }
+
+    function zoomStep() {
+        const gap = zoomMotion.target - zoomMotion.current;
+        if (Math.abs(gap) < 0.002) {
+            zoomMotion.current = zoomMotion.target;
+            zoomMotion.frame = 0;
+            zoomCall(false);
+            return;
+        }
+        zoomMotion.current += gap * 0.22;
+        zoomCall(true);
+        zoomMotion.frame = requestAnimationFrame(zoomStep);
+    }
+
+    function zoomTo(target, x, y) {
+        zoomMotion.target = Math.min(zoomMotion.max, Math.max(zoomMotion.min, target));
+        zoomMotion.x = x;
+        zoomMotion.y = y;
+        if (!zoomMotion.frame) zoomMotion.frame = requestAnimationFrame(zoomStep);
+    }
+
+    function startZoom() {
+        // The wheel: caught before Ruffle, so the game's own step zoom (Base.zoomMap) does not run as well.
+        container.addEventListener("wheel", (event) => {
+            if (!player || !zoomStart()) return;
+            event.preventDefault();
+            event.stopPropagation();
+            const lines = event.deltaMode === 1 ? 33 : event.deltaMode === 2 ? 400 : 1;
+            const delta = Math.max(-300, Math.min(300, event.deltaY * lines));
+            const point = stagePoint(event.clientX, event.clientY);
+            zoomTo(zoomMotion.target * Math.exp(-delta * 0.0016), point.x, point.y);
+        }, { capture: true, passive: false });
+
+        // Two fingers: pinch to zoom and drag to move, live (no easing). One finger stays the game's own drag.
+        const touches = new Map();
+        let pinch = null;
+        const centre = () => {
+            const [a, b] = [...touches.values()];
+            return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, distance: Math.hypot(a.x - b.x, a.y - b.y) };
+        };
+        const swallow = (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+        };
+        container.addEventListener("pointerdown", (event) => {
+            if (event.pointerType !== "touch") return;
+            touches.set(event.pointerId, { x: event.clientX, y: event.clientY });
+            if (touches.size === 2 && zoomStart()) {
+                if (zoomMotion.frame) cancelAnimationFrame(zoomMotion.frame);
+                zoomMotion.frame = 0;
+                const c = centre();
+                pinch = { distance: Math.max(1, c.distance), zoom: zoomMotion.current, last: stagePoint(c.x, c.y) };
+                swallow(event);
+            } else if (touches.size > 2) {
+                swallow(event);
+            }
+        }, { capture: true, passive: false });
+        container.addEventListener("pointermove", (event) => {
+            if (!touches.has(event.pointerId)) return;
+            touches.set(event.pointerId, { x: event.clientX, y: event.clientY });
+            if (!pinch || touches.size < 2) return;
+            swallow(event);
+            const c = centre();
+            const point = stagePoint(c.x, c.y);
+            try {
+                player.seMove(point.x - pinch.last.x, point.y - pinch.last.y);
+            } catch (error) {
+                // the game is busy
+            }
+            pinch.last = point;
+            zoomMotion.current = Math.min(zoomMotion.max, Math.max(zoomMotion.min, pinch.zoom * c.distance / pinch.distance));
+            zoomMotion.target = zoomMotion.current;
+            zoomMotion.x = point.x;
+            zoomMotion.y = point.y;
+            zoomCall(true);
+        }, { capture: true, passive: false });
+        const lift = (event) => {
+            if (!touches.has(event.pointerId)) return;
+            touches.delete(event.pointerId);
+            if (pinch && touches.size < 2) {
+                pinch = null;
+                zoomCall(false);  // the end of the pinch: the buildings are re-smoothed once
+            }
+        };
+        container.addEventListener("pointerup", lift, true);
+        container.addEventListener("pointercancel", lift, true);
+        // Safari's own page zoom on a pinch.
+        for (const name of ["gesturestart", "gesturechange"]) container.addEventListener(name, swallow, { passive: false });
+    }
+
+    function startView() {
+        if (!fullView) return;
+        container.classList.add("is-view");
+        shell.classList.add("view-full");
+        Object.defineProperty(window, "devicePixelRatio", { configurable: true, get: () => realPixelRatio() * viewScale });
+        sizeView();
+        new ResizeObserver(() => sizeView()).observe(container);
+        setInterval(fitView, 300);
+        startZoom();
+    }
+
     // Point 26 (SE_HUD): a small clock with the village's hour and weather, the same ones the game shows (the
     // day and night tint and the rain or snow above), with the season in its tooltip. Own drawings for its icon.
     const hudClock = document.getElementById("hud-clock");
@@ -331,9 +524,9 @@
         if (!hudClock || hudClock.hidden) return;
         const stage = hudClock.parentElement.getBoundingClientRect();
         const box = container.getBoundingClientRect();
-        const scale = Math.max(0.6, box.width / 760);
+        const scale = overlayScale(box);
         hudClock.style.setProperty("--hud-scale", scale.toFixed(3));
-        hudClock.style.left = `${box.left - stage.left + 8 * scale}px`;
+        hudClock.style.left = `${overlayLeft(box, stage, scale) + 2 * scale}px`;
         // below the resource bar: the page's own one (SE_HUD) or the game's
         hudClock.style.top = `${box.top - stage.top + (hudShown ? 52 : 96) * scale}px`;
     }
@@ -371,13 +564,15 @@
         if (!hudBar || hudBar.hidden) return;
         const stage = hudBar.parentElement.getBoundingClientRect();
         const box = container.getBoundingClientRect();
-        const scale = Math.max(0.6, box.width / 760);
+        const scale = overlayScale(box);
         hudBar.style.setProperty("--hud-scale", scale.toFixed(3));
-        hudBar.style.left = `${box.left - stage.left + 6 * scale}px`;
+        hudBar.style.left = `${overlayLeft(box, stage, scale)}px`;
         hudBar.style.top = `${box.top - stage.top + 6 * scale}px`;
-        if (hudEmpire) {  // right of the World globe, against the movie's right edge
+        if (hudEmpire) {
+            // Right of the World globe: 645 of the game's pixels into its top interface, which the game's
+            // full-window layout centres on the stage (GuiManager.fullscreen: x = stage width / 2 - 380).
             hudEmpire.style.setProperty("--hud-scale", scale.toFixed(3));
-            hudEmpire.style.right = `${stage.right - box.right}px`;
+            hudEmpire.style.left = `${box.left - stage.left + (stageWidth / 2 - 380 + 645) * scale}px`;
             hudEmpire.style.top = `${box.top - stage.top + 22 * scale}px`;
         }
     }
@@ -420,6 +615,8 @@
         hudBar.querySelector(".hud-xp-text").textContent = `${Math.floor(progress * 100)}%`;
         hudBar.querySelector('[data-hud="profile"]').title =
             `${t("Nível")} ${state.lvl} · ${numberFormat.format(state.xp)} / ${numberFormat.format(state.xpMax)} XP`;
+        // A window of the game is open (the news, a shop, ...): the page's overlays step back so it shows whole.
+        document.body.classList.toggle("hud-dimmed", state.windows > 0);
         if (hudEmpire) {
             hudEmpire.querySelector(".hud-name").textContent = state.name || "";
             hudEmpire.querySelector(".hud-pop b").textContent = state.popText || "";
@@ -649,6 +846,7 @@
             showSoundHint();
             startDayNight();
             startHud();
+            startView();
             player.setAttribute("aria-label", "Social Empires");
             container.appendChild(player);
             player.addEventListener("loadedmetadata", applyAudio, { once: true });
@@ -678,9 +876,9 @@
                 allowFullscreen: true,
                 splashScreen: false,
                 quality: ruffleSettings.quality || "16x16",
-                scale: "showAll",
+                scale: config.fullView ? "noScale" : "showAll",
                 forceScale: true,
-                letterbox: "on",
+                letterbox: config.fullView ? "off" : "on",
                 // Preserve the old domains embedded in asset SWFs on this host.
                 urlRewriteRules: [
                     [/^https?:\/\/(?:default01\.)?static\.socialpointgames\.com\/static\/socialempires\//i, staticPath],
