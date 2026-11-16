@@ -1,9 +1,10 @@
 RESUMEN DEL BLOQUE E (funciones de la lista) - actualizado el 13/11/2026
 =======================================================================
 
-Avance del bloque E: 4 de 12 puntos terminados (19 a 22), más dos pedidos
-extra (área de ataque y habilidades automáticas). Del 22 quedan las fases 3
-y 4 del clan dentro del juego.
+Avance del bloque E: 7 de 12 puntos terminados (19 a 25), más pedidos
+extra (área de ataque, habilidades automáticas, botón PvP, arenas PvP y
+actualizador automático). Del 22 quedan las fases 3 y 4 del clan dentro
+del juego.
 El detalle completo está en TareaDFinalizada.txt (secciones 15, 16 y 17).
 
 
@@ -195,11 +196,25 @@ cambian en la próxima batalla; la arena, al reiniciar el servidor; las
 aldeas solo se guardan con el servidor apagado. Detalle en DECISIONS.md.
 
 
+PUNTO 25. PASE DE TEMPORADA GRATUITO .............................. 100 %
+-----------------------------------------------------------------------
+Un pase por estación de Argentina (Pase de Verano, Otoño, Invierno y
+Primavera, unos 3 meses cada uno), con 40 niveles de 600 puntos. Se suben
+jugando (recolectar, ganar islas de aventura, saqueos, ataques del
+Explorador y duelos; hasta 300 puntos por día) y sobre todo con 3 desafíos
+diarios y 3 semanales, iguales para todos. Premios: oro, madera, comida y
+piedra; dinero cada 5 niveles; una unidad de la estación cada 10 (a
+Regalos) y la del nivel 40, propia de la temporada. Se abre con el botón
+"Pase" dentro del juego; al cobrar, el juego pide recargar la aldea. Los
+botones Clan, PvP y Pase ahora tienen su propia columna (antes el juego solo
+mostraba 2 íconos y PvP desaparecía los lunes). SE_SEASON_PASS=on.
+
+
 PUNTOS QUE SIGUEN
 -----------------
   23. Clima y ciclo día/noche ......................................... 100 %
   24. Editor de mundo ................................................. 100 %
-  25. Pase de temporada gratuito ........................................ 0 %
+  25. Pase de temporada gratuito ...................................... 100 %
   26. Mejorar el HUD .................................................... 0 %
   27. Mejorar la IA de combate .......................................... 0 %
   28. Aventuras en solitario o con el clan, 10 unidades elegidas ........ 0 %

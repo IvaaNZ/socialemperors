@@ -147,4 +147,7 @@ def install_pvp(app, accounts, village_lock, recover_raids, raids, eligible_vill
             except (OSError, sqlite3.Error):
                 app.logger.exception('A transferência do saque aguarda recuperação.')
                 return jsonify({'error': _('Não foi possível finalizar o saque agora. A transferência será recuperada antes da próxima ação; atualize a página em instantes.')}), 503
+            season = app.extensions.get('season_pass')  # SE_SEASON_PASS: a raid won counts for the pass
+            if season and result.get('won'):
+                season['record_for'](session['USERID'], 'raid_win', once=result.get('id'))
         return jsonify({'result': {key: result.get(key) for key in RAID_RESULT_KEYS}})

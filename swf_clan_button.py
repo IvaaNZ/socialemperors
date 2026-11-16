@@ -40,6 +40,15 @@ ADD_METHOD = '__addClanButton'
 CLICK_METHOD = '__clanClick'
 # Where the art sits inside the icon (the panel's icons hang to the left of and below their origin).
 ART_X, ART_Y = -62, 6
+# The game's panel (GuiManager.createViralButtons: new IconPanel(100, SIDE_RIGHT, 200) at x 760, y -380) shows only
+# floor(200 / 100) = 2 icons and does not draw the rest: on Mondays its chest took a place and "PvP" was not shown,
+# and a third button never would be. Our buttons go to a panel of their own (GuiManager.__seButtonPanel), the same
+# kind, just left of the game's one (the game's zoom bar is below it), with room for OWN_PANEL_ICONS icons.
+OWN_PANEL_SLOT = '__seButtonPanel'
+OWN_PANEL_METHOD = '__seButtons'
+OWN_PANEL_ICONS = 3
+OWN_PANEL_X = 690
+OWN_PANEL_Y = -380
 
 NAMES = {
     'Sprite': 'flash.display', 'Loader': 'flash.display', 'URLRequest': 'flash.net',
@@ -78,8 +87,53 @@ def add_clan_button_to_abc(abc, image_url=CLAN_BUTTON_URL):
     return add_panel_button_to_abc(abc, image_url, CALLBACK, ADD_METHOD, CLICK_METHOD)
 
 
+def _own_panel_method(abc, gui, create, method):
+    """GuiManager.__seButtons(): our panel, made the first time it is asked for (once, for every button)."""
+    for trait in gui['traits']:
+        if abc.multiname_name(trait['name']) == OWN_PANEL_METHOD:
+            return trait['name']
+    slot = abc.add_qname('', OWN_PANEL_SLOT)
+    gui['traits'].append({'name': slot, 'kind': 0, 'data': [0, 0, 0], 'metadata': None})
+    m = {
+        'IconPanel': used_multiname(abc, create, 'findpropstrict', 'IconPanel'),
+        'IconPanelLex': used_multiname(abc, create, 'getlex', 'IconPanel'),
+        'SIDE_RIGHT': used_multiname(abc, create, 'getproperty', 'SIDE_RIGHT'),
+        'x': used_multiname(abc, create, 'setproperty', 'x'),
+        'y': used_multiname(abc, create, 'setproperty', 'y'),
+        'addChildAt': used_multiname(abc, create, 'callpropvoid', 'addChildAt'),
+        'addChildAtLookup': used_multiname(abc, create, 'findpropstrict', 'addChildAt'),
+    }
+    code, labels = assemble([
+        ('getlocal0',), ('pushscope',),
+        ('getlocal0',), ('getproperty', slot), ('dup',), ('iftrue', 'have'),
+        ('pop',),
+        ('getlocal0',), ('findpropstrict', m['IconPanel']), ('pushbyte', 100), ('getlex', m['IconPanelLex']),
+        ('getproperty', m['SIDE_RIGHT']), ('pushshort', 100 * OWN_PANEL_ICONS),
+        ('constructprop', m['IconPanel'], 3), ('initproperty', slot),
+        ('getlocal0',), ('getproperty', slot), ('pushshort', OWN_PANEL_X), ('setproperty', m['x']),
+        ('getlocal0',), ('getproperty', slot), ('pushshort', _signed_short(OWN_PANEL_Y)), ('setproperty', m['y']),
+        ('findpropstrict', m['addChildAtLookup']), ('getlocal0',), ('getproperty', slot), ('pushbyte', 0),
+        ('callpropvoid', m['addChildAt'], 2),
+        ('getlocal0',), ('getproperty', slot),
+        ('label:', 'have'),
+        ('returnvalue',),
+    ])
+    reference = abc.body_of(create)
+    index = len(abc.methods)
+    abc.methods.append({'return_type': 0, 'param_types': [], 'name': abc.add_string(OWN_PANEL_METHOD), 'flags': 0,
+                        'options': None, 'param_names': None})
+    abc.bodies.append({'method': index, 'max_stack': 6, 'local_count': 1,
+                       'init_scope_depth': reference['init_scope_depth'],
+                       'max_scope_depth': reference['init_scope_depth'] + 1,
+                       'code': code, 'exceptions': [], 'traits': []})
+    qname = abc.add_qname('', OWN_PANEL_METHOD)
+    gui['traits'].append({'name': qname, 'kind': 1, 'data': [0, index], 'metadata': None})
+    return qname
+
+
 def add_panel_button_to_abc(abc, image_url, callback, add_method, click_method):
-    """An icon in the game's right panel that calls ExternalInterface `callback` on a click (the clan and PvP buttons).
+    """An icon in our own panel (next to the game's right panel) that calls ExternalInterface `callback` on a click
+    (the clan, PvP and season pass buttons).
 
     Each button's call goes right before createViralButtons' final returnvoid: a button added later sits below.
     """
@@ -88,7 +142,7 @@ def add_panel_button_to_abc(abc, image_url, callback, add_method, click_method):
         raise AbcError(f'{add_method} is already present')
     n = {name: _qname(abc, name, package) for name, package in NAMES.items()}
     create = abc.method_of('GuiManager', 'createViralButtons')
-    panel = used_multiname(abc, create, 'getproperty', '_viralButtonPanel')
+    own_panel = _own_panel_method(abc, gui, create, None)
     add_icon = used_multiname(abc, create, 'callpropvoid', 'addIcon')
     s = {text: abc.add_string(text) for text in (image_url, callback, 'rollOut')}
     reference = abc.body_of(create)
@@ -139,7 +193,7 @@ def add_panel_button_to_abc(abc, image_url, callback, add_method, click_method):
         ('getlocal2',), ('findpropstrict', n['URLRequest']), ('pushstring', s[image_url]),
         ('constructprop', n['URLRequest'], 1), ('callpropvoid', n['load'], 1),
         ('getlocal1',), ('getlocal2',), ('callpropvoid', n['addChild'], 1),
-        ('getlocal0',), ('getproperty', panel), ('getlocal1',), ('getlocal0',), ('getproperty', clan_click),
+        ('getlocal0',), ('callproperty', own_panel, 0), ('getlocal1',), ('getlocal0',), ('getproperty', clan_click),
         ('pushnull',), ('callpropvoid', add_icon, 3),  # no tooltip
     ] + guarded_end)
     add_name = method(add_method, 0, code, labels, 5, 3)

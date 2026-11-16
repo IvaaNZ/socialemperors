@@ -533,7 +533,7 @@
                 // Only with duels or clans on: the duel page opens the tournament arena (Base.__startDuel)
                 // and the game's "Clan" button opens the clan window (window.seOpenClan).
                 allowScriptAccess: Boolean(config.dayNight || document.getElementById("duel-config") || document.getElementById("clan-overlay-config")
-                    || document.getElementById("pvp-overlay-config")),
+                    || document.getElementById("pvp-overlay-config") || document.getElementById("season-pass-overlay-config")),
                 allowFullscreen: true,
                 splashScreen: false,
                 quality: ruffleSettings.quality || "16x16",

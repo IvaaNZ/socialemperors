@@ -8,6 +8,7 @@ from engine import apply_cost, apply_collect, apply_collect_xp, timestamp_now
 from monday_bonus import MondayBonusError, claim_monday_bonus
 from village_names import set_village_name
 from tutorial import record_tutorial_step
+from season_pass import record_event as season_pass_event
 from world import WORLD_COMMANDS, WorldError, apply_world_command, world_explorer_enabled
 from darts import DARTS_COMMANDS, DEFAULT_DART_COST, apply_darts_command, daily_darts_enabled
 from village_commands import (COLLECTION_COMMANDS, MAP_QUEST_COMMANDS, SOCIAL_COMMANDS, VILLAGE_COMMANDS, WAREHOUSE_COMMANDS, VillageCommandError,
@@ -121,6 +122,7 @@ def do_command(USERID, cmd, args):
                 break
     
     elif cmd == Constant.CMD_COLLECT:
+        season_pass_event(save, 'collect')  # SE_SEASON_PASS: points and challenges of the season pass
         x = args[0]
         y = args[1]
         town_id = args[2]
@@ -639,6 +641,8 @@ def do_command(USERID, cmd, args):
                 record_quest_rank(save, quest_id, difficulty)
         else:
             save["privateState"]["unlockedQuestIndex"] = max(quest_id + 1, int(save["privateState"]["unlockedQuestIndex"]), 0)
+        if win:  # SE_SEASON_PASS: an island won counts for the season pass, more with more stars
+            season_pass_event(save, 'quest_win', stars=difficulty)
         # save["maps"]["questTimes"] [quest_id] = TODO min (... , duration_sec)
         # save["maps"]["lastQuestTimes"] [quest_id] = TODO min (... , duration_sec)
 

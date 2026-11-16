@@ -173,6 +173,7 @@ def economy():
 def village_revision(userid):
     return '.'.join(value for value in (
         raids().revision(userid), village_admin().change_revision(userid), economy().revision(userid),
+        season_pass_revision(village_session(userid)) if SEASON_PASS_ENABLED else '',
     ) if value)
 
 
@@ -802,7 +803,15 @@ def raid_village(defender_id):
         except (OSError, sqlite3.Error):
             app.logger.exception('A transferência do saque aguarda recuperação.')
             abort(503, description='Não foi possível finalizar o saque agora. A transferência será recuperada antes da próxima ação; atualize a página em instantes.')
+        record_raid_for_season_pass(result)
     return redirect(url_for('rival_villages', battle=result['id']), code=303)
+
+def record_raid_for_season_pass(result):
+    """A raid won counts for the attacker's season pass (SE_SEASON_PASS; once per raid)."""
+    season = app.extensions.get('season_pass')
+    if season and isinstance(result, dict) and result.get('won'):
+        season['record_for'](result.get('attacker_id') or session['USERID'], 'raid_win', once=result.get('id'))
+
 
 @app.route("/ruffle.html")
 def ruffle():
@@ -906,6 +915,12 @@ def localized_game_movie(language=None):
         name = f'pvp_button_{pvp_locale(language)}.png'
         translated = add_pvp(translated, image_url='/img/' + (name if (Path(TEMPLATES_DIR) / 'img' / name).exists()
                                                               else 'pvp_button_es.png'))
+    if SEASON_PASS_ENABLED:  # the "Pase" button in the game's icon panel (below "PvP")
+        from portal_i18n import normalize_locale as pass_locale
+        from swf_season_pass import add_season_pass_button
+        name = f'season_pass_button_{pass_locale(language)}.png'
+        translated = add_season_pass_button(translated, image_url='/img/' + (
+            name if (Path(TEMPLATES_DIR) / 'img' / name).exists() else 'season_pass_button_es.png'))
     return translated, hashlib.sha256(translated).hexdigest()
 
 ## GAME DYNAMIC
@@ -1085,6 +1100,9 @@ AUTO_APPROVE = os.environ.get('SE_AUTO_APPROVE', 'on').strip().lower() in ('on',
 # Unit abilities (swf_unit_abilities.py): automatic, one summon at most, tooltips. Off: the movie is unchanged.
 ABILITIES_ENABLED = os.environ.get('SE_ABILITIES', 'off').strip().lower() in ('on', '1', 'true', 'yes')
 PVP_ENABLED = os.environ.get('SE_PVP', 'off').strip().lower() in ('on', '1', 'true', 'yes')
+# Point 25: free season pass, one per season of Argentina (season_pass.py, season_pass_web.py, swf_season_pass.py).
+from season_pass import season_pass_enabled, revision as season_pass_revision
+SEASON_PASS_ENABLED = season_pass_enabled()
 SOUND_FIX_ENABLED = os.environ.get('SE_SOUND_FIX', 'on').strip().lower() in ('on', '1', 'true', 'yes')
 # Point 23: the village darkens at night by Argentina's hour, with rain or snow by season (swf_daylight.py, game.js).
 DAY_NIGHT_ENABLED = os.environ.get('SE_DAY_NIGHT', 'on').strip().lower() in ('on', '1', 'true', 'yes')
@@ -1122,6 +1140,16 @@ app.jinja_env.globals['clans_enabled'] = CLANS_ENABLED
 if CLANS_ENABLED:
     from clans_web import install_clans
     install_clans(app, accounts, village_lock, all_saves_userid, village_session, data_dir)
+if SEASON_PASS_ENABLED:  # the in-game season pass window; raids and duels count for it
+    from get_game_config import get_name_from_item_id
+    from localization import load_catalog
+    item_texts = lru_cache(maxsize=4)(load_catalog)  # the item names of one language, read once
+    from season_pass_web import install_season_pass
+
+    def season_unit_name(item_id):
+        name = get_name_from_item_id(int(item_id)) or str(item_id)
+        return item_texts(portal_language()).get(name, name)
+    install_season_pass(app, village_lock, village_session, save_village, season_unit_name, accounts)
 if PVP_ENABLED:  # the in-game PvP window (rivals, raids, duels) and raids with a chosen team
     from pvp import TEAM_LIMIT
     from pvp_web import install_pvp
@@ -1132,6 +1160,8 @@ if DUELS_ENABLED:
                   validate_game_key)
     if CLANS_ENABLED:  # finished duels count for clan challenges
         app.extensions['duels'].result_listeners.append(app.extensions['clans'].record_duel)
+    if SEASON_PASS_ENABLED:  # ... and for the season pass of both players
+        app.extensions['duels'].result_listeners.append(app.extensions['season_pass']['on_duel'])
 
 print (" [+] Running server...")
 

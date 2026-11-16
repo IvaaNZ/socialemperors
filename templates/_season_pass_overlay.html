@@ -1,0 +1,5 @@
+{# In-game season pass window (SE_SEASON_PASS=on only): the window that the game's "Pase" button opens. Same look as the clan window. #}
+<link rel="stylesheet" href="{{ url_for('css', path='clan_overlay.css') }}">
+<link rel="stylesheet" href="{{ url_for('css', path='season_pass_overlay.css') }}">
+<script id="season-pass-overlay-config" type="application/json">{{ dict(season_pass_overlay, csrf=csrf_token()) | tojson }}</script>
+<script src="{{ url_for('javascript', path='season_pass_overlay.js') }}" defer></script>

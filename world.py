@@ -302,6 +302,9 @@ def _end_attack(userid, save, args, globals_, now):
     if pending is None:
         raise WorldError(f'no attack on {victim_id} to finish')
     won = int(results.get('win') or 0) == 1
+    if won:  # SE_SEASON_PASS: an attack won counts for the season pass
+        from season_pass import record_event
+        record_event(save, 'world_attack_win')
     max_gold = int(globals_.get('MAX_GOLD_ASSAULT', 20000))
     gold = max(0, min(int((results.get('resources') or {}).get('g') or 0), max_gold))
     xp = max(0, min(int((results.get('resources') or {}).get('x') or 0), MAX_XP_ASSAULT))

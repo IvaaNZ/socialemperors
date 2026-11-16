@@ -1,0 +1,24 @@
+/* In-game season pass window (SE_SEASON_PASS=on): the clan window's look (clan_overlay.css) plus the progress bar,
+   the reward ladder and the challenges. */
+.spx-overlay .clanx-window { font-size: 15px; }
+.spx-head { display: flex; align-items: center; gap: 14px; padding: 4px 0 10px; }
+.spx-badge { flex: none; display: grid; place-items: center; width: 58px; height: 58px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #ffe9a8, #d9a637 70%); border: 3px solid #7a4f17; color: #3b2410; font-weight: 800; font-size: 22px; box-shadow: inset 0 -3px 0 #0002; }
+.spx-head-text { flex: 1; min-width: 0; }
+.spx-head-text strong { display: block; font-size: 16px; color: #2b1a0b; }
+.spx-bar { height: 14px; margin: 6px 0 4px; border-radius: 999px; background: #e8d9b5; border: 1px solid #b08a47; overflow: hidden; }
+.spx-bar > span { display: block; height: 100%; background: linear-gradient(#7fc35a, #4c8f2c); border-radius: 999px; }
+.spx-claim-all { margin: 0 0 10px; }
+.spx-ladder li { align-items: center; }
+.spx-level { flex: none; display: inline-grid; place-items: center; min-width: 38px; height: 28px; margin-right: 10px; border-radius: 6px; background: #e8d9b5; border: 1px solid #b08a47; font-weight: 700; color: #3b2410; }
+.spx-ladder li.is-unit .spx-level { background: #f4d77a; }
+.spx-ladder li.is-locked { opacity: .55; }
+.spx-ladder li.is-claimed .spx-reward { text-decoration: line-through; text-decoration-color: #0005; }
+.spx-reward { flex: 1; }
+.spx-unit { font-weight: 700; color: #6b3d0c; }
+.spx-challenge { display: block; padding: 8px 0; border-bottom: 1px dashed #d6b97a; }
+.spx-challenge:last-child { border-bottom: 0; }
+.spx-challenge .spx-bar { height: 10px; }
+.spx-challenge-row { display: flex; justify-content: space-between; gap: 8px; }
+.spx-challenge.is-done .spx-bar > span { background: linear-gradient(#ffd66b, #d9a637); }
+.spx-points { flex: none; font-weight: 700; color: #4c8f2c; }
+.spx-reload { margin-left: 8px; }
