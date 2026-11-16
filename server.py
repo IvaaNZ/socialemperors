@@ -725,7 +725,7 @@ def play():
         return render_template("play.html", script_texts=game_script_texts(), save_info=save_info(USERID), serverTime=server_time, last_logged_in=last_login, friendsInfo=fb_friends_str(USERID), version=version_name, GAMEVERSION=GAME_VERSION, raid_revision=village_revision(USERID), game_user_key=game_session_key(USERID),
                                webgl_renderer=RUFFLE_SETTINGS['renderer'] == 'webgl', ruffle_settings=RUFFLE_SETTINGS,
                                push_time=QUICK_SAVE_SECONDS if QUICK_SAVE_ENABLED else None, sound_hint=SOUND_FIX_ENABLED,
-                               day_night=DAY_NIGHT_ENABLED,
+                               day_night=DAY_NIGHT_ENABLED, hud_clock=HUD_ENABLED and DAY_NIGHT_ENABLED,
                                update_notice=UPDATE_NOTICE_ENABLED, server_build=SERVER_BUILD)
 
 
@@ -1127,6 +1127,8 @@ SEASON_PASS_ENABLED = season_pass_enabled()
 SOUND_FIX_ENABLED = os.environ.get('SE_SOUND_FIX', 'on').strip().lower() in ('on', '1', 'true', 'yes')
 # Point 23: the village darkens at night by Argentina's hour, with rain or snow by season (swf_daylight.py, game.js).
 DAY_NIGHT_ENABLED = os.environ.get('SE_DAY_NIGHT', 'on').strip().lower() in ('on', '1', 'true', 'yes')
+# Point 26: the improved HUD over the game (the hour and weather clock, ...). The clock follows the day and night cycle.
+HUD_ENABLED = os.environ.get('SE_HUD', 'on').strip().lower() in ('on', '1', 'true', 'yes')
 READABLE_UI_ENABLED = os.environ.get('SE_READABLE_UI', 'on').strip().lower() in ('on', '1', 'true', 'yes')
 # New accounts: the player name is letters and digits only and names the new empire; registering signs out
 # whoever was signed in in that browser. Off: the earlier registration.

@@ -315,6 +315,51 @@
         if (kind) weatherFrame = requestAnimationFrame(drawWeather);
     }
 
+    // Point 26 (SE_HUD): a small clock with the village's hour and weather, the same ones the game shows (the
+    // day and night tint and the rain or snow above), with the season in its tooltip. Own drawings for its icon.
+    const hudClock = document.getElementById("hud-clock");
+    const CLOCK_ICONS = {
+        sun: '<svg viewBox="0 0 26 26"><rect width="26" height="26" fill="#6fb3ff"/><circle cx="13" cy="12" r="5.5" fill="#ffd84a" stroke="#f0a020" stroke-width="1.2"/><g stroke="#ffd84a" stroke-width="1.6" stroke-linecap="round"><path d="M13 2.5v2.5M13 19v2.5M3.5 12H6M20 12h2.5M6.3 5.3l1.8 1.8M17.9 16.9l1.8 1.8M6.3 18.7l1.8-1.8M17.9 7.1l1.8-1.8"/></g><path d="M0 22q7-4 13 0t13 0v4H0z" fill="#5aa83c"/></svg>',
+        moon: '<svg viewBox="0 0 26 26"><rect width="26" height="26" fill="#1d2f66"/><circle cx="6" cy="6" r=".8" fill="#fff"/><circle cx="20" cy="5" r=".7" fill="#fff"/><circle cx="17" cy="15" r=".6" fill="#fff"/><path d="M15 4.5a7.5 7.5 0 1 0 5 12.6 6.2 6.2 0 1 1-5-12.6z" fill="#ffe9a8"/><path d="M0 22q7-4 13 0t13 0v4H0z" fill="#2c5a2a"/></svg>',
+        dusk: '<svg viewBox="0 0 26 26"><rect width="26" height="26" fill="#f2a35c"/><rect width="26" height="13" fill="#7a5fb8"/><circle cx="13" cy="17" r="5" fill="#ffd25a"/><path d="M0 20q7-3 13 0t13 0v6H0z" fill="#4c7f34"/></svg>',
+        rain: '<svg viewBox="0 0 26 26"><rect width="26" height="26" fill="#6d7f99"/><path d="M6 13a4 4 0 0 1 1-7.8A5.5 5.5 0 0 1 17.6 6 3.6 3.6 0 0 1 20 13z" fill="#e8eef7"/><g stroke="#a8d0ff" stroke-width="1.6" stroke-linecap="round"><path d="M8 16l-1 3M13 16l-1 3M18 16l-1 3M10.5 20l-1 3M15.5 20l-1 3"/></g></svg>',
+        snow: '<svg viewBox="0 0 26 26"><rect width="26" height="26" fill="#8fa6c4"/><path d="M6 13a4 4 0 0 1 1-7.8A5.5 5.5 0 0 1 17.6 6 3.6 3.6 0 0 1 20 13z" fill="#fff"/><g fill="#fff"><circle cx="8" cy="17" r="1.3"/><circle cx="13" cy="19" r="1.3"/><circle cx="18" cy="17" r="1.3"/><circle cx="10.5" cy="22" r="1.3"/><circle cx="15.5" cy="22.5" r="1.3"/></g></svg>',
+    };
+    const SEASON_TEXT = { summer: t("Verão"), autumn: t("Outono"), winter: t("Inverno"), spring: t("Primavera") };
+
+    function placeClock() {
+        if (!hudClock || hudClock.hidden) return;
+        const stage = hudClock.parentElement.getBoundingClientRect();
+        const box = container.getBoundingClientRect();
+        const scale = Math.max(0.6, box.width / 760);
+        hudClock.style.setProperty("--hud-scale", scale.toFixed(3));
+        hudClock.style.left = `${box.left - stage.left + 8 * scale}px`;
+        hudClock.style.top = `${box.top - stage.top + 96 * scale}px`;  // below the game's resource bar
+    }
+
+    function updateClock(clock, weather) {
+        if (!config.hudClock || !hudClock) return;
+        const hour = Math.floor(clock.hour);
+        const minute = Math.floor((clock.hour - hour) * 60);
+        const night = clock.hour < 5.5 || clock.hour >= 20.5;
+        const twilight = (clock.hour >= 5.5 && clock.hour < 7.5) || (clock.hour >= 18.5 && clock.hour < 20.5);
+        let icon = night ? "moon" : twilight ? "dusk" : "sun";
+        let text = night ? t("Noite clara") : twilight ? (clock.hour < 12 ? t("Amanhecer") : t("Entardecer")) : t("Ensolarado");
+        if (weather === "rain") { icon = "rain"; text = t("Chuva"); }
+        if (weather === "snow") { icon = "snow"; text = t("Neve"); }
+        hudClock.querySelector(".hud-clock-icon").innerHTML = CLOCK_ICONS[icon];
+        hudClock.querySelector(".hud-clock-time").textContent = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+        hudClock.querySelector(".hud-clock-weather").textContent = text;
+        hudClock.title = `${text} · ${SEASON_TEXT[seasonOf(clock.month, clock.day)]}`;
+        hudClock.hidden = false;
+        placeClock();
+    }
+
+    if (hudClock) {
+        window.addEventListener("resize", placeClock);
+        document.addEventListener("fullscreenchange", () => setTimeout(placeClock, 50));
+    }
+
     function updateDayNight() {
         const clock = argentinaNow();
         const [red, green, blue] = lightAt(clock.hour);
@@ -324,7 +369,9 @@
             // the game is still loading or changing maps: the next round tints it
         }
         const quiet = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-        setWeather(quiet ? "" : weatherNow(clock));
+        const weather = weatherNow(clock);
+        setWeather(quiet ? "" : weather);
+        updateClock(clock, weather);
     }
 
     function startDayNight() {

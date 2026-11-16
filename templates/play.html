@@ -20,6 +20,7 @@
         'pushTime': push_time | default(none),
         'soundHint': sound_hint | default(false),
         'dayNight': day_night | default(false),
+        'hudClock': hud_clock | default(false),
         'updateNotice': update_notice | default(false),
         'build': server_build | default(''),
         'versionUrl': url_for('server_version'),
@@ -88,6 +89,11 @@
                 <div id="game-player" class="game-player"></div>
                 <p id="sound-hint" class="sound-hint" role="status" hidden></p>
                 <canvas id="weather-layer" class="weather-layer" aria-hidden="true" hidden></canvas>
+                <div id="hud-clock" class="hud-clock" role="status" aria-live="off" hidden>
+                    <span class="hud-clock-icon" aria-hidden="true"></span>
+                    <span class="hud-clock-time"></span>
+                    <span class="hud-clock-weather"></span>
+                </div>
                 <div id="game-loading" class="game-loading" role="status" aria-live="polite">
                     <img src="{{ url_for('images', path='knight.png') }}" width="52" height="64" alt="">
                     <h2 id="loading-title">{{ _('Preparando sua vila') }}</h2>
