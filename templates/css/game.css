@@ -208,3 +208,14 @@ body.hud-dimmed .hud-side * { pointer-events: none; }
    weather wait for the village. */
 .game-player.is-view.is-loading { background: radial-gradient(circle at 50% 50%, #ffffff 0%, #d6efff 35%, #8fcdf2 75%, #6ab8e8 100%); }
 .game-player.is-loading ~ .hud-clock, .game-player.is-loading ~ .weather-layer { display: none !important; }
+/* The menu opens smoothly: its panel fades and slides in from the button, and out before it hides. */
+.controls-panel:not([hidden]) { animation: controls-in .22s cubic-bezier(.2, .8, .2, 1); transform-origin: top left; }
+.controls-panel.is-closing { animation: controls-out .17s ease-in forwards; pointer-events: none; }
+.game-shell.view-full.is-expanded .controls-panel, .game-shell.view-full:fullscreen .controls-panel { transform-origin: top right; }
+.controls-toggle { transition: background-color .15s ease, filter .15s ease, transform .15s ease; }
+.controls-toggle[aria-expanded="true"] { transform: scale(.94); }
+@keyframes controls-in { from { opacity: 0; transform: translateY(-6px) scale(.96); } to { opacity: 1; transform: none; } }
+@keyframes controls-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(-6px) scale(.96); } }
+@media (prefers-reduced-motion: reduce) {
+    .controls-panel:not([hidden]), .controls-panel.is-closing { animation-duration: 1ms; }
+}

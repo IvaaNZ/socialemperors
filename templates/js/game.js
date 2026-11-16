@@ -715,8 +715,16 @@
         if (moved && moreOpen) showSidePieces();  // the open pieces follow the column
     }
 
-    // Open, "More" shows the pieces stacked below it, centred on the right column (the "Prize" box first). What
-    // shows of a piece (seHudArt) is centred, not its bounds, which also hold the game's hidden buttons.
+    // What shows of a side piece, in its bounds (stage pixels): the "Prize" box's bounds (190 x 160) are mostly
+    // empty room for the game's other offers, its picture is a 62 x 88 box in them. Others: their bounds.
+    function sidePieceArt(name, piece) {
+        if (name === "_viralButtonPanel" && Math.abs(piece.w - 190) < 4 && Math.abs(piece.h - 160) < 4) {
+            return { x: piece.x + 55, y: piece.y + 44, w: 62, h: 88 };
+        }
+        return piece;
+    }
+
+    // Open, "More" shows the pieces stacked below it, centred on the right column (the "Prize" box first).
     function showSidePieces() {
         const box = container.getBoundingClientRect();
         const scale = positionScale(box);
@@ -728,13 +736,7 @@
             let x = NaN;
             let y = NaN;
             if (moreOpen && piece && piece.w > 0) {
-                let art = null;
-                try {
-                    art = player.seHudArt(name);
-                } catch (error) {
-                    art = null;
-                }
-                if (!art || !(art.w > 0)) art = piece;
+                const art = sidePieceArt(name, piece);
                 const artLeft = Math.min(centre - art.w / 2, stageWidth - art.w - 3);  // whole on the stage
                 x = artLeft - (art.x - piece.x);
                 y = top - (art.y - piece.y);
@@ -778,10 +780,20 @@
         const box = container.getBoundingClientRect();
         const scale = positionScale(box);
         const wide = stageWidth > 761;
+        // The page's right column: its own width and the menu button's (not the menu's panel, opened over it).
         const side = hudSide.getBoundingClientRect();
-        const dock = menuOverGame() ? controlsDock.getBoundingClientRect() : null;
-        const column = Math.max(side.width || 0, dock ? dock.width : 0) + 16;
+        const menu = menuOverGame() ? controlsToggle.getBoundingClientRect() : null;
+        const column = Math.max(side.width || 0, menu ? menu.width : 0) + 16;
         const edge = stageWidth - column / scale;  // where the page's right column starts
+        // Open, "More" stacks its pieces centred under it: the Clan column keeps clear of the widest one.
+        let pieces = 0;
+        if (moreOpen) {
+            for (const name of SIDE_PIECES) {
+                const piece = hudButtons[name];
+                if (piece && piece.on && piece.w > 0) pieces = Math.max(pieces, sidePieceArt(name, piece).w);
+            }
+        }
+        const clanEdge = stageWidth - Math.max(column / scale, pieces + 12);
 
         const globe = hudButtons.globe;
         if (globe && globe.w > 0 && pieceHome.globe) {
@@ -792,7 +804,7 @@
         const clan = hudButtons.clanPanel;
         if (clan && clan.w > 0 && pieceHome.clanPanel) {
             const home = centred + pieceHome.clanPanel.x;
-            placePiece("clanPanel", wide ? Math.max(home, edge - 4 - clan.w) : home, NaN);
+            placePiece("clanPanel", wide ? Math.max(home, clanEdge - 4 - clan.w) : home, NaN);
         }
         const book = hudButtons.magicBox;
         const bar = hudButtons.bgBar;
@@ -900,6 +912,8 @@
         expand.setAttribute("aria-pressed", String(expanded));
     }
 
+    let panelCloseTimer = 0;
+
     function hideControls() {
         clearTimeout(hideControlsTimer);
         clearTimeout(hoverControlsTimer);
@@ -908,10 +922,16 @@
             controlsToggle.focus({ preventScroll: true });
             revealOnFocus = true;
         }
-        controlsPanel.hidden = true;
         controlsToggle.setAttribute("aria-expanded", "false");
         shell.classList.remove("controls-open");
         controlsActivated = false;
+        if (controlsPanel.hidden) return;
+        controlsPanel.classList.add("is-closing");
+        clearTimeout(panelCloseTimer);
+        panelCloseTimer = setTimeout(() => {
+            controlsPanel.hidden = true;
+            controlsPanel.classList.remove("is-closing");
+        }, 170);
     }
 
     function scheduleControlsHide() {
@@ -927,6 +947,8 @@
     function showControls(activated = false) {
         clearTimeout(hoverControlsTimer);
         controlsActivated = controlsActivated || activated;
+        clearTimeout(panelCloseTimer);
+        controlsPanel.classList.remove("is-closing");
         controlsPanel.hidden = false;
         controlsToggle.setAttribute("aria-expanded", "true");
         shell.classList.add("controls-open");

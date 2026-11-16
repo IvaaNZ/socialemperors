@@ -608,9 +608,16 @@ Cómo funciona:
 - El juego mueve las piezas que la página le pide (`Base.__hudPlace`, solo el globo con su `ExperienceMeterMC`, la columna `__seButtonPanel` y `magicBox`) hasta una posición absoluta del escenario. Compara con dónde están, así que repetirlo no acumula corrimientos.
 - Antes de mover nada, la página guarda dónde las pone el juego respecto de su interfaz centrada. En un escenario de 760 o menos (celular vertical, "Restaurar ventana") vuelven ahí. En uno ancho nunca quedan más a la izquierda de ese lugar.
 - El nombre y la población siguen al globo. Sin el parche de clanes, la columna no existe y no se toca (se comprueba con `in`).
-- Para centrar el "Premio" se usa lo que se ve (`Base.__hudArt`, la unión de los límites de sus hijos visibles): sus límites incluyen botones ocultos del juego y por eso antes quedaba corrido. Las piezas nunca pasan del borde derecho.
+- Para centrar el "Premio" se usa la caja de su dibujo: 62×88 dentro de sus límites de 190×160, que son casi todo lugar vacío para otras ofertas del juego. Medir "lo visible" en el juego (la unión de sus hijos visibles) no servía, porque todos cuentan como visibles. Las piezas nunca pasan del borde derecho. Con "Más" abierto, la columna de Clan/PvP/Pase se corre lo que haga falta para no tocar la pieza más ancha (el panel de opciones).
 - Probado en la copia con una ventana de 1366 de ancho (escenario 1543×600) y en "Restaurar ventana".
 
 ## Pantalla de carga centrada (`SE_VIEW`)
 
 Con el escenario del tamaño de la ventana, la pantalla de carga del juego (una imagen de 760×600) quedaba pegada a la izquierda, con el resto verde, y encima se veían el reloj y la lluvia. Ahora, mientras carga, el escenario mide 760×600, va centrado y agrandado para llenar la altura, sobre un fondo celeste como el cielo de esa imagen. El reloj y la lluvia esperan a la aldea. Cuando la aldea está lista (llegan los números del jugador; con `SE_HUD` apagado, cuando responde el puente de la vista), el escenario pasa a ocupar todo y el juego se reacomoda. Probado en la copia con una ventana de 1366 de ancho: las dos etapas de la carga se ven centradas.
+
+## Menú fluido y sin encimados (captura del dueño)
+
+- Al abrir el Menú, el nombre del imperio se montaba sobre el globo: la página tomaba el ancho del menú abierto (200 px) como el de la columna derecha y corría el globo. Ahora usa el ancho del botón Menú.
+- Con "Más" abierto, el "Premio" quedaba sobre Clan y PvP: ver arriba, ahora se centra por su dibujo y la columna de Clan se aparta.
+- El panel del Menú se abre y se cierra con una animación corta (aparece y se desliza en 0,22 s y se va en 0,17 s antes de ocultarse). El botón se achica un poco mientras está abierto. Sin animación si el sistema pide menos movimiento.
+- Probado en la copia con el zoom del navegador al 80% (como el del dueño).

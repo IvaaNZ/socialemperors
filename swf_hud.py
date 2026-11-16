@@ -19,10 +19,9 @@ This edit adds, without changing any original instruction:
     them) and, unless x is NaN, moved so its top left corner is at (x, y) of the stage (below the "More" button);
   * Base.__hudPlace(name, x, y): one of PLACED (the World globe, the Clan / PvP / Pass column, the spell book)
     moved to (x, y) of the stage: the page lays them out against the window's edges;
-  * Base.__hudArt(name): what shows of a side piece (its visible children's bounds), to centre it;
   * Base.__registerHud(), called first in Base.init: ExternalInterface callbacks 'seHudState', 'seHudHide',
-    'seHudCash', 'seHudButtons', 'seHudShow', 'seHudPlace' and 'seHudArt' (the page, templates/js/game.js,
-    polls the state and calls the others).
+    'seHudCash', 'seHudButtons', 'seHudShow' and 'seHudPlace' (the page, templates/js/game.js, polls the
+    state and calls the others).
 
 Every name is taken from an instruction the game already uses. Each method runs inside its own try/catch: an error
 leaves the game as it is (the page then keeps the game's own ribbon).
@@ -36,10 +35,9 @@ from swf_duel_bridge import DO_ABC, assemble, prepend
 from swf_range_overlay import OPCODE_BY_NAME, _qname
 
 STATE_METHOD, HIDE_METHOD, CASH_METHOD, REGISTER_METHOD = '__hudState', '__hudHide', '__hudCash', '__registerHud'
-BUTTONS_METHOD, SHOW_METHOD, PLACE_METHOD, ART_METHOD = '__hudButtons', '__hudShow', '__hudPlace', '__hudArt'
+BUTTONS_METHOD, SHOW_METHOD, PLACE_METHOD = '__hudButtons', '__hudShow', '__hudPlace'
 CALLBACKS = {'seHudState': STATE_METHOD, 'seHudHide': HIDE_METHOD, 'seHudCash': CASH_METHOD,
-             'seHudButtons': BUTTONS_METHOD, 'seHudShow': SHOW_METHOD, 'seHudPlace': PLACE_METHOD,
-             'seHudArt': ART_METHOD}
+             'seHudButtons': BUTTONS_METHOD, 'seHudShow': SHOW_METHOD, 'seHudPlace': PLACE_METHOD}
 # Pieces the page moves (seHudPlace): the World globe (its ExperienceMeterMC moves with it, child 9 of it is the
 # globe), the Clan, PvP and Pass column (GuiManager.__seButtonPanel, swf_clan_button.py: absent with clans off) and
 # the spell book (GuiManager.magicBox).
@@ -255,50 +253,10 @@ def add_hud_to_abc(abc):
         program += [('label:', f'skip{number}')]
     place = method(PLACE_METHOD, 3, guarded(program), 8, 6)
 
-    # Base.__hudArt(name): {x, y, w, h} on the stage of what shows of one of SIDE_BUTTONS (the union of its visible
-    # children's bounds: their own bounds also hold hidden buttons), or null. Locals: 1 name, 2 piece, 3 index,
-    # 4 child, 5 its bounds, 6-9 left, top, right, bottom.
-    program = [('getlocal0',), ('pushscope',), ('label:', 'try'), ('pushnull',), ('setlocal2',)]
-    for number, name in enumerate(SIDE_BUTTONS):
-        program += [('getlocal1',), ('pushstring', s[name]), ('ifne', f'other{number}')] + path(name) + [
-            ('setlocal2',), ('label:', f'other{number}')]
-    program += [('getlocal2',), ('iffalse', 'none'),
-                ('pushshort', 30000), ('setlocal', 6), ('pushshort', 30000), ('setlocal', 7),
-                ('pushshort', 30000), ('negate',), ('setlocal', 8), ('pushshort', 30000), ('negate',), ('setlocal', 9),
-                ('pushbyte', 0), ('setlocal3',),
-                ('label:', 'loop'), ('label',),
-                ('getlocal3',), ('getlocal2',), ('getproperty', n['numChildren']), ('ifnlt', 'end'),
-                ('getlocal2',), ('getlocal3',), ('callproperty', n['getChildAt'], 1), ('setlocal', 4),
-                ('getlocal', 4), ('getproperty', n['visible']), ('iffalse', 'next'),
-                ('getlocal', 4), ('getlocal2',), ('getproperty', n['stage']), ('callproperty', n['getBounds'], 1),
-                ('setlocal', 5),
-                ('getlocal', 5), ('getproperty', n['width']), ('pushbyte', 0), ('ifngt', 'next')]
-    for edge, local, value, keep in (
-            ('left', 6, [('getlocal', 5), ('getproperty', n['x'])], 'ifnlt'),
-            ('top', 7, [('getlocal', 5), ('getproperty', n['y'])], 'ifnlt'),
-            ('right', 8, [('getlocal', 5), ('getproperty', n['x']), ('getlocal', 5), ('getproperty', n['width']),
-                          ('add',)], 'ifngt'),
-            ('bottom', 9, [('getlocal', 5), ('getproperty', n['y']), ('getlocal', 5), ('getproperty', n['height']),
-                           ('add',)], 'ifngt')):
-        program += value + [('getlocal', local), (keep, f'kept_{edge}')] + value + [
-            ('setlocal', local), ('label:', f'kept_{edge}')]
-    program += [('label:', 'next'), ('getlocal3',), ('increment_i',), ('setlocal3',), ('jump', 'loop'),
-                ('label:', 'end'),
-                ('getlocal', 8), ('getlocal', 6), ('ifngt', 'none'),
-                ('pushstring', s['x']), ('getlocal', 6), ('pushstring', s['y']), ('getlocal', 7),
-                ('pushstring', s['w']), ('getlocal', 8), ('getlocal', 6), ('subtract',),
-                ('pushstring', s['h']), ('getlocal', 9), ('getlocal', 7), ('subtract',),
-                ('newobject', 4), ('returnvalue',),
-                ('label:', 'none'), ('pushnull',), ('returnvalue',),
-                ('label:', 'try_end'),
-                ('label:', 'catch'), ('getlocal0',), ('pushscope',), ('pop',), ('pushnull',), ('returnvalue',)]
-    art = method(ART_METHOD, 1, program, 10, 10)
-
     # Base.__registerHud(): the page's way in.
     program = [('getlex', n['ExternalInterface']), ('getproperty', n['available']), ('iffalse', 'done')]
     for callback, target in ((s['seHudState'], state), (s['seHudHide'], hide), (s['seHudCash'], cash),
-                             (s['seHudButtons'], buttons), (s['seHudShow'], show), (s['seHudPlace'], place),
-                             (s['seHudArt'], art)):
+                             (s['seHudButtons'], buttons), (s['seHudShow'], show), (s['seHudPlace'], place)):
         program += [('getlex', n['ExternalInterface']), ('pushstring', callback), ('getlocal0',),
                     ('getproperty', target), ('callpropvoid', n['addCallback'], 2)]
     register = method(REGISTER_METHOD, 0, guarded(program), 4, 1)

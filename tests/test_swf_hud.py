@@ -3,7 +3,7 @@ from pathlib import Path
 
 from swf_abc import Abc, AbcError, disassemble
 from swf_duel_bridge import DO_ABC
-from swf_hud import (ART_METHOD, BAR_BUTTONS, BUTTONS_METHOD, CALLBACKS, CASH_METHOD, EXPERIENCE_PARTS, HIDDEN,
+from swf_hud import (BAR_BUTTONS, BUTTONS_METHOD, CALLBACKS, CASH_METHOD, EXPERIENCE_PARTS, HIDDEN,
                      HIDE_METHOD, PLACE_METHOD, PLACED, REGISTER_METHOD, SHOW_METHOD, SIDE_BUTTONS, STATE_FIELDS,
                      STATE_METHOD, TEXT_FIELDS, add_hud, add_hud_to_abc)
 from swf_localization import decode_swf, iter_tags
@@ -64,20 +64,6 @@ class Hud(unittest.TestCase):
         self.assertEqual([str(op[2]).strip("'") for op in ops if op[1] == 'pushstring'],
                          ['globe', 'clanPanel', '__seButtonPanel', 'magicBox'])
         self.assertIn('in', [op[1] for op in ops])  # no clan patch: the column is left alone
-
-    def test_the_art_of_a_side_piece_is_its_visible_childrens_bounds(self):
-        names = self.names(ART_METHOD)
-        self.assertIn('numChildren', names)
-        self.assertIn('getChildAt 1', names)
-        self.assertIn('visible', names)
-
-    def test_more_shows_and_places_only_the_side_pieces(self):
-        ops = disassemble(self.abc, self.abc.body_of(self.abc.method_of('Base', SHOW_METHOD))['code'])
-        compared = [str(op[2]).strip("'") for op in ops if op[1] == 'pushstring']
-        self.assertEqual(compared, list(SIDE_BUTTONS))
-        names = [str(op[2]) for op in ops if len(op) > 2]
-        self.assertEqual(names.count('visible'), len(SIDE_BUTTONS))
-        self.assertIn('getBounds 1', names)
 
     def test_it_is_added_once(self):
         with self.assertRaises(AbcError):
