@@ -168,9 +168,12 @@ def _bitmap_size(code, payload):
     return None  # JPEG: known from the decoded picture (the tool) or the HD file (the pass)
 
 
-def eligible_bitmaps(tags):
-    """Ids of the pictures that can be enlarged, from [(code, payload)] of the movie's top-level tags."""
+def eligible_bitmaps(tags, own_hd=None):
+    """Ids of the pictures that can be enlarged, from [(code, payload)] of the movie's top-level tags.
+    `own_hd`: ids left out because they already have their own HD (the client movie's, by default)."""
     from swf_hd_art import HD_BITMAP_IDS
+    if own_hd is None:
+        own_hd = HD_BITMAP_IDS
     bitmaps, exported, used, morphed = set(), set(), set(), set()
     for code, payload in tags:
         if code in BITMAP_TAGS:
@@ -184,7 +187,7 @@ def eligible_bitmaps(tags):
             used.update(fill[1] for fill in _shape_fill_offsets(payload, code))
         elif code in MORPH_TAGS:
             morphed |= _morph_bitmaps(payload, code)
-    return {b for b in bitmaps if b in used and b not in exported and b not in morphed and b not in HD_BITMAP_IDS}
+    return {b for b in bitmaps if b in used and b not in exported and b not in morphed and b not in own_hd}
 
 
 def translated_ids(language):
@@ -212,12 +215,18 @@ def hd_path(character_id, language):
 
 @lru_cache(maxsize=1024)
 def _packed(path):
-    """(width, height, JPEG3 body after the character id) of an HD picture: a JPEG of its colours multiplied by
+    """(width, height, JPEG3 body) of an HD picture file."""
+    from PIL import Image
+    return pack_picture(Image.open(path))
+
+
+def pack_picture(image):
+    """(width, height, JPEG3 body after the character id) of a picture: a JPEG of its colours multiplied by
     alpha (as the game's own JPEG3 pictures, measured: Flash premultiplies them) and the zlib alpha plane."""
     import io
     import zlib
     from PIL import Image, ImageChops
-    image = Image.open(path).convert('RGBA')
+    image = image.convert('RGBA')
     red, green, blue, alpha = image.split()
     colours = Image.merge('RGB', [ImageChops.multiply(channel, alpha) for channel in (red, green, blue)])
     stream = io.BytesIO()
@@ -259,6 +268,25 @@ def apply_hd_icons(data, language='es'):
         if max(width, height) > MAX_ICON_SIDE * HD_FACTOR:
             continue
         replaced[character_id] = (width, height, packed)
+    return _rebuild(data, body, header_length, tags, replaced)
+
+
+def replace_pictures(data, pictures):
+    """Return a movie (a building or unit sprite) with pictures swapped: {character id: HD picture HD_FACTOR times
+    the original size}. Only safe pictures (eligible_bitmaps) are swapped."""
+    from swf_localization import decode_swf, iter_tags
+    body, header_length = decode_swf(data)
+    tags = list(iter_tags(body, header_length))
+    candidates = eligible_bitmaps([(code, payload) for code, payload, _ in tags], own_hd=set())
+    replaced = {character_id: pack_picture(picture) for character_id, picture in pictures.items()
+                if character_id in candidates}
+    return _rebuild(data, body, header_length, tags, replaced)
+
+
+def _rebuild(data, body, header_length, tags, replaced):
+    """The movie with the `replaced` pictures ({id: (width, height, JPEG3 body)}) and their fills rescaled."""
+    import zlib
+    from swf_localization import encode_tag
     out = []
     for code, payload, long_length in tags:
         if code in BITMAP_TAGS:

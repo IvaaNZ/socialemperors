@@ -539,3 +539,10 @@ Pedido del dueño: "Aplica todos los iconos en HD dentro de todo el juego", desp
 - **Peso:** guardadas sin pérdida, el juego pasaba de 4,1 a 14 MB; como JPEG3 (calidad 92, como la mayoría de las imágenes del juego) queda en 6,8 MB.
 - **Error encontrado y corregido:** las formas de Flash pueden declarar rellenos nuevos en medio de su dibujo (StyleChangeRecord con NewStyles), no solo al principio. Al principio solo se ajustaban los del principio y el ícono del oro de la barra de recursos salía encimado con las piedras. Ahora se recorre el dibujo completo de las 1.347 formas (1.073 rellenos con imagen). `SE_HD_ICONS_SKIP` deja sin HD las imágenes que se le indiquen, para buscar una que falle.
 - **Probado en la copia:** la barra de recursos (oro, madera, comida, piedra, dinero), los íconos del costado y el menú Construir se ven bien y más nítidos; el juego arma su película con HD en unos 5 s.
+
+### Edificios, decoraciones y recursos del mapa en HD (`SE_HD_SPRITES`)
+
+Pedido del dueño ("faltarían los recursos y demás cosas dentro del juego"). Los dibujos del mundo son 1.587 archivos aparte (`assets/buildingsprites`, 914 MB, 61.431 imágenes): 900 de edificios, decoraciones y recursos (5.529 imágenes, unas 5 horas de IA) y 669 de unidades (55.558 imágenes de animación, unas 35 horas). El dueño eligió **edificios y recursos primero**; las unidades quedan para después.
+
+- `tools/make_hd_sprites.py` agranda las imágenes de cada objeto de tipo edificio igual que los íconos (Real-ESRGAN 4× y reducción exacta a 2×) y escribe el archivo de nuevo con `swf_hd_icons.replace_pictures` (mismos números, rellenos reescalados: nada se mueve). Las texturas de más de 1.024 píxeles por lado (los terrenos) quedan como están. Trabaja por tandas, saltea lo ya hecho (se puede cortar y volver a correr) y anota el avance en `assets_hd/progreso.txt`.
+- Los archivos HD van a `assets_hd/buildingsprites`, **fuera de git** (son cientos de MB y se pueden regenerar). Con `SE_HD_SPRITES=on` el servidor entrega la versión HD de un dibujo cuando existe; si no, el original.

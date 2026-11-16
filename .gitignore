@@ -19,3 +19,4 @@ instance/
 WorldEditor/*.exe
 WorldEditor/imagenes/
 tools/realesrgan/
+assets_hd/

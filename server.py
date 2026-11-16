@@ -873,6 +873,11 @@ def static_assets_loader(path):
         response.headers['Cache-Control'] = 'private, no-cache'
         response.headers['Vary'] = 'Cookie'
         return response
+    if HD_SPRITES_ENABLED and path.startswith('buildingsprites/'):
+        # SE_HD_SPRITES: the HD version of a building's picture when it was made (tools/make_hd_sprites.py)
+        hd_folder = Path(ASSETS_DIR).resolve().parent / 'assets_hd'
+        if (hd_folder / path).is_file():
+            return send_from_directory(hd_folder, path)
     return send_from_directory(ASSETS_DIR, path)
 
 
@@ -1119,6 +1124,9 @@ app.jinja_env.globals['empire_name_enabled'] = EMPIRE_NAME_ENABLED
 # to the gifts. SE_QUICK_SAVE (on) asks for 3 s, the game's minimum; an empty queue sends nothing.
 QUICK_SAVE_ENABLED = os.environ.get('SE_QUICK_SAVE', 'on').strip().lower() in ('on', '1', 'true', 'yes')
 QUICK_SAVE_SECONDS = 3
+# HD buildings, decorations and map resources (assets_hd/buildingsprites, made by tools/make_hd_sprites.py, not in git):
+# served instead of the originals when they exist. Off, or for a sprite without its HD version: the original.
+HD_SPRITES_ENABLED = os.environ.get('SE_HD_SPRITES', 'on').strip().lower() in ('on', '1', 'true', 'yes')
 # Updates: every start of the server has its own build (updater.py sets SE_BUILD; a server started by hand makes one).
 # The game page asks /version and, when it changed, shows "There is an update available" with a Restart button and
 # reloads by itself after 10 s, so nobody keeps playing an old server's game (SE_UPDATE_NOTICE, on).
