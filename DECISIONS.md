@@ -550,3 +550,7 @@ Pedido del dueño ("faltarían los recursos y demás cosas dentro del juego"). L
 ### HD apagado (resultado medido)
 
 Probado en la copia con una pantalla de alta resolución simulada: el juego HD y los edificios HD se entregan y Ruffle dibuja a resolución completa, pero la diferencia a tamaño normal es mínima (unos 2 tonos sobre 255 en promedio) y Ruffle achica las imágenes grandes sin suavizarlas bien, lo que deja bordes inclinados algo serruchados. El dueño no vio cambios y eligió apagarlo: `SE_HD_ICONS=off` y `SE_HD_SPRITES=off` (el juego vuelve a 4,1 MB). La generación de edificios se detuvo (quedaron unos 75 en `assets_hd`, fuera de git); el código y las herramientas quedan por si se usan con pantallas grandes.
+
+### HD prendido de nuevo
+
+El dueño pidió dejarlos prendidos: `SE_HD_ICONS=on` y `SE_HD_SPRITES=on` en `server.env`, y se retomó la generación de los edificios (`tools/make_hd_sprites.py` sigue donde quedó; el servidor usa los que ya están hechos).
