@@ -528,3 +528,14 @@ Pedido del dueño. Cada nivel de la ventana muestra la imagen de su premio (`tem
 - **Unidades:** su dibujo en el mapa, de frente (lector del World Editor, `WorldEditor/sprites.py`); el Yeti negro, hecho solo de formas vectoriales, se dibuja con `swf_raster.py`.
 
 El servidor agrega la dirección de la imagen a cada premio; una prueba revisa que existan las imágenes de los premios de las cuatro temporadas.
+
+## Íconos del juego en HD (`SE_HD_ICONS`)
+
+Pedido del dueño: "Aplica todos los iconos en HD dentro de todo el juego", después de ver una comparación de filtros contra IA (eligió la IA). Con su permiso se usó Real-ESRGAN portable (`realesrgan-ncnn-vulkan`, usa la placa de video; en `tools/realesrgan`, fuera de git).
+
+- **Qué se agranda:** de las 365 imágenes del juego, las que se pueden cambiar sin riesgo (`swf_hd_icons.eligible_bitmaps`): no exportadas al código (ActionScript podría leer su tamaño), usadas por alguna forma y por ninguna forma animada (morph), y sin HD propio (Construir y la otra de `swf_hd_art`). De esas, los **íconos**: hasta 256 píxeles por lado (259); los fondos y ventanas grandes quedan como están.
+- **Cómo:** `tools/make_hd_icons.py` agranda cada una 4× con el modelo anime de Real-ESRGAN y la reduce a exactamente **2×** (más nítido que agrandar 2× directo). 4× habría costado unos 116 MB de memoria en el juego; 2× unos 29 MB. Las imágenes traducidas (español y portugués) se agrandan desde su traducción (`config/hd_icons/<idioma>/`). Al armar el juego, `swf_hd_icons.apply_hd_icons` pone cada imagen HD con el mismo número y divide por 2 la escala de cada relleno que la usa: el dibujo ocupa lo mismo en pantalla. No toca el código del juego.
+- **Transparencia:** se midió que Flash guarda tanto las imágenes sin pérdida como las JPEG3 con el color ya multiplicado por la transparencia; se deshace al leerlas (`WorldEditor/sprites.py`, también mejora los bordes en el World Editor y en los íconos del pase) y se rehace al guardarlas.
+- **Peso:** guardadas sin pérdida, el juego pasaba de 4,1 a 14 MB; como JPEG3 (calidad 92, como la mayoría de las imágenes del juego) queda en 6,8 MB.
+- **Error encontrado y corregido:** las formas de Flash pueden declarar rellenos nuevos en medio de su dibujo (StyleChangeRecord con NewStyles), no solo al principio. Al principio solo se ajustaban los del principio y el ícono del oro de la barra de recursos salía encimado con las piedras. Ahora se recorre el dibujo completo de las 1.347 formas (1.073 rellenos con imagen). `SE_HD_ICONS_SKIP` deja sin HD las imágenes que se le indiquen, para buscar una que falle.
+- **Probado en la copia:** la barra de recursos (oro, madera, comida, piedra, dinero), los íconos del costado y el menú Construir se ven bien y más nítidos; el juego arma su película con HD en unos 5 s.

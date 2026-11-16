@@ -18,3 +18,4 @@ instance/
 *.bak-*
 WorldEditor/*.exe
 WorldEditor/imagenes/
+tools/realesrgan/

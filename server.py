@@ -921,6 +921,9 @@ def localized_game_movie(language=None):
         name = f'season_pass_button_{pass_locale(language)}.png'
         translated = add_season_pass_button(translated, image_url='/img/' + (
             name if (Path(TEMPLATES_DIR) / 'img' / name).exists() else 'season_pass_button_es.png'))
+    from swf_hd_icons import apply_hd_icons, hd_icons_enabled
+    if hd_icons_enabled():  # the game's icons at twice their pixels (pictures and shape fills only, never code)
+        translated = apply_hd_icons(translated, language)
     return translated, hashlib.sha256(translated).hexdigest()
 
 ## GAME DYNAMIC

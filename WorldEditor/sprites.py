@@ -110,6 +110,12 @@ def _jpeg(data):
     return Image.open(io.BytesIO(data)).convert('RGBA')
 
 
+def _unpremultiply(image):
+    """Flash keeps colours multiplied by their alpha (Lossless2, and JPEG3 too): back to plain RGBA, or the edges
+    of a picture come out dark when it is drawn or enlarged."""
+    return Image.merge('RGBa', image.split()).convert('RGBA')
+
+
 def _bitmap(code, data, offset, length):
     payload = data[offset:offset + length]
     if code == 35 or code == 90:  # DefineBitsJPEG3 / 4: JPEG plus a zlib alpha plane
@@ -122,6 +128,7 @@ def _bitmap(code, data, offset, length):
                 alpha = zlib.decompress(rest)
                 if len(alpha) == image.width * image.height:
                     image.putalpha(Image.frombytes('L', image.size, alpha))
+                    image = _unpremultiply(image)  # JPEG3 colours come multiplied by their alpha
             except zlib.error:
                 pass
         return image
@@ -149,7 +156,7 @@ def _bitmap(code, data, offset, length):
         pixels = zlib.decompress(payload[7:])
         if code == 36:  # premultiplied ARGB
             image = Image.frombytes('RGBA', (width, height), pixels, 'raw', 'ARGB')
-            return image
+            return _unpremultiply(image)
         image = Image.frombytes('RGBX', (width, height), pixels, 'raw', 'XRGB')
         return image.convert('RGBA')
     return None
