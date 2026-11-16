@@ -50,7 +50,7 @@ SAND_LINE = '#cdb579'
 GRID = '#d3c592'
 GRID_MAJOR = '#b9a96e'
 PREVIEW_SIZE = 150
-KIND_NAMES = {'island': 'Isla de misión', 'arena': 'Arena de duelos', 'village': 'Aldea'}
+KIND_NAMES = {'island': 'Isla de misión', 'arena': 'Arena de torneos', 'pvp': 'Arena PvP', 'village': 'Aldea'}
 
 
 def colour_of(entry):
@@ -84,6 +84,8 @@ class Editor(tk.Tk):
         self.zoom_job = None
         self.terrain_colours = {}
         self.catalog = core.load_catalog()
+        sprite_folder = core.ROOT / 'assets' / 'buildingsprites'
+        self.sprite_files = {path.name.lower() for path in sprite_folder.glob('*.swf')}
         self.catalog_rows = []
         self.library = sprites.Library(core.ROOT, core.ROOT / 'WorldEditor' / 'imagenes') if sprites else None
         self.pictures = {}  # (img_name, unit, flipped, scale, ghost) -> (PhotoImage, PIL picture, dx, dy)
@@ -92,6 +94,7 @@ class Editor(tk.Tk):
         self._build()
         self._fill_islands()
         self._fill_villages()
+        self._fill_arenas()
         self._fill_catalog()
         self.protocol('WM_DELETE_WINDOW', self.close)
         self._draw()
@@ -133,11 +136,25 @@ class Editor(tk.Tk):
         ttk.Label(islands, text='(nueva) = el juego la conoce pero no tiene mapa',
                   wraplength=220, foreground='#666').pack(fill='x')
 
-        arena = ttk.Frame(left, padding=8)
-        left.add(arena, text='Arena')
-        ttk.Label(arena, text='El mapa donde se pelean los duelos.\nEl servidor lo lee al prenderse: '
-                              'después de guardar, reinicialo.', wraplength=220).pack(fill='x')
-        ttk.Button(arena, text='Abrir arena de duelos', command=self.open_arena).pack(fill='x', pady=8)
+        arena = ttk.Frame(left, padding=4)
+        left.add(arena, text='Arenas')
+        ttk.Label(arena, text='Arenas PvP', font=('Segoe UI', 10, 'bold')).pack(anchor='w')
+        ttk.Label(arena, text='Cada duelo se pelea en una de estas arenas, elegida al azar.',
+                  wraplength=220, foreground='#666').pack(fill='x')
+        self.arena_list = tk.Listbox(arena, activestyle='none', exportselection=False)
+        self.arena_list.pack(fill='both', expand=True, pady=(4, 0))
+        self.arena_list.bind('<Double-Button-1>', lambda e: self.open_pvp_arena())
+        arena_buttons = ttk.Frame(arena)
+        arena_buttons.pack(fill='x', pady=(4, 0))
+        ttk.Button(arena_buttons, text='Nueva', command=self.new_pvp_arena).pack(side='left', expand=True, fill='x')
+        ttk.Button(arena_buttons, text='Abrir', command=self.open_pvp_arena).pack(side='left', expand=True, fill='x')
+        ttk.Button(arena_buttons, text='Borrar', command=self.delete_pvp_arena).pack(side='left', expand=True,
+                                                                                     fill='x')
+        ttk.Separator(arena).pack(fill='x', pady=8)
+        ttk.Label(arena, text='Arena de torneos', font=('Segoe UI', 10, 'bold')).pack(anchor='w')
+        ttk.Label(arena, text='La de los torneos del juego. También la usan los duelos mientras no haya '
+                              'ninguna arena PvP.', wraplength=220, foreground='#666').pack(fill='x')
+        ttk.Button(arena, text='Abrir arena de torneos', command=self.open_arena).pack(fill='x', pady=(4, 0))
 
         villages = ttk.Frame(left, padding=4)
         left.add(villages, text='Aldeas')
@@ -258,7 +275,10 @@ class Editor(tk.Tk):
                     and text != str(item_id):
                 continue
             self.catalog_rows.append(item_id)
-            self.catalog_list.insert('end', f"{label}  [{entry.get('width')}x{entry.get('height')}]  #{item_id}")
+            missing = '' if self._has_sprite(entry) else '  · sin dibujo'
+            self.catalog_list.insert('end', f"{label}  [{entry.get('width')}x{entry.get('height')}]  #{item_id}{missing}")
+            if missing:
+                self.catalog_list.itemconfigure('end', foreground='#999')
 
     # ------------------------------------------------------------------ pictures
     def _is_unit(self, item_id):
@@ -272,9 +292,16 @@ class Editor(tk.Tk):
         if key in self.pictures:
             return self.pictures[key]
         found = self.library.picture(entry.get('img_name'), unit) if self.library else None
-        if not found:
-            self.pictures[key] = None
-            return None
+        if not found:  # the game has no picture for it (mobile-only items, missing files): its shop card
+            card = self.library.thumbnail(item_id, entry.get('img_name')) if self.library else None
+            if card is None:
+                self.pictures[key] = None
+                return None
+            width, height = core.footprint([item_id, 0, 0, 0], self.catalog)
+            size = max(24, (width + height) * core.HALF_WIDTH * 0.8)  # about as wide as its base
+            card = card.copy()
+            card.thumbnail((size, size), Image.LANCZOS)
+            found = (card, (card.width / 2, card.height))
         picture, (origin_x, origin_y) = found
         if flipped:
             picture = picture.transpose(Image.FLIP_LEFT_RIGHT)
@@ -314,8 +341,14 @@ class Editor(tk.Tk):
             self.preview_photo = None
             self.preview.configure(image='', text='Sin imagen')
         kind = 'Unidad' if entry.get('type') == 'u' else 'Edificio o decoración'
+        warning = '' if self._has_sprite(entry) else ('\nEl juego no tiene su dibujo (objeto de celular o '
+                                                     'archivo faltante): en el juego no se verá bien.')
         self.preview_text['text'] = (f"{entry.get('label', item_id)}  (#{item_id})\n{kind}, "
-                                     f"{entry.get('width')}x{entry.get('height')} casillas")
+                                     f"{entry.get('width')}x{entry.get('height')} casillas{warning}")
+
+    def _has_sprite(self, entry):
+        """Whether the game has the item's picture (assets/buildingsprites/<img_name>.swf)."""
+        return f"{entry.get('img_name')}.swf".lower() in self.sprite_files
 
     # ------------------------------------------------------------------ opening
     def _replace_document(self, opener):
@@ -346,6 +379,61 @@ class Editor(tk.Tk):
 
     def open_arena(self):
         self._replace_document(core.Document.open_arena)
+
+    def _fill_arenas(self):
+        self.arena_paths = []
+        self.arena_list.delete(0, 'end')
+        for path, name in core.pvp_arenas():
+            self.arena_paths.append(path)
+            self.arena_list.insert('end', name)
+        if not self.arena_paths:
+            self.arena_list.insert('end', '(ninguna: "Nueva" crea la primera)')
+            self.arena_list.itemconfigure('end', foreground='#888')
+
+    def _chosen_arena(self):
+        selection = self.arena_list.curselection()
+        if selection and selection[0] < len(self.arena_paths):
+            return self.arena_paths[selection[0]]
+        return None
+
+    def open_pvp_arena(self):
+        path = self._chosen_arena()
+        if path:
+            self._replace_document(lambda: core.Document.open_pvp_arena(path))
+
+    def new_pvp_arena(self):
+        from tkinter import simpledialog
+        if not self.confirm_discard():
+            return
+        name = simpledialog.askstring('Nueva arena PvP', 'Nombre de la arena:', parent=self)
+        if name is None:
+            return
+        if self.doc:
+            self.doc.dirty = False  # already asked above
+        self._replace_document(lambda: core.Document.new_arena(name))
+        if self.doc and self.doc.kind == 'pvp':
+            self.status['text'] = (f'Arena nueva "{self.doc.title}": colocá objetos y guardá (Ctrl+S). '
+                                   'Hasta guardarla no se usa en los duelos.')
+
+    def delete_pvp_arena(self):
+        path = self._chosen_arena()
+        if not path:
+            return
+        name = self.arena_list.get(self.arena_list.curselection()[0])
+        if not messagebox.askyesno('Borrar arena', f'¿Borrar la arena PvP "{name}"?\n\nDeja de usarse en los '
+                                                   'duelos. Queda una copia de respaldo en su carpeta.'):
+            return
+        try:
+            core.delete_arena(path)
+        except (core.EditorError, OSError) as error:
+            messagebox.showerror('No se borró', str(error))
+            return
+        if self.doc and self.doc.path == path:  # it was open: close it without asking
+            self.doc, self.selected, self.placing = None, None, None
+            self.name_entry.delete(0, 'end')
+            self._draw()
+        self._fill_arenas()
+        self.status['text'] = f'Arena "{name}" borrada.'
 
     def open_village(self):
         selection = self.village_list.curselection()
@@ -378,9 +466,11 @@ class Editor(tk.Tk):
             messagebox.showerror('No se guardó', str(error))
             return False
         note = {'island': 'El juego la usa en la próxima batalla de esa isla.',
-                'arena': 'Reiniciá el servidor para que los duelos usen la arena nueva.',
+                'arena': 'Se usa en los próximos torneos (y en los duelos si no hay arenas PvP).',
+                'pvp': 'Entra al sorteo de los próximos duelos.',
                 'village': 'El jugador la ve la próxima vez que prenda el servidor.'}[self.doc.kind]
         self._fill_islands()
+        self._fill_arenas()
         self._draw()
         self.status['text'] = f'Guardado en {path}. {note}'
         return True

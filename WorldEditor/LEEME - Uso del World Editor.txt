@@ -3,7 +3,7 @@ WORLD EDITOR (EDITOR DE MUNDO) - SOCIAL EMPIRES
 
 Sirve para editar, sin entrar al juego:
   - las islas de misión (las del barco),
-  - la arena de duelos,
+  - las arenas PvP de los duelos (se pueden crear varias) y la de torneos,
   - las aldeas de los jugadores.
 
 
@@ -43,12 +43,15 @@ LA VENTANA
                   Islas  : todas las islas de misión. Las que dicen "(nueva)"
                            el juego las conoce pero no tienen mapa: empiezan
                            vacías.
-                  Arena  : la arena donde se pelean los duelos.
+                  Arenas : arriba, las arenas PvP (botones Nueva, Abrir y
+                           Borrar): cada duelo se pelea en una de ellas,
+                           elegida al azar. Abajo, la arena de torneos, que
+                           también usan los duelos si no hay ninguna PvP.
                   Aldeas : las aldeas de los jugadores. Abajo se elige cuál de
                            sus islas editar.
                 Doble clic (o el botón "Abrir") para abrir.
   Centro ...... el mapa, con el suelo del juego:
-                  Aldeas y arena : el mapa tiene 25 zonas de 20 x 20 casillas
+                  Aldeas y arenas: el mapa tiene 25 zonas de 20 x 20 casillas
                            (separadas por líneas punteadas). Las zonas
                            compradas se ven con el terreno del mapa (pradera,
                            desierto, hielo, mar, mineral, selva o nubes) y el
@@ -102,7 +105,8 @@ otra cosa o se cierra la ventana con cambios, pregunta si guardarlos.
 CUÁNDO SE VE EL CAMBIO EN EL JUEGO
 ----------------------------------
   Islas ..... en la próxima batalla de esa isla. No hace falta reiniciar.
-  Arena ..... hay que reiniciar el servidor.
+  Arenas .... en el próximo duelo o torneo. No hace falta reiniciar.
+              Una arena PvP nueva entra al sorteo recién al guardarla.
   Aldeas .... SOLO SE GUARDAN CON EL SERVIDOR APAGADO. Con el servidor
               prendido las aldeas están en su memoria y pisaría el cambio:
               el editor avisa y no guarda. Apagar el servidor, guardar y
@@ -119,8 +123,20 @@ Para volver atrás: borrar el archivo editado y quitarle a la copia la parte
 
 Dónde están los archivos:
   Islas ..... villages\quests\<número de isla>.json
-  Arena ..... config\duels\arena.json
+  Arenas PvP  config\duels\arenas\<nombre>.json
+  Torneos ... config\duels\arena.json
   Aldeas .... saves\<id>.save.json  (o la carpeta configurada en el servidor)
+
+
+ARENAS PVP
+----------
+  Nueva ..... pide un nombre y abre una arena con el terreno de la de
+              torneos y sin objetos. Se guarda con Ctrl+S.
+  Abrir ..... doble clic en la lista o el botón "Abrir".
+  Nombre .... se cambia arriba con "Cambiar nombre" y se guarda.
+  Borrar .... la saca de los duelos; su archivo queda como copia de
+              respaldo (.bak-...) en config\duels\arenas.
+Los dos jugadores de un duelo pelean en la misma arena.
 
 
 A TENER EN CUENTA

@@ -188,6 +188,24 @@ class BattleTests(HubTestCase):
     def results(self, *account_ids):
         return [self.pages[account_id].last('duel_result') for account_id in account_ids]
 
+    def test_each_duel_is_fought_on_one_pvp_arena_or_the_tournament_arena(self):
+        self.assertIsNone(self.hub.arena_for(1))  # no duel
+        self.accept(1, 2)
+        self.assertIsNone(self.hub.arena_for(1))  # no PvP arenas: the tournament arena
+        self.hub.arenas = lambda: ['bosque', 'desierto']
+        self.hub.choose = lambda names: names[-1]
+        self.accept(3, 5)
+        self.assertEqual((self.hub.arena_for(3), self.hub.arena_for(5)), ('desierto', 'desierto'))  # the same one
+        self.assertIsNone(self.hub.arena_for(4))
+
+    def test_pvp_arenas_are_the_json_files_of_their_folder(self):
+        import duels_web
+        with tempfile.TemporaryDirectory() as folder:
+            for name in ('bosque.json', 'Mala Arena.json', 'nota.txt', 'desierto.json', 'bosque.json.bak-1'):
+                (Path(folder) / name).write_text('{}', encoding='utf-8')
+            self.assertEqual(duels_web.pvp_arenas(folder), ['bosque', 'desierto'])
+        self.assertEqual(duels_web.pvp_arenas(Path(folder) / 'no-existe'), [])
+
     def test_accepting_sends_both_players_into_the_arena_with_both_armies(self):
         mine, theirs = self.accept(1, 2)
         self.assertEqual((mine['side'], theirs['side']), ('challenger', 'defender'))

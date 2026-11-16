@@ -9,6 +9,7 @@ the same tournament services the game uses.
 """
 
 import contextlib
+import shutil
 import hashlib
 import hmac
 import http.cookiejar
@@ -34,6 +35,7 @@ with contextlib.redirect_stdout(io.StringIO()):
     import sessions
 
 import duels
+import duels_web
 import simple_websocket
 from werkzeug.serving import make_server
 
@@ -210,6 +212,39 @@ class LiveDuelTests(unittest.TestCase):
         config = json.loads(re.search(r'<script id="duel-config" type="application/json">(.*?)</script>', page).group(1))
         self.assertEqual(config['wsPath'], '/duels/ws')  # a path; the page adds its own ws(s)://host
         self.assertIn('80', page)
+
+    def test_a_duel_is_fought_on_a_pvp_arena_of_the_world_editor(self):
+        folder = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, folder, True)
+        arena = json.loads(duels_web.DEFAULT_ARENA_FILE.read_text(encoding='utf-8'))
+        arena['playerInfo']['name'] = 'Coliseo del Norte'
+        arena['map']['items'] = [[195, 44 + i, 44, 0, 0] for i in range(5)]
+        (Path(folder) / 'coliseo-del-norte.json').write_text(json.dumps(arena), encoding='utf-8')
+        os.environ['SE_DUEL_ARENAS_DIR'] = folder
+        self.addCleanup(os.environ.pop, 'SE_DUEL_ARENAS_DIR', None)
+        ana, beto = self.player(troops=2), self.player(troops=2)
+        ws_ana, ws_beto = ana.socket(), beto.socket()
+        try:
+            receive_until(ws_ana, 'hello')
+            receive_until(ws_beto, 'hello')
+            start_ana, start_beto = self.start_duel(ana, beto, ws_ana, ws_beto)
+            for player in (ana, beto):  # both rivals get the same arena
+                served = json.loads(player.text(GAME + 'get_player_info.php?' + urllib.parse.urlencode(
+                    {'USERID': player.village_id, 'user_key': player.game_key(), 'user': duels.ARENA_MAP_ID,
+                     'language': 'es', 'client_id': 't'})))
+                self.assertEqual((served['playerInfo']['name'], served['map']['items']),
+                                 ('Coliseo del Norte', arena['map']['items']))
+            ana.play(start_ana, 60)
+            beto.play(start_beto, 40)
+            receive_until(ws_ana, 'duel_result')
+        finally:
+            ws_ana.close()
+            ws_beto.close()
+        # without a duel, the map is the tournament arena
+        served = json.loads(ana.text(GAME + 'get_player_info.php?' + urllib.parse.urlencode(
+            {'USERID': ana.village_id, 'user_key': ana.game_key(), 'user': duels.ARENA_MAP_ID,
+             'language': 'es', 'client_id': 't'})))
+        self.assertEqual(served['map']['items'], [])
 
     def test_services_without_a_battle_and_fake_results(self):
         ana, beto = self.player(troops=1), self.player(troops=9)

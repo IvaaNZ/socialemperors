@@ -96,6 +96,30 @@ class WorldEditor(unittest.TestCase):
         self.assertTrue(path.read_text(encoding='utf-8').splitlines()[1].startswith('    "'))
         self.assertEqual(core.layout_of('{\n "a": 1\n}'), 1)
 
+    def test_pvp_arenas_are_created_listed_renamed_and_deleted(self):
+        arenas = self.folder / 'arenas'
+        with patch.object(core, 'ARENAS_DIR', arenas):
+            self.assertEqual(core.pvp_arenas(), [])
+            doc = core.Document.new_arena('Bosque Élfico')
+            self.assertEqual((doc.kind, doc.path.name, doc.items, doc.dirty), ('pvp', 'bosque-elfico.json', [], True))
+            doc.add(1, 50, 50, now=1)
+            doc.save()
+            self.assertEqual(core.Document.new_arena('Bosque élfico').path.name, 'bosque-elfico-2.json')
+            [(path, name)] = core.pvp_arenas()
+            self.assertEqual(name, 'Bosque Élfico')
+            again = core.Document.open_pvp_arena(path)
+            self.assertEqual((again.title, again.items), ('Bosque Élfico', [[1, 50, 50, 0, 1]]))
+            self.assertEqual(again.data['map']['expansions'], json.loads(core.ARENA_FILE.read_text())['map']['expansions'])
+            again.set_name('Bosque')
+            again.save()
+            self.assertEqual(core.pvp_arenas()[0][1], 'Bosque')
+            backup = core.delete_arena(path)
+            self.assertEqual((core.pvp_arenas(), backup.exists()), ([], True))
+            with self.assertRaises(core.EditorError):
+                core.delete_arena(core.ARENA_FILE)  # the tournament arena stays
+            with self.assertRaises(core.EditorError):
+                core.Document.new_arena('  ')
+
     def test_footprints_overlaps_and_picking(self):
         house, wall, troll = [1, 10, 10, 0, 0], [2, 9, 11, 1, 0], [9, 10, 10, 0, 0]
         self.assertEqual(core.footprint(wall, CATALOG), (1, 3))  # turned: width and height swap

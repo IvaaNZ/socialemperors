@@ -15,6 +15,7 @@ lives in the server's memory while it runs, so it is only saved with the server 
 import copy
 import json
 import os
+import re
 import socket
 import sys
 import time
@@ -26,7 +27,8 @@ ROOT = (Path(sys.executable) if FROZEN else Path(__file__)).resolve().parent.par
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))  # the game's config and texts are read with the server's own modules
 QUESTS_DIR = ROOT / 'villages' / 'quests'
-ARENA_FILE = ROOT / 'config' / 'duels' / 'arena.json'
+ARENA_FILE = ROOT / 'config' / 'duels' / 'arena.json'  # the tournament arena (and the duels' when there is no PvP one)
+ARENAS_DIR = ROOT / 'config' / 'duels' / 'arenas'  # PvP arenas: each duel is fought on one of them, at random
 # The players' saves: the same folder the server uses (SOCIAL_EMPIRES_SAVES_DIR or SOCIAL_EMPIRES_DATA_DIR/saves).
 SAVES_DIR = Path(os.environ.get('SOCIAL_EMPIRES_SAVES_DIR')
                  or (Path(os.environ['SOCIAL_EMPIRES_DATA_DIR']) / 'saves' if os.environ.get('SOCIAL_EMPIRES_DATA_DIR')
@@ -49,7 +51,8 @@ QUEST_ISLANDS = {
     '100000046': 'Inferno 1', '100000047': 'Inferno 2', '100000048': 'Inferno 3', '100000049': 'Inferno 4',
     '100000090': 'Dioses 1', '100000091': 'Dioses 2', '100000092': 'Dioses 3',
 }
-TEMPLATE_ISLAND = '100000006'  # a new island starts as a copy of this one, without its items
+TEMPLATE_ISLAND = '100000006'
+ARENA_FILE_NAME = re.compile(r'^[a-z0-9][a-z0-9_-]{0,63}$')  # the names the server accepts (duels_web.ARENA_NAME)  # a new island starts as a copy of this one, without its items
 
 
 class EditorError(ValueError):
@@ -73,6 +76,42 @@ def quest_islands():
         if path.stem not in QUEST_ISLANDS and path.stem.isdigit():
             out.append((path.stem, f'Isla extra {path.stem}', True))
     return out
+
+
+def pvp_arenas(folder=None):
+    """[(path, name)] of the PvP arenas, by name."""
+    out = []
+    for path in sorted(Path(folder or ARENAS_DIR).glob('*.json')):
+        if not ARENA_FILE_NAME.match(path.stem):
+            continue
+        try:
+            name = json.loads(path.read_text(encoding='utf-8'))['playerInfo'].get('name') or path.stem
+        except (OSError, ValueError, KeyError, TypeError):
+            continue
+        out.append((path, name))
+    return sorted(out, key=lambda pair: str(pair[1]).lower())
+
+
+def arena_file_name(name, folder=None):
+    """A free file name (letters, numbers and dashes, as the server accepts) for a new PvP arena."""
+    import unicodedata
+    plain = unicodedata.normalize('NFKD', str(name)).encode('ascii', 'ignore').decode().lower()
+    stem = re.sub(r'[^a-z0-9]+', '-', plain).strip('-')[:50] or 'arena'
+    folder = Path(folder or ARENAS_DIR)
+    candidate, number = stem, 2
+    while (folder / f'{candidate}.json').exists():
+        candidate, number = f'{stem}-{number}', number + 1
+    return candidate
+
+
+def delete_arena(path):
+    """Removes a PvP arena from the duels; its file is kept as a backup (name.json.bak-YYYYmmdd-HHMMSS)."""
+    path = Path(path)
+    if path.parent.resolve() != Path(ARENAS_DIR).resolve() or path.suffix != '.json':
+        raise EditorError('Solo se pueden borrar arenas PvP')
+    backup = path.with_name(f"{path.name}.bak-{time.strftime('%Y%m%d-%H%M%S')}")
+    os.replace(path, backup)
+    return backup
 
 
 def player_villages(folder=None):
@@ -140,7 +179,30 @@ class Document:
 
     @classmethod
     def open_arena(cls):
-        return cls.open_file(ARENA_FILE, 'arena', 'Arena de duelos')
+        """The tournament arena (also the duels' while there is no PvP arena)."""
+        return cls.open_file(ARENA_FILE, 'arena', 'Arena de torneos')
+
+    @classmethod
+    def open_pvp_arena(cls, path):
+        doc = cls.open_file(path, 'pvp')
+        doc.title = doc.data['playerInfo'].get('name') or doc.path.stem
+        return doc
+
+    @classmethod
+    def new_arena(cls, name, folder=None):
+        """A new PvP arena: the tournament arena's settings and terrain, with no objects. It is written on saving."""
+        name = str(name).strip()
+        if not name:
+            raise EditorError('La arena necesita un nombre')
+        folder = Path(folder or ARENAS_DIR)
+        template = cls.open_file(ARENA_FILE, 'arena')
+        data = copy.deepcopy(template.data)
+        data['map']['items'] = []
+        data['playerInfo']['name'] = name
+        doc = cls(folder / f'{arena_file_name(name, folder)}.json', data, 'pvp', name)
+        doc.indent, doc.newline, doc.escaped_slashes = template.indent, template.newline, template.escaped_slashes
+        doc.dirty = True
+        return doc
 
     @classmethod
     def open_village(cls, path, map_index=0):
@@ -228,6 +290,7 @@ class Document:
             backup = self.path.with_name(f'{self.path.name}.bak-{stamp}')
             backup.write_bytes(self.path.read_bytes())
             self.backed_up = True
+        self.path.parent.mkdir(parents=True, exist_ok=True)
         temporary = self.path.with_name(self.path.name + '.tmp')
         temporary.write_bytes(self.dumps().encode('utf-8'))
         os.replace(temporary, self.path)

@@ -28,6 +28,7 @@ or the deadline) any unit-death command of that village is dropped.
 import hashlib
 import hmac
 import json
+import re
 import os
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -46,6 +47,10 @@ PING_INTERVAL = 25  # seconds; keeps hosting proxies from closing idle sockets
 SERVICE_KEY = b'3m0d3pwiupoetn7ysa02'  # Config.SERVER_KEY of the game (HMAC-SHA256 of service payloads)
 GAME_PATH = '/dynamic.flash1.dev.socialpoint.es/appsfb/socialempiresdev/srvempires/'
 DEFAULT_ARENA_FILE = Path(__file__).resolve().parent / 'config' / 'duels' / 'arena.json'
+# PvP arenas made with the World Editor (one file each): every duel is fought on one of them, chosen at random
+# when it starts. Without any, duels use the tournament arena (DEFAULT_ARENA_FILE / SE_DUEL_ARENA_FILE).
+DEFAULT_ARENAS_DIR = DEFAULT_ARENA_FILE.parent / 'arenas'
+ARENA_NAME = re.compile(r'^[a-z0-9][a-z0-9_-]{0,63}$')
 
 
 def duel_texts():
@@ -156,6 +161,18 @@ def with_duel_tournament(config):
     return served
 
 
+def arenas_dir():
+    return Path(os.environ.get('SE_DUEL_ARENAS_DIR') or DEFAULT_ARENAS_DIR)
+
+
+def pvp_arenas(directory=None):
+    """Names of the PvP arenas (the file names without .json)."""
+    folder = Path(directory) if directory else arenas_dir()
+    if not folder.is_dir():
+        return []
+    return sorted(path.stem for path in folder.glob('*.json') if ARENA_NAME.match(path.stem))
+
+
 def load_arena(path=None):
     path = Path(path or os.environ.get('SE_DUEL_ARENA_FILE') or DEFAULT_ARENA_FILE)
     arena = json.loads(path.read_text(encoding='utf-8'))
@@ -168,7 +185,7 @@ def install_duels(app, accounts, village_lock, all_saves_userid, village_session
                   validate_game_key):
     """Register the duel routes and start the hub (called only with SE_DUELS=on)."""
     store = DuelStore(data_dir / 'duels.sqlite3')
-    arena = load_arena()
+    arena = load_arena()  # checked at start; served fresh from disk, so the World Editor's changes count at once
 
     def profile(account_id, team=None):
         account = accounts().get(account_id)
@@ -181,7 +198,7 @@ def install_duels(app, accounts, village_lock, all_saves_userid, village_session
         result['name'] = account['name']
         return result
 
-    hub = DuelHub(store, profile)
+    hub = DuelHub(store, profile, arenas=pvp_arenas)
     app.extensions['duels'] = hub
     app.config.setdefault('SOCK_SERVER_OPTIONS', {'ping_interval': PING_INTERVAL, 'max_message_size': MAX_MESSAGE_SIZE})
     sock = Sock(app)
@@ -218,7 +235,13 @@ def install_duels(app, accounts, village_lock, all_saves_userid, village_session
         # The arena is loaded like an adventure map (get_player_info with user=<map id>).
         if request.path == GAME_PATH + 'get_player_info.php' and request.values.get('user') == str(ARENA_MAP_ID):
             validate_game_key(request.values.get('USERID', ''))
-            return arena
+            account = current_player()
+            name = hub.arena_for(account['id']) if account else None
+            try:  # the duel's PvP arena; the tournament arena otherwise
+                return load_arena(arenas_dir() / f'{name}.json' if name else None)
+            except (OSError, ValueError) as error:
+                print(f' [duel] arena {name or "default"} unreadable ({error}): using the one loaded at start')
+                return arena
 
     def filter_commands(userid, commands):
         account_id = arena_villages.get(userid)

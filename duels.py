@@ -49,6 +49,7 @@ import itertools
 import json
 import math
 import os
+import random
 import sqlite3
 import threading
 import time
@@ -412,11 +413,15 @@ def parse_percent(value):
 class DuelHub:
     """Online players, pending challenges and battles (in memory, thread-safe)."""
 
-    def __init__(self, store, profile, clock=time.time):
-        """`profile(account_id)` -> {'name', 'level', 'power', 'troops', 'units', 'tutorial_complete'} or None."""
+    def __init__(self, store, profile, clock=time.time, arenas=None, choose=random.choice):
+        """`profile(account_id)` -> {'name', 'level', 'power', 'troops', 'units', 'tutorial_complete'} or None.
+        `arenas()` -> the names of the PvP arenas made with the World Editor: each duel is fought on one of them,
+        chosen when it starts (none: the tournament arena)."""
         self.store = store
         self.profile = profile
         self.clock = clock
+        self.arenas = arenas or (lambda: [])
+        self.choose = choose
         self.lock = threading.RLock()
         self.connections = {}     # account_id -> {connection_id: send}
         self.names = {}           # account_id -> display name
@@ -599,12 +604,26 @@ class DuelHub:
             'profiles': {'challenger': mine, 'defender': theirs},
             'started': {'challenger': None, 'defender': None},
             'reports': {side: {'status': None, 'percent': None, 'seconds': None, 'at': None} for side in SIDES},
+            'arena': self._pick_arena(),
         }
         self.battles[duel_id] = battle
         for account_id in (challenger, defender):
             self._send(account_id, self._battle_message(battle, account_id))
         self._broadcast_presence()
         return battle
+
+    def _pick_arena(self):
+        try:
+            names = list(self.arenas())
+        except OSError:
+            names = []
+        return self.choose(names) if names else None
+
+    def arena_for(self, account_id):
+        """The PvP arena of the player's current duel, or None (the tournament arena)."""
+        with self.lock:
+            battle = self._battle_for(account_id)
+            return battle.get('arena') if battle else None
 
     def _battle_message(self, battle, viewer):
         side = self._side_of(battle, viewer)
