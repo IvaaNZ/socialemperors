@@ -922,6 +922,9 @@ def localized_game_movie(language=None):
     if FAST_HOVER_ENABLED:  # the pointer over a building no longer redraws it on every move (swf_fast_hover.py)
         from swf_fast_hover import add_fast_hover
         translated = add_fast_hover(translated)
+    if SMART_AI_ENABLED:  # smarter targets, help in groups, the wounded fall back (swf_smart_ai.py)
+        from swf_smart_ai import add_smart_ai
+        translated = add_smart_ai(translated)
     if PERF_MODE_ENABLED:  # the player may stop the buildings' animations from the menu (swf_perf_mode.py)
         from swf_perf_mode import add_perf_mode
         translated = add_perf_mode(translated)
@@ -1153,6 +1156,9 @@ VIEW_ENABLED = os.environ.get('SE_VIEW', 'on').strip().lower() in ('on', '1', 't
 # Moving the mouse over the village: the game's check of whether the pointer is on a building's picture keeps its
 # last drawing instead of drawing the building again on every move (swf_fast_hover.py).
 FAST_HOVER_ENABLED = os.environ.get('SE_FAST_HOVER', 'on').strip().lower() in ('on', '1', 'true', 'yes')
+# Point 27: a smarter combat AI for both sides: targets by priority, help in groups, the wounded fall back
+# (swf_smart_ai.py).
+SMART_AI_ENABLED = os.environ.get('SE_SMART_AI', 'on').strip().lower() in ('on', '1', 'true', 'yes')
 # The menu's performance mode: each player may stop the buildings' animations (swf_perf_mode.py, game.js).
 PERF_MODE_ENABLED = os.environ.get('SE_PERF_MODE', 'on').strip().lower() in ('on', '1', 'true', 'yes')
 READABLE_UI_ENABLED = os.environ.get('SE_READABLE_UI', 'on').strip().lower() in ('on', '1', 'true', 'yes')
