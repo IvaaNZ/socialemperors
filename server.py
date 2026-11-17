@@ -925,6 +925,12 @@ def localized_game_movie(language=None):
     if SMART_AI_ENABLED:  # smarter targets, help in groups, the wounded fall back (swf_smart_ai.py)
         from swf_smart_ai import add_smart_ai
         translated = add_smart_ai(translated)
+    if QUEST_TEAMS_ENABLED or COOP_ENABLED:  # every adventure island opens "Elige tu equipo" (swf_coop.py)
+        from swf_coop import add_quest_teams
+        translated = add_quest_teams(translated)
+    if COOP_ENABLED:  # Solitario or Clan before an adventure; the clan raid's team (swf_coop.py, COOP_PLAN.md)
+        from swf_coop import add_coop
+        translated = add_coop(translated)
     if PERF_MODE_ENABLED:  # the player may stop the buildings' animations from the menu (swf_perf_mode.py)
         from swf_perf_mode import add_perf_mode
         translated = add_perf_mode(translated)
@@ -1159,6 +1165,10 @@ FAST_HOVER_ENABLED = os.environ.get('SE_FAST_HOVER', 'on').strip().lower() in ('
 # Point 27: a smarter combat AI for both sides: targets by priority, help in groups, the wounded fall back
 # (swf_smart_ai.py).
 SMART_AI_ENABLED = os.environ.get('SE_SMART_AI', 'on').strip().lower() in ('on', '1', 'true', 'yes')
+# Point 28: every adventure island lets the player choose the team that sails (swf_coop.py).
+QUEST_TEAMS_ENABLED = os.environ.get('SE_QUEST_TEAMS', 'on').strip().lower() in ('on', '1', 'true', 'yes')
+# Point 28: adventures alone or with the clan, live (COOP_PLAN.md). Off until the live raid works.
+COOP_ENABLED = os.environ.get('SE_COOP', 'off').strip().lower() in ('on', '1', 'true', 'yes')
 # The menu's performance mode: each player may stop the buildings' animations (swf_perf_mode.py, game.js).
 PERF_MODE_ENABLED = os.environ.get('SE_PERF_MODE', 'on').strip().lower() in ('on', '1', 'true', 'yes')
 READABLE_UI_ENABLED = os.environ.get('SE_READABLE_UI', 'on').strip().lower() in ('on', '1', 'true', 'yes')
