@@ -628,3 +628,14 @@ Con el botón de pantalla completa del panel de opciones del juego (bajo "Más")
 
 - Ese botón ahora pone en pantalla completa **la página entera** (lo mismo que "Pantalla completa" del Menú), así el HUD sigue a la vista y se reacomoda solo. Sin interruptor: es un arreglo pedido.
 - Cómo: el `requestFullscreen` del reproductor se reemplaza por uno que pide la pantalla completa del contenedor del juego, o sale si ya está. Ruffle solo se entera de los cambios en el reproductor, así que la página le reenvía cada `fullscreenchange`: ve que el reproductor no está en pantalla completa y el botón del juego vuelve a pedirla, por eso cada toque alterna entrar y salir.
+## Celular: ventanas al girar y botones más grandes en vertical (pedido del dueño)
+
+Viendo el juego en un celular simulado (390 x 844) aparecieron dos cosas, y el dueño pidió arreglar ambas:
+
+- **Una ventana abierta quedaba fuera de la pantalla al girar el celular.** El juego centra cada ventana en el tamaño del escenario cuando se abre y nunca más la mueve: al girar, quedaba donde estaba (fuera de vista) y la barra se atenuaba sin forma de cerrarla. Ahora, cuando cambia el tamaño del escenario (girar el celular, cambiar el tamaño de la ventana, pantalla completa), la página mueve las ventanas abiertas la mitad del cambio (`Base.__seShift(dx, dy)`, swf_view.py), así siguen centradas. Lo que está en (0, 0) (el fondo oscuro del tutorial, las alertas, que se ubican solas) no se mueve.
+- **En vertical todo se veía a la mitad de tamaño** (los 760 px del juego llenan el ancho). Ahora, con el celular vertical (alto > 1,15 × ancho):
+  - la barra de recursos, el reloj, el nombre del imperio y la columna de la derecha (Bono diario, Más) se dibujan 1,45 veces más grandes; la barra pasa a dos filas para no tapar el botón Menú;
+  - el globo "mundo" con el nombre y la población va a la izquierda, debajo del reloj (arriba ya no entra al lado de la barra);
+  - el juego dibuja más grandes el globo (1,4), la columna Clan/PvP/Pase (1,5, contra el borde derecho) y el libro de hechizos (1,4), con su parte de abajo donde el juego la pone (`Base.__hudScale(nombre, escala)`, swf_hud.py);
+  - la barra de abajo del juego queda igual: ya ocupa todo el ancho y agrandarla cortaría botones.
+  - Al girar a horizontal todo vuelve a su tamaño. Sin interruptor nuevo: son arreglos pedidos dentro de SE_VIEW y SE_HUD.

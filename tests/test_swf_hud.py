@@ -4,7 +4,8 @@ from pathlib import Path
 from swf_abc import Abc, AbcError, disassemble
 from swf_duel_bridge import DO_ABC
 from swf_hud import (BAR_BUTTONS, BUTTONS_METHOD, CALLBACKS, CASH_METHOD, EXPERIENCE_PARTS, HIDDEN,
-                     HIDE_METHOD, PLACE_METHOD, PLACED, REGISTER_METHOD, SHOW_METHOD, SIDE_BUTTONS, STATE_FIELDS,
+                     HIDE_METHOD, PLACE_METHOD, PLACED, REGISTER_METHOD, SCALE_METHOD, SHOW_METHOD, SIDE_BUTTONS,
+                     STATE_FIELDS,
                      STATE_METHOD, TEXT_FIELDS, add_hud, add_hud_to_abc)
 from swf_localization import decode_swf, iter_tags
 
@@ -64,6 +65,16 @@ class Hud(unittest.TestCase):
         self.assertEqual([str(op[2]).strip("'") for op in ops if op[1] == 'pushstring'],
                          ['globe', 'clanPanel', '__seButtonPanel', 'magicBox'])
         self.assertIn('in', [op[1] for op in ops])  # no clan patch: the column is left alone
+
+    def test_the_same_pieces_can_be_drawn_bigger(self):
+        ops = disassemble(self.abc, self.abc.body_of(self.abc.method_of('Base', SCALE_METHOD))['code'])
+        self.assertEqual([str(op[2]).strip("'") for op in ops if op[1] == 'pushstring'],
+                         ['globe', 'clanPanel', '__seButtonPanel', 'magicBox'])
+        names = [str(op[2]) for op in ops if len(op) > 2]
+        self.assertEqual(names.count('scaleX'), len(PLACED))
+        self.assertEqual(names.count('scaleY'), len(PLACED))
+        self.assertIn('experienceBar', names)  # the globe's whole meter
+        self.assertIn('in', [op[1] for op in ops])
 
     def test_it_is_added_once(self):
         with self.assertRaises(AbcError):

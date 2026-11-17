@@ -4,8 +4,8 @@ from pathlib import Path
 from swf_abc import Abc, AbcError, disassemble
 from swf_duel_bridge import DO_ABC
 from swf_localization import decode_swf, iter_tags
-from swf_view import (CALLBACKS, FIT_METHOD, MOVE_METHOD, REGISTER_METHOD, VIEW_METHOD, ZOOM_METHOD, add_view,
-                      add_view_to_abc)
+from swf_view import (CALLBACKS, FIT_METHOD, MOVE_METHOD, REGISTER_METHOD, SHIFT_METHOD, VIEW_METHOD, ZOOM_METHOD,
+                      add_view, add_view_to_abc)
 
 MOVIE = Path('assets/flash/SocialEmpires0926bsec.swf')
 
@@ -46,6 +46,15 @@ class View(unittest.TestCase):
                      'setZoom 2', 'setZoom 1', 'moveMap 2'):
             self.assertIn(name, names)
         self.assertIn('moveMap 2', self.names(MOVE_METHOD))
+
+    def test_the_open_windows_move_with_a_new_size_but_not_those_at_the_corner(self):
+        ops = self.ops(SHIFT_METHOD)
+        names = [str(op[2]) for op in ops if len(op) > 2]
+        for name in ('PopUp', 'popupLayer', 'numChildren', 'getChildAt 1'):
+            self.assertIn(name, names)
+        self.assertEqual(names.count('x'), 3)  # read to skip (0, 0), read and written to move
+        self.assertEqual(names.count('y'), 3)
+        self.assertIn('increment_i', [op[1] for op in ops])
 
     def test_the_page_can_call_it_and_init_registers_it_first(self):
         for callback, _ in CALLBACKS:

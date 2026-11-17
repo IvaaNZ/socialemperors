@@ -219,3 +219,5 @@ body.hud-dimmed .hud-side * { pointer-events: none; }
 @media (prefers-reduced-motion: reduce) {
     .controls-panel:not([hidden]), .controls-panel.is-closing { animation-duration: 1ms; }
 }
+/* An upright phone: the bar is drawn bigger (game.js, hudScale) and wraps into rows clear of the menu button. */
+.hud-bar.is-tall { flex-wrap: wrap; row-gap: calc(5px * var(--hud-scale, 1)); }

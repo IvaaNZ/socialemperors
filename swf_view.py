@@ -16,7 +16,10 @@ without changing any original instruction:
     zoom in the game's settings (GuiManager.setZoom). Nothing happens in the tutorial, with the map locked or while
     placing a building, like the game's own zoom (Base.zoomMap);
   * Base.__seMove(dx, dy): the map moved by the game's own Base.moveMap (two fingers drag it while they zoom);
-  * Base.__registerView(), called first in Base.init: ExternalInterface callbacks seView, seFit, seZoom and seMove.
+  * Base.__seShift(dx, dy): the game's open windows moved by (dx, dy): the page keeps them centred when the stage's
+    size changes (a phone turned with a window open left it out of sight);
+  * Base.__registerView(), called first in Base.init: ExternalInterface callbacks seView, seFit, seZoom, seMove and
+    seShift.
 
 Every name is taken from an instruction the game already uses; each method runs inside a try/catch.
 """
@@ -29,11 +32,13 @@ from swf_duel_bridge import DO_ABC, assemble, prepend
 from swf_hud import _used_names
 from swf_range_overlay import OPCODE_BY_NAME, _qname
 
-VIEW_METHOD, FIT_METHOD, ZOOM_METHOD, MOVE_METHOD, REGISTER_METHOD = (
-    '__seView', '__seFit', '__seZoom', '__seMove', '__registerView')
-CALLBACKS = (('seView', VIEW_METHOD), ('seFit', FIT_METHOD), ('seZoom', ZOOM_METHOD), ('seMove', MOVE_METHOD))
+VIEW_METHOD, FIT_METHOD, ZOOM_METHOD, MOVE_METHOD, SHIFT_METHOD, REGISTER_METHOD = (
+    '__seView', '__seFit', '__seZoom', '__seMove', '__seShift', '__registerView')
+CALLBACKS = (('seView', VIEW_METHOD), ('seFit', FIT_METHOD), ('seZoom', ZOOM_METHOD), ('seMove', MOVE_METHOD),
+             ('seShift', SHIFT_METHOD))
 NAMES = {'ExternalInterface': 'flash.external', 'available': '', 'addCallback': '', 'visible': '', 'x': '', 'y': '',
-         'Point': 'flash.geom', 'globalToLocal': '', 'localToGlobal': '', 'stageWidth': '', 'stageHeight': ''}
+         'Point': 'flash.geom', 'globalToLocal': '', 'localToGlobal': '', 'stageWidth': '', 'stageHeight': '',
+         'numChildren': '', 'getChildAt': ''}
 
 
 def add_view_to_abc(abc):
@@ -45,7 +50,7 @@ def add_view_to_abc(abc):
               ('callpropvoid', 'normalscreen'), ('callpropvoid', 'fullscreen'), ('getproperty', 'zoomSlider'),
               ('callpropvoid', 'centerBuildings'), ('getproperty', 'buildingLayer'), ('callpropvoid', 'setZoom'),
               ('callpropvoid', 'moveMap'), ('getproperty', 'tutorialMode'), ('getproperty', 'mapLocked'),
-              ('getproperty', 'addingBuildings')}
+              ('getproperty', 'addingBuildings'), ('getproperty', 'PopUp'), ('getproperty', 'popupLayer')}
     m = _used_names(abc, wanted)
     n = {name: _qname(abc, name, package) for name, package in NAMES.items()}
     s = {text: abc.add_string(text) for text in ['zoom', 'zMin', 'zMax', 'sw', 'sh'] + [c for c, _ in CALLBACKS]}
@@ -121,9 +126,31 @@ def add_view_to_abc(abc):
     program = [('getlocal0',), ('getlocal1',), ('getlocal2',), ('callpropvoid', m[('callpropvoid', 'moveMap')], 2)]
     move = method(MOVE_METHOD, 2, program, 3, 3)
 
+    # Base.__seShift(dx, dy): the game's open windows (Base.PopUp.popupLayer's children) moved by (dx, dy). The game
+    # places each one on the stage's centre when it opens and never again: when the stage's size changes (a phone
+    # turned, the window resized), the page moves them by half the change so they stay centred. A child at (0, 0)
+    # (the tutorial's dark background, the alert windows, which place themselves) stays. Locals: 1-2 the arguments,
+    # 3 the layer, 4 the index, 5 the window.
+    program = [('getlex', m[('getlex', 'Base')]), ('getproperty', m[('getproperty', 'PopUp')]),
+               ('getproperty', m[('getproperty', 'popupLayer')]), ('setlocal3',),
+               ('pushbyte', 0), ('setlocal', 4),
+               ('label:', 'loop'), ('label',),
+               ('getlocal', 4), ('getlocal3',), ('getproperty', n['numChildren']), ('ifnlt', 'end'),
+               ('getlocal3',), ('getlocal', 4), ('callproperty', n['getChildAt'], 1), ('setlocal', 5),
+               ('getlocal', 5), ('getproperty', n['x']), ('pushbyte', 0), ('ifne', 'move'),
+               ('getlocal', 5), ('getproperty', n['y']), ('pushbyte', 0), ('ifeq', 'next'),
+               ('label:', 'move'),
+               ('getlocal', 5), ('getlocal', 5), ('getproperty', n['x']), ('getlocal1',), ('add',),
+               ('setproperty', n['x']),
+               ('getlocal', 5), ('getlocal', 5), ('getproperty', n['y']), ('getlocal2',), ('add',),
+               ('setproperty', n['y']),
+               ('label:', 'next'), ('getlocal', 4), ('increment_i',), ('setlocal', 4), ('jump', 'loop'),
+               ('label:', 'end')]
+    shift = method(SHIFT_METHOD, 2, program, 4, 6)
+
     # Base.__registerView()
     program = [('getlex', n['ExternalInterface']), ('getproperty', n['available']), ('iffalse', 'done')]
-    for (callback, _), target in zip(CALLBACKS, (view, fit, zoom, move)):
+    for (callback, _), target in zip(CALLBACKS, (view, fit, zoom, move, shift)):
         program += [('getlex', n['ExternalInterface']), ('pushstring', s[callback]), ('getlocal0',),
                     ('getproperty', target), ('callpropvoid', n['addCallback'], 2)]
     register = method(REGISTER_METHOD, 0, program, 4, 1)

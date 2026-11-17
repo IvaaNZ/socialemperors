@@ -340,6 +340,20 @@
         return fullView ? viewScale : Math.max(0.6, box.width / 760);
     }
 
+    // A phone held upright: the game's 760 pixels fill the width, so everything is drawn at half size or less. The
+    // page's bar, clock, empire's name and right column are drawn bigger (the bar in two rows), and so are the
+    // game's globe, Clan column and spell book (layoutPieces); the bottom bar already fills the width.
+    const TALL_HUD = 1.45;
+
+    function isTall() {
+        return fullView && viewReady && container.clientHeight > container.clientWidth * 1.15;
+    }
+
+    function hudScale(box) {
+        const scale = overlayScale(box);
+        return isTall() ? Math.min(1, scale * TALL_HUD) : scale;
+    }
+
     // The page's overlays start right of the menu button when the game reaches the tab's left edge.
     function overlayLeft(box, stage, scale) {
         return box.left - stage.left + 6 * scale;
@@ -388,6 +402,14 @@
         if (size === fittedSize) return;
         try {
             player.seFit(!fittedSize);  // the first time, the map also centres on the buildings
+            if (fittedSize) {
+                // The game's open windows were centred on the old size: they move by half the change.
+                try {
+                    player.seShift((state.sw - stageWidth) / 2, (state.sh - stageHeight) / 2);
+                } catch (error) {
+                    // a game without the bridge: its windows stay
+                }
+            }
             fittedSize = size;
             stageWidth = state.sw;
             stageHeight = state.sh;
@@ -541,11 +563,13 @@
         if (!hudClock || hudClock.hidden) return;
         const stage = hudClock.parentElement.getBoundingClientRect();
         const box = container.getBoundingClientRect();
-        const scale = overlayScale(box);
+        const scale = hudScale(box);
         hudClock.style.setProperty("--hud-scale", scale.toFixed(3));
         hudClock.style.left = `${overlayLeft(box, stage, scale) + 2 * scale}px`;
-        // below the resource bar: the page's own one (SE_HUD) or the game's
-        hudClock.style.top = `${box.top - stage.top + (hudShown ? 52 : 96) * scale}px`;
+        // below the resource bar: the page's own one (SE_HUD, in two rows on an upright phone) or the game's
+        let top = box.top - stage.top + (hudShown ? 52 : 96) * scale;
+        if (hudShown && hudBar && !hudBar.hidden && isTall()) top = hudBar.getBoundingClientRect().bottom - stage.top + 6 * scale;
+        hudClock.style.top = `${top}px`;
     }
 
     function updateClock(clock, weather) {
@@ -581,18 +605,27 @@
         if (!hudBar || hudBar.hidden) return;
         const stage = hudBar.parentElement.getBoundingClientRect();
         const box = container.getBoundingClientRect();
-        const scale = overlayScale(box);
+        const scale = hudScale(box);
+        const tall = isTall();
         hudBar.style.setProperty("--hud-scale", scale.toFixed(3));
         hudBar.style.left = `${overlayLeft(box, stage, scale)}px`;
         hudBar.style.top = `${box.top - stage.top + 6 * scale}px`;
+        // Upright, the bar wraps into rows that keep clear of the menu button on the right.
+        hudBar.classList.toggle("is-tall", tall);
+        hudBar.style.maxWidth = tall ? `${Math.max(160, box.width - 6 * scale - 84)}px` : "";
         if (hudEmpire) {
             // Right of the World globe: 645 of the game's pixels into its top interface, which the game's
             // full-window layout centres on the stage (GuiManager.fullscreen: x = stage width / 2 - 380).
             hudEmpire.style.setProperty("--hud-scale", scale.toFixed(3));
             const globe = hudButtons && hudButtons.globe;
+            const position = positionScale(box);
             const after = globe && globe.w > 0 ? globe.x + globe.w + 2 : stageWidth / 2 - 380 + 645;
-            hudEmpire.style.left = `${box.left - stage.left + after * scale}px`;
-            hudEmpire.style.top = `${box.top - stage.top + 22 * scale}px`;
+            hudEmpire.style.left = `${box.left - stage.left + after * position}px`;
+            // Upright, the globe is under the clock: the name and population beside it, centred on it.
+            const top = tall && globe && globe.w > 0
+                ? box.top - stage.top + (globe.y + globe.h / 2) * position - hudEmpire.offsetHeight / 2
+                : box.top - stage.top + 22 * scale;
+            hudEmpire.style.top = `${top}px`;
         }
     }
 
@@ -693,7 +726,7 @@
 
         // The right column: below the menu button when it is over the game, else on the stage's top right; lower
         // when the empire's name reaches it (a narrow stage).
-        hudSide.style.setProperty("--hud-scale", overlayScale(box).toFixed(3));
+        hudSide.style.setProperty("--hud-scale", hudScale(box).toFixed(3));
         const right = stage.right - box.right + 8;
         let columnTop = top + 8;
         if (menuOverGame()) {
@@ -770,15 +803,32 @@
         }
     }
 
+    // Upright, how much bigger the game draws them (seHudScale); elsewhere 1.
+    const TALL_PIECES = { globe: 1.4, clanPanel: 1.5, magicBox: 1.4 };
+
+    function scalePiece(name, scale) {
+        const piece = hudButtons[name];
+        const home = pieceHome[name];
+        if (!piece || !home || !(piece.w > 0) || Math.abs(piece.w - home.w * scale) <= 1) return;
+        try {
+            player.seHudScale(name, scale);
+        } catch (error) {
+            // the game is busy, or a game without it: the next round
+        }
+    }
+
     function layoutPieces() {
         if (!fullView || !fittedSize) return;
         const centred = stageWidth / 2 - 380;  // where the game's full-window layout puts its interface
         for (const name of ["globe", "clanPanel", "magicBox"]) {
             const piece = hudButtons[name];
             if (piece && piece.w > 0 && !pieceHome[name]) {
-                pieceHome[name] = { x: piece.x - centred, y: piece.y - stageHeight };
+                // y: the globe hangs from the top, the others sit on the bottom bar
+                pieceHome[name] = { x: piece.x - centred, y: name === "globe" ? piece.y : piece.y - stageHeight, w: piece.w, h: piece.h };
             }
         }
+        const tall = isTall();
+        for (const name of Object.keys(TALL_PIECES)) scalePiece(name, tall ? TALL_PIECES[name] : 1);
         const box = container.getBoundingClientRect();
         const scale = positionScale(box);
         const wide = stageWidth > 761;
@@ -800,19 +850,31 @@
         const globe = hudButtons.globe;
         if (globe && globe.w > 0 && pieceHome.globe) {
             const home = centred + pieceHome.globe.x;
-            const empire = hudEmpire ? hudEmpire.getBoundingClientRect().width / scale : 0;
-            placePiece("globe", wide ? Math.max(home, edge - empire - 6 - globe.w) : home, NaN);
+            if (tall) {
+                // Upright: on the left under the clock (the bar takes the top), its name and population beside it.
+                const clock = hudClock && !hudClock.hidden ? hudClock.getBoundingClientRect() : null;
+                const below = clock && clock.height ? (clock.bottom - box.top) / scale + 4 : pieceHome.globe.y;
+                placePiece("globe", 6, below);
+            } else {
+                const empire = hudEmpire ? hudEmpire.getBoundingClientRect().width / scale : 0;
+                placePiece("globe", wide ? Math.max(home, edge - empire - 6 - globe.w) : home, pieceHome.globe.y);
+            }
         }
+        // Bigger upright pieces keep their bottom where the game puts it (they grow upwards).
+        const homeBottom = name => stageHeight + pieceHome[name].y + pieceHome[name].h;
         const clan = hudButtons.clanPanel;
         if (clan && clan.w > 0 && pieceHome.clanPanel) {
             const home = centred + pieceHome.clanPanel.x;
-            placePiece("clanPanel", wide ? Math.max(home, clanEdge - 4 - clan.w) : home, NaN);
+            // Upright, the page's right column is far above it: against the edge.
+            if (tall) placePiece("clanPanel", stageWidth - 8 - clan.w, homeBottom("clanPanel") - clan.h);
+            else placePiece("clanPanel", wide ? Math.max(home, clanEdge - 4 - clan.w) : home, stageHeight + pieceHome.clanPanel.y);
         }
         const book = hudButtons.magicBox;
         const bar = hudButtons.bgBar;
         if (book && book.w > 0 && pieceHome.magicBox) {
             const fits = wide && bar && bar.x >= book.w + 12;
             if (fits) placePiece("magicBox", 4, stageHeight - book.h - 4);
+            else if (tall) placePiece("magicBox", 4, homeBottom("magicBox") - book.h);
             else placePiece("magicBox", centred + pieceHome.magicBox.x, stageHeight + pieceHome.magicBox.y);
         }
     }
