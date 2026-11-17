@@ -1,0 +1,5 @@
+{# Adventures alone or with the clan (SE_COOP=on): the choice before sailing and the clan raid's room. Clan window look. #}
+<link rel="stylesheet" href="{{ url_for('css', path='clan_overlay.css') }}">
+<link rel="stylesheet" href="{{ url_for('css', path='coop_overlay.css') }}">
+<script id="coop-overlay-config" type="application/json">{{ dict(coop_overlay, csrf=csrf_token()) | tojson }}</script>
+<script src="{{ url_for('javascript', path='coop_overlay.js') }}" defer></script>

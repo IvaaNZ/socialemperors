@@ -451,6 +451,8 @@
             showMessage(texts["error_" + message.code] || texts.error_invalid);
             break;
         default:
+            // Other features' live notices (the clan raid's room, coop_overlay.js) listen for this event.
+            window.dispatchEvent(new CustomEvent("se-live", { detail: message }));
             break;
         }
     }

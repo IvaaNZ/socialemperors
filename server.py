@@ -1232,6 +1232,9 @@ if DUELS_ENABLED:
         app.extensions['duels'].result_listeners.append(app.extensions['clans'].record_duel)
     if SEASON_PASS_ENABLED:  # ... and for the season pass of both players
         app.extensions['duels'].result_listeners.append(app.extensions['season_pass']['on_duel'])
+if COOP_ENABLED and CLANS_ENABLED:  # the clan raid's room (coop_web.py); its live notices need SE_DUELS
+    from coop_web import install_coop
+    install_coop(app, accounts, data_dir)
 
 print (" [+] Running server...")
 

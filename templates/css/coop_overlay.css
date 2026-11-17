@@ -1,0 +1,32 @@
+/* Adventures alone or with the clan (SE_COOP=on): the choice and the clan raid's room, in the clan window's style. */
+
+.coop-choice { z-index: 25; align-items: center; }
+.coop-choice-window { width: min(520px, 94%); }
+.coop-question { margin: 4px 0 12px; font-size: 16px; font-weight: 700; text-align: center; }
+.coop-modes { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.coop-mode { display: flex; flex-direction: column; gap: 6px; padding: 14px 12px; border: 3px solid #6b3d16; border-radius: 10px; background: linear-gradient(#fff6d8, #f3dfa8); color: #3b2410; font: 14px/1.35 inherit; text-align: center; cursor: pointer; box-shadow: 0 3px 0 #3e220b; }
+.coop-mode strong { font-size: 19px; }
+.coop-mode:hover, .coop-mode:focus-visible { background: linear-gradient(#fffbe9, #f7e6b9); outline: 2px solid #1f5fa8; outline-offset: 2px; }
+@media (max-width: 480px) { .coop-modes { grid-template-columns: 1fr; } }
+
+.coop-room { z-index: 24; }
+.coop-room .clanx-window { width: min(560px, 96%); }
+.coop-players { margin: 0; padding: 0; list-style: none; }
+.coop-players li { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 5px 0; border-bottom: 1px dashed #c9974f; }
+.coop-players li:last-child { border-bottom: 0; }
+.coop-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #b8b0a0; box-shadow: 0 0 0 2px #fff6d8; }
+.coop-dot.is-online { background: #3fae3f; }
+.coop-state { color: #7a4a1e; font-weight: 700; }
+.coop-units { margin-left: auto; font-variant-numeric: tabular-nums; }
+.coop-note { margin: 8px 0 0; font-style: italic; }
+.coop-room .clanx-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.coop-room .clanx-btn[disabled] { opacity: .5; cursor: not-allowed; }
+
+.coop-chip { position: absolute; z-index: 18; top: 8px; left: 50%; transform: translateX(-50%); padding: 6px 14px; border: 2px solid #3e220b; border-radius: 999px; background: linear-gradient(#a36a33, #7a4a1e); color: #fff3d0; font: 700 13px/1.2 "Trebuchet MS", system-ui, sans-serif; text-shadow: 0 1px 0 #2b1a0b; cursor: pointer; box-shadow: 0 3px 8px rgba(0, 0, 0, .4); }
+.coop-chip[hidden] { display: none; }
+
+.coop-notice { position: absolute; z-index: 26; top: 12%; left: 50%; transform: translateX(-50%); width: min(420px, 92%); padding: 12px 14px; border: 4px solid #6b3d16; border-radius: 10px; background: linear-gradient(#f6e7c1, #ead08f); color: #3b2410; font: 14px/1.4 "Trebuchet MS", system-ui, sans-serif; box-shadow: 0 12px 36px rgba(0, 0, 0, .55); }
+.coop-notice[hidden] { display: none; }
+.coop-notice-title { margin: 0 0 4px; font-size: 16px; font-weight: 700; }
+.coop-notice-detail { margin: 0 0 8px; }
+.coop-notice .clanx-actions { display: flex; flex-wrap: wrap; gap: 8px; }
