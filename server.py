@@ -919,6 +919,9 @@ def localized_game_movie(language=None):
     if VIEW_ENABLED:  # the game fills the browser window and the page zooms the map smoothly (swf_view.py)
         from swf_view import add_view
         translated = add_view(translated)
+    if FAST_HOVER_ENABLED:  # the pointer over a building no longer redraws it on every move (swf_fast_hover.py)
+        from swf_fast_hover import add_fast_hover
+        translated = add_fast_hover(translated)
     if READABLE_UI_ENABLED:  # white lettering with a black outline; no "x0" units in the team window
         from swf_readable_text import make_text_readable
         translated = make_text_readable(translated)
@@ -1144,6 +1147,9 @@ HUD_ENABLED = os.environ.get('SE_HUD', 'on').strip().lower() in ('on', '1', 'tru
 # The game fills the whole browser window (no green bands), without the zoom slider, and the map zooms smoothly
 # with the mouse wheel or two fingers (swf_view.py, game.js).
 VIEW_ENABLED = os.environ.get('SE_VIEW', 'on').strip().lower() in ('on', '1', 'true', 'yes')
+# Moving the mouse over the village: the game's check of whether the pointer is on a building's picture keeps its
+# last drawing instead of drawing the building again on every move (swf_fast_hover.py).
+FAST_HOVER_ENABLED = os.environ.get('SE_FAST_HOVER', 'on').strip().lower() in ('on', '1', 'true', 'yes')
 READABLE_UI_ENABLED = os.environ.get('SE_READABLE_UI', 'on').strip().lower() in ('on', '1', 'true', 'yes')
 # New accounts: the player name is letters and digits only and names the new empire; registering signs out
 # whoever was signed in in that browser. Off: the earlier registration.

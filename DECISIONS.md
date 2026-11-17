@@ -639,3 +639,11 @@ Viendo el juego en un celular simulado (390 x 844) aparecieron dos cosas, y el d
   - el juego dibuja más grandes el globo (1,4), la columna Clan/PvP/Pase (1,5, contra el borde derecho) y el libro de hechizos (1,4), con su parte de abajo donde el juego la pone (`Base.__hudScale(nombre, escala)`, swf_hud.py);
   - la barra de abajo del juego queda igual: ya ocupa todo el ancho y agrandarla cortaría botones.
   - Al girar a horizontal todo vuelve a su tamaño. Sin interruptor nuevo: son arreglos pedidos dentro de SE_VIEW y SE_HUD.
+## Rendimiento: medición y el mouse sobre los edificios (pedido del dueño: "que vaya a más FPS")
+
+Medido en la PC del dueño (AMD Radeon integrada, 12 núcleos), en la copia, con su aldea (2956 objetos animados en el mapa, 741 con animación):
+
+- **Más de 60 FPS no es posible sin romper el juego.** El juego está hecho para 30 cuadros por segundo y todo avanza por cuadro (unidades, ataques, tiempos: 269 lugares usan ENTER_FRAME); a 60 iría el doble de rápido y su control de velocidad (Base.UpdateGame, SPEED_HACK_CONTROL) lo frenaría. La meta es acercarse a 30 estables.
+- Perfil de CPU: ~71% es Ruffle avanzando las animaciones de los clips (construct_frame, enter_frame, frame scripts), en un solo núcleo; la página (clima, reloj, botones) ~1%. La calidad de Ruffle (high / medium / low) no cambió nada medible.
+- **El mouse sobre los edificios** (SE_FAST_HOVER, swf_fast_hover.py): cada edificio escucha MOUSE_MOVE y `IsoInteractiveElement.getPixel` creaba una imagen, dibujaba el edificio y leía un píxel en cada movimiento; en Ruffle eso espera a la tarjeta gráfica (getBufferSubData: 37% del tiempo arrastrando el mapa). Ahora guarda la última imagen (estáticos `__sePxBmp`, `__sePxOf`, `__sePxShift`) y la reutiliza mientras el puntero sigue sobre el mismo edificio. Misma respuesta que antes (probado: sobre una esquina transparente se resalta el edificio de atrás). Arrastrando el mapa a 1366×768: de 8,8 a 12,6–14,2 FPS en mediciones seguidas.
+- `Base.__seView` devuelve también `frames` (Base.numIteraciones, uno por cuadro) para medir los FPS desde la página.

@@ -4,8 +4,9 @@ The page (templates/js/game.js) makes the game's stage as big as the browser win
 with green bands at its sides, and zooms the map continuously with the mouse wheel or two fingers. This edit adds,
 without changing any original instruction:
 
-  * Base.__seView(): an Object with the map's zoom (Base.currentZoom), its limits (MIN_ZOOM, MAX_ZOOM) and the
-    stage's size (stageWidth, stageHeight); null while the game is loading;
+  * Base.__seView(): an Object with the map's zoom (Base.currentZoom), its limits (MIN_ZOOM, MAX_ZOOM), the
+    stage's size (stageWidth, stageHeight) and the game's frame counter (Base.numIteraciones, one a frame: the
+    page measures the frame rate with it); null while the game is loading;
   * Base.__seFit(center): lays the interface out for the stage's present size with the game's own full-screen
     layout (GuiManager.fullscreen, the one the Facebook game used: the bottom bar centred, the side buttons on the
     edges), after undoing a previous one (GuiManager.normalscreen); hides the zoom slider on the right
@@ -50,10 +51,11 @@ def add_view_to_abc(abc):
               ('callpropvoid', 'normalscreen'), ('callpropvoid', 'fullscreen'), ('getproperty', 'zoomSlider'),
               ('callpropvoid', 'centerBuildings'), ('getproperty', 'buildingLayer'), ('callpropvoid', 'setZoom'),
               ('callpropvoid', 'moveMap'), ('getproperty', 'tutorialMode'), ('getproperty', 'mapLocked'),
-              ('getproperty', 'addingBuildings'), ('getproperty', 'PopUp'), ('getproperty', 'popupLayer')}
+              ('getproperty', 'addingBuildings'), ('getproperty', 'PopUp'), ('getproperty', 'popupLayer'),
+              ('getproperty', 'numIteraciones')}
     m = _used_names(abc, wanted)
     n = {name: _qname(abc, name, package) for name, package in NAMES.items()}
-    s = {text: abc.add_string(text) for text in ['zoom', 'zMin', 'zMax', 'sw', 'sh'] + [c for c, _ in CALLBACKS]}
+    s = {text: abc.add_string(text) for text in ['zoom', 'zMin', 'zMax', 'sw', 'sh', 'frames'] + [c for c, _ in CALLBACKS]}
     reference = abc.body_of(abc.method_of('Base', 'DebugUnitTiles'))
 
     def method(name, params, program, max_stack, local_count, value=False):
@@ -89,8 +91,10 @@ def add_view_to_abc(abc):
                ('pushstring', s['zMax']), ('getlocal0',), ('getproperty', m[('getproperty', 'MAX_ZOOM')]),
                ('pushstring', s['sw'])] + stage + [('getproperty', n['stageWidth']),
                ('pushstring', s['sh'])] + stage + [('getproperty', n['stageHeight']),
-               ('newobject', 5), ('returnvalue',)]
-    view = method(VIEW_METHOD, 0, program, 14, 1, value=True)
+               # The game's own frame counter (Base.UpdateGame adds one a frame): the page measures the frame rate.
+               ('pushstring', s['frames']), ('getlocal0',), ('getproperty', m[('getproperty', 'numIteraciones')]),
+               ('newobject', 6), ('returnvalue',)]
+    view = method(VIEW_METHOD, 0, program, 16, 1, value=True)
 
     # Base.__seFit(center)
     program = (gui + [('getproperty', n['x']), ('pushbyte', 0), ('ifne', 'normal')]

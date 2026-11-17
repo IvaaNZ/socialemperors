@@ -29,7 +29,7 @@ class View(unittest.TestCase):
 
     def test_the_state_has_the_zoom_its_limits_and_the_stage_size(self):
         names = self.names(VIEW_METHOD)
-        for name in ('currentZoom', 'MIN_ZOOM', 'MAX_ZOOM', 'stageWidth', 'stageHeight'):
+        for name in ('currentZoom', 'MIN_ZOOM', 'MAX_ZOOM', 'stageWidth', 'stageHeight', 'numIteraciones'):
             self.assertIn(name, names)
 
     def test_the_fit_uses_the_games_own_full_screen_layout_and_hides_the_slider(self):
