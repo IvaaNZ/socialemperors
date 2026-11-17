@@ -46,7 +46,7 @@
     let villageEventsTimer;
     let villageEventsPending = false;
     let villageChanged = false;
-    const preferences = { volume: 100, muted: false };
+    const preferences = { volume: 100, muted: false, sharp: false, perf: true };
 
     try {
         const saved = JSON.parse(localStorage.getItem(preferenceKey));
@@ -55,6 +55,8 @@
                 preferences.volume = Math.round(saved.volume);
             }
             preferences.muted = saved.muted === true;
+            preferences.sharp = saved.sharp === true;
+            preferences.perf = saved.perf !== false;
         }
     } catch {
         // Playing and changing controls still work when browser storage is blocked.
@@ -336,6 +338,19 @@
         return () => fixed;
     })();
 
+    // How many pixels Ruffle draws. Sharp: as many as the screen has. Fluid (the default): at most a 1366 x 768
+    // screen's, and never fewer than the stage's own; the browser enlarges the picture. Drawing is shared with the
+    // game's own work on one core and, with an integrated graphics card, measured on a 1920 x 1080 screen: 12
+    // frames a second sharp, 19 fluid. A phone drew up to 3 million pixels.
+    const FLUID_PIXELS = 1366 * 768;
+
+    function drawRatio() {
+        const sharp = realPixelRatio() * viewScale;
+        if (preferences.sharp || !player) return sharp;
+        const stagePixels = Math.max(1, player.clientWidth * player.clientHeight);
+        return Math.min(sharp, Math.max(1, Math.sqrt(FLUID_PIXELS / stagePixels)));
+    }
+
     function overlayScale(box) {
         return fullView ? viewScale : Math.max(0.6, box.width / 760);
     }
@@ -540,7 +555,7 @@
         if (!fullView) return;
         container.classList.add("is-view");
         shell.classList.add("view-full");
-        Object.defineProperty(window, "devicePixelRatio", { configurable: true, get: () => realPixelRatio() * viewScale });
+        Object.defineProperty(window, "devicePixelRatio", { configurable: true, get: drawRatio });
         sizeView();
         new ResizeObserver(() => sizeView()).observe(container);
         setInterval(fitView, 300);
@@ -1045,6 +1060,57 @@
     mute.hidden = false;
     expand.hidden = false;
     fullscreen.hidden = !document.fullscreenEnabled;
+    // The picture: fluid (the default) or sharp (drawRatio); Ruffle reads the new density when its size changes.
+    const sharpButton = document.getElementById("sharp-button");
+    function showSharp() {
+        sharpButton.textContent = preferences.sharp ? t("Imagem: nítida") : t("Imagem: fluida");
+        sharpButton.setAttribute("aria-pressed", String(preferences.sharp));
+    }
+    if (sharpButton && fullView) {
+        sharpButton.hidden = false;
+        showSharp();
+        sharpButton.addEventListener("click", () => {
+            preferences.sharp = !preferences.sharp;
+            savePreferences();
+            showSharp();
+            if (player) {
+                const width = player.style.width;
+                player.style.width = `${parseFloat(width) - 1}px`;
+                requestAnimationFrame(() => {
+                    player.style.width = width;
+                    window.dispatchEvent(new Event("resize"));
+                });
+            }
+        });
+    }
+    // Performance mode (SE_PERF_MODE, swf_perf_mode.py): the buildings' animations stop (flags and the like; the
+    // units keep theirs). On by default; again every 5 s in the own village (gameMode 1), so new buildings stop too
+    // (about 5 ms each time). Off reloads the page: the game starts every animation again.
+    const perfButton = document.getElementById("perf-button");
+    function showPerf() {
+        perfButton.textContent = preferences.perf ? t("Modo desempenho: sim") : t("Modo desempenho: não");
+        perfButton.setAttribute("aria-pressed", String(preferences.perf));
+    }
+    if (perfButton && config.perfMode) {
+        perfButton.hidden = false;
+        showPerf();
+        perfButton.addEventListener("click", () => {
+            preferences.perf = !preferences.perf;
+            savePreferences();
+            showPerf();
+            if (preferences.perf) applyPerf();
+            else window.location.reload();
+        });
+        setInterval(applyPerf, 5000);
+    }
+    function applyPerf() {
+        if (!preferences.perf || !player || hudLast.mode !== 1) return;
+        try {
+            if (typeof player.sePerf === "function") player.sePerf();
+        } catch (error) {
+            // the game is loading or changing maps: the next round
+        }
+    }
     applyAudio();
     setExpanded(true);
     watchServerVersion();

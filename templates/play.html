@@ -23,6 +23,7 @@
         'hudClock': hud_clock | default(false),
         'hudBar': hud_bar | default(false),
         'fullView': full_view | default(false),
+        'perfMode': perf_mode | default(false),
         'dailyNext': daily_next,
         'updateNotice': update_notice | default(false),
         'build': server_build | default(''),
@@ -81,6 +82,8 @@
                     <div class="view-controls">
                         <button id="expand-button" class="secondary-button" type="button" aria-controls="vila" aria-pressed="true" hidden>{{ _('Restaurar janela') }}</button>
                         <button id="fullscreen-button" class="secondary-button" type="button" aria-controls="vila" hidden>{{ _('Tela cheia') }}</button>
+                        <button id="sharp-button" class="secondary-button" type="button" aria-pressed="false" title="{{ _('Fluida: mais quadros por segundo. Nítida: mais detalhe, mais lenta.') }}" hidden>{{ _('Imagem: fluida') }}</button>
+                        <button id="perf-button" class="secondary-button" type="button" aria-pressed="true" title="{{ _('Sim: os edifícios param de se animar e o jogo fica mais rápido. Não: tudo se anima (recarrega a página).') }}" hidden>{{ _('Modo desempenho: sim') }}</button>
                         <a class="secondary-button" href="/village">{{ _('Nome da vila') }}</a>
                         <a class="secondary-button" href="/rivals">{{ _('Rivais e saques') }}</a>
                         <a class="secondary-button" href="{{ url_for('treasury') }}">{{ _('Tesouro gratuito') }}</a>

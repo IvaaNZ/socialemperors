@@ -847,5 +847,11 @@
   "Presentes": "Gifts",
   "Bônus diário": "Daily bonus",
   "Coletar!": "Collect!",
-  "Mais": "More"
+  "Mais": "More",
+  "Imagem: fluida": "Picture: smooth",
+  "Imagem: nítida": "Picture: sharp",
+  "Fluida: mais quadros por segundo. Nítida: mais detalhe, mais lenta.": "Smooth: more frames per second. Sharp: more detail, slower.",
+  "Modo desempenho: sim": "Performance mode: on",
+  "Modo desempenho: não": "Performance mode: off",
+  "Sim: os edifícios param de se animar e o jogo fica mais rápido. Não: tudo se anima (recarrega a página).": "On: buildings stop animating and the game runs faster. Off: everything animates (reloads the page)."
 }

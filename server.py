@@ -731,7 +731,7 @@ def play():
         return render_template("play.html", script_texts=game_script_texts(), daily_next=daily_next, save_info=save_info(USERID), serverTime=server_time, last_logged_in=last_login, friendsInfo=fb_friends_str(USERID), version=version_name, GAMEVERSION=GAME_VERSION, raid_revision=village_revision(USERID), game_user_key=game_session_key(USERID),
                                webgl_renderer=RUFFLE_SETTINGS['renderer'] == 'webgl', ruffle_settings=RUFFLE_SETTINGS,
                                push_time=QUICK_SAVE_SECONDS if QUICK_SAVE_ENABLED else None, sound_hint=SOUND_FIX_ENABLED,
-                               day_night=DAY_NIGHT_ENABLED, hud_clock=HUD_ENABLED and DAY_NIGHT_ENABLED, hud_bar=HUD_ENABLED, full_view=VIEW_ENABLED,
+                               day_night=DAY_NIGHT_ENABLED, hud_clock=HUD_ENABLED and DAY_NIGHT_ENABLED, hud_bar=HUD_ENABLED, full_view=VIEW_ENABLED, perf_mode=PERF_MODE_ENABLED,
                                update_notice=UPDATE_NOTICE_ENABLED, server_build=SERVER_BUILD)
 
 
@@ -922,6 +922,9 @@ def localized_game_movie(language=None):
     if FAST_HOVER_ENABLED:  # the pointer over a building no longer redraws it on every move (swf_fast_hover.py)
         from swf_fast_hover import add_fast_hover
         translated = add_fast_hover(translated)
+    if PERF_MODE_ENABLED:  # the player may stop the buildings' animations from the menu (swf_perf_mode.py)
+        from swf_perf_mode import add_perf_mode
+        translated = add_perf_mode(translated)
     if READABLE_UI_ENABLED:  # white lettering with a black outline; no "x0" units in the team window
         from swf_readable_text import make_text_readable
         translated = make_text_readable(translated)
@@ -1150,6 +1153,8 @@ VIEW_ENABLED = os.environ.get('SE_VIEW', 'on').strip().lower() in ('on', '1', 't
 # Moving the mouse over the village: the game's check of whether the pointer is on a building's picture keeps its
 # last drawing instead of drawing the building again on every move (swf_fast_hover.py).
 FAST_HOVER_ENABLED = os.environ.get('SE_FAST_HOVER', 'on').strip().lower() in ('on', '1', 'true', 'yes')
+# The menu's performance mode: each player may stop the buildings' animations (swf_perf_mode.py, game.js).
+PERF_MODE_ENABLED = os.environ.get('SE_PERF_MODE', 'on').strip().lower() in ('on', '1', 'true', 'yes')
 READABLE_UI_ENABLED = os.environ.get('SE_READABLE_UI', 'on').strip().lower() in ('on', '1', 'true', 'yes')
 # New accounts: the player name is letters and digits only and names the new empire; registering signs out
 # whoever was signed in in that browser. Off: the earlier registration.

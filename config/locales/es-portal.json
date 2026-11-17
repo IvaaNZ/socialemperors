@@ -857,5 +857,11 @@
   "Presentes": "Regalos",
   "Bônus diário": "Bono diario",
   "Coletar!": "¡Cobrar!",
-  "Mais": "Más"
+  "Mais": "Más",
+  "Imagem: fluida": "Imagen: fluida",
+  "Imagem: nítida": "Imagen: nítida",
+  "Fluida: mais quadros por segundo. Nítida: mais detalhe, mais lenta.": "Fluida: más cuadros por segundo. Nítida: más detalle, más lenta.",
+  "Modo desempenho: sim": "Modo rendimiento: sí",
+  "Modo desempenho: não": "Modo rendimiento: no",
+  "Sim: os edifícios param de se animar e o jogo fica mais rápido. Não: tudo se anima (recarrega a página).": "Sí: los edificios dejan de animarse y el juego va más rápido. No: todo se anima (recarga la página)."
 }
