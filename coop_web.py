@@ -15,8 +15,22 @@ from flask import abort, g, jsonify, request, session, url_for
 
 from auth import validate_csrf
 from coop import MAX_PLAYERS, TEAM_UNITS, CoopError, CoopStore
+import os
+
 from duels_web import is_unit_death
 from portal_i18n import translate as _
+
+
+SIGNAL_LIMIT = 20000  # characters of one connection message (an offer with its network details fits)
+
+
+def ice_servers():
+    """The STUN servers the browsers use to find each other (SE_COOP_STUN, comma separated; 'off': none, which
+    only connects players on the same network). A STUN server sees the players' network addresses, nothing else."""
+    value = os.environ.get('SE_COOP_STUN', 'stun:stun.l.google.com:19302').strip()
+    if value.lower() in ('', 'off', 'none'):
+        return []
+    return [{'urls': [url.strip() for url in value.split(',') if url.strip()]}]
 
 
 def overlay_texts():
@@ -40,6 +54,9 @@ def overlay_texts():
         'sailing_host': _('A incursão está em curso: suas tropas e as do clã estão na ilha.'),
         'sailing_guest': _('{name} está jogando a ilha com as tropas de todos. Em breve você poderá assistir ao vivo.'),
         'end_raid': _('Terminar a incursão'), 'no_island': _('Abra o mapa de aventuras e escolha a ilha de novo.'),
+        'watching': _('Assistindo ao vivo a ilha de {name}'), 'connecting': _('Conectando com a ilha de {name}…'),
+        'no_video': _('Não foi possível ver a ilha ao vivo. A incursão continua.'),
+        'retry': _('Tentar de novo'),
         'close_room': _('Fechar a sala'), 'leave': _('Sair da sala'),
         'invite_title': _('{name} convida você para uma incursão do clã'),
         'invite_detail': _('Leve até 10 unidades da sua aldeia.'),
@@ -184,6 +201,30 @@ def install_coop(app, accounts, data_dir):
             return jsonify({'ok': False, 'error': error.code, 'state': state(account)}), 400
         return jsonify({'ok': True, 'state': state(account)})
 
+    @app.post('/coop/api/signal', endpoint='coop_api_signal')
+    def coop_api_signal():
+        """The video's connection messages (WebRTC offer, answer, network candidates, a guest's "join") between
+        two players of the same raid at sea, relayed live; the video itself goes from browser to browser."""
+        account = api_player()
+        validate_csrf()
+        live = hub()
+        if live is None:
+            return jsonify({'ok': False, 'error': 'live'}), 400
+        payload_text = request.form.get('payload', '')
+        if len(payload_text) > SIGNAL_LIMIT:
+            return jsonify({'ok': False, 'error': 'forbidden'}), 400
+        try:
+            target = int(request.form.get('to', ''))
+            payload = json.loads(payload_text)
+        except ValueError:
+            return jsonify({'ok': False, 'error': 'forbidden'}), 400
+        room = store.sailing_room_of(account['id'])
+        members = {p['account_id'] for p in room['players'] if p['state'] in ('host', 'accepted')} if room else set()
+        if not isinstance(payload, dict) or account['id'] not in members or target not in members or target == account['id']:
+            return jsonify({'ok': False, 'error': 'gone'}), 400
+        live.send_to(target, {'type': 'coop_signal', 'room': room['id'], 'from': account['id'], 'payload': payload})
+        return jsonify({'ok': True})
+
     def filter_commands(userid, commands):
         """During a raid at sea, the host's game reports the deaths of every player's units: none of them may
         leave the host's village. Phase 5 gives each loss to its owner; until then nobody loses units."""
@@ -205,6 +246,7 @@ def install_coop(app, accounts, data_dir):
         if not current_player():
             return {}
         return {'coop_overlay': {'state': url_for('coop_api_state'), 'action': url_for('coop_api_action'),
+                                 'signal': url_for('coop_api_signal'), 'ice': ice_servers(),
                                  'texts': overlay_texts()}}
 
     return store

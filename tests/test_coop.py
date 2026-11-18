@@ -116,5 +116,20 @@ class Rooms(unittest.TestCase):
         self.assertEqual(self.store.room(self.room['id'])['status'], 'cancelled')
 
 
+class IceServers(unittest.TestCase):
+    def test_the_stun_servers_come_from_server_env_and_off_means_none(self):
+        import os
+        from unittest import mock
+
+        from coop_web import ice_servers
+        with mock.patch.dict(os.environ, {'SE_COOP_STUN': 'stun:a.example:3478, stun:b.example:3478'}):
+            self.assertEqual(ice_servers(), [{'urls': ['stun:a.example:3478', 'stun:b.example:3478']}])
+        with mock.patch.dict(os.environ, {'SE_COOP_STUN': 'off'}):
+            self.assertEqual(ice_servers(), [])
+        with mock.patch.dict(os.environ, {}, clear=False):
+            os.environ.pop('SE_COOP_STUN', None)
+            self.assertEqual(len(ice_servers()), 1)
+
+
 if __name__ == '__main__':
     unittest.main()

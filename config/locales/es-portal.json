@@ -907,5 +907,9 @@
   "{name} está jogando a ilha com as tropas de todos. Em breve você poderá assistir ao vivo.": "{name} está jugando la isla con las tropas de todos. Pronto podrás verla en vivo.",
   "Terminar a incursão": "Terminar la incursión",
   "Abra o mapa de aventuras e escolha a ilha de novo.": "Abre el mapa de aventuras y elige la isla de nuevo.",
-  "Todos precisam escolher suas unidades.": "Todos tienen que elegir sus unidades."
+  "Todos precisam escolher suas unidades.": "Todos tienen que elegir sus unidades.",
+  "Assistindo ao vivo a ilha de {name}": "Viendo en vivo la isla de {name}",
+  "Conectando com a ilha de {name}…": "Conectando con la isla de {name}…",
+  "Não foi possível ver a ilha ao vivo. A incursão continua.": "No se pudo ver la isla en vivo. La incursión sigue.",
+  "Tentar de novo": "Intentar de nuevo"
 }

@@ -303,8 +303,172 @@
         ], T.invite_detail);
     }
 
+    // ---- phase 3: the guests watch the host's island live, as video (WebRTC, browser to browser). The host's
+    // page sends its game's canvas to every guest that asks ("join"); the server only relays the connection
+    // messages (coop_signal). The guest sees it over its own game.
+    const peers = new Map();   // the host: guest id -> RTCPeerConnection
+    let guestPeer = null;      // a guest: its connection to the host
+    let joinTimer = 0;
+
+    async function signal(to, payload) {
+        const data = new FormData();
+        data.append("csrf_token", config.csrf);
+        data.append("to", to);
+        data.append("payload", JSON.stringify(payload));
+        try {
+            await fetch(config.signal, { method: "POST", body: data, credentials: "same-origin" });
+        } catch (error) {
+            // the next try
+        }
+    }
+
+    let earlyIce = [];  // a guest: network candidates that came before the host's offer
+
+    function newPeer(other) {
+        const peer = new RTCPeerConnection({ iceServers: config.ice || [] });
+        peer.pendingIce = [];
+        peer.onicecandidate = (event) => { if (event.candidate) signal(other, { kind: "ice", candidate: event.candidate.toJSON() }); };
+        return peer;
+    }
+
+    // Candidates may arrive before the other side's description: kept until it is set.
+    async function addIce(peer, candidate) {
+        if (peer.remoteDescription) await peer.addIceCandidate(candidate);
+        else peer.pendingIce.push(candidate);
+    }
+
+    async function setRemote(peer, sdp) {
+        await peer.setRemoteDescription(sdp);
+        for (const candidate of peer.pendingIce.splice(0)) await peer.addIceCandidate(candidate);
+    }
+
+    function gameCanvas() {
+        const game = player();
+        return game && game.shadowRoot ? game.shadowRoot.querySelector("canvas") : null;
+    }
+
+    async function hostAnswerJoin(guest) {
+        const canvas = gameCanvas();
+        if (!canvas || typeof canvas.captureStream !== "function") return;
+        const old = peers.get(guest);
+        if (old) old.close();
+        const peer = newPeer(guest);
+        peers.set(guest, peer);
+        const stream = canvas.captureStream(20);
+        for (const track of stream.getTracks()) peer.addTrack(track, stream);
+        const offer = await peer.createOffer();
+        await peer.setLocalDescription(offer);
+        signal(guest, { kind: "offer", sdp: peer.localDescription.toJSON() });
+    }
+
+    const viewer = document.createElement("div");
+    viewer.className = "coop-viewer";
+    viewer.hidden = true;
+    viewer.innerHTML = '<div class="coop-viewer-bar"><span class="coop-viewer-title"></span>' + button(T.leave, "viewer-leave", "red") +
+        '</div><video class="coop-video" autoplay playsinline muted></video><p class="coop-viewer-note" hidden></p>';
+    stage.appendChild(viewer);
+    const video = viewer.querySelector("video");
+    const viewerTitle = viewer.querySelector(".coop-viewer-title");
+    const viewerNote = viewer.querySelector(".coop-viewer-note");
+
+    function hostName(room) {
+        const host = room && room.players.find((p) => p.id === room.host);
+        return host ? host.name : "";
+    }
+
+    function guestJoin() {
+        const room = state && state.room;
+        if (!room || room.status !== "sailing" || room.is_host) return;
+        viewer.hidden = false;
+        hidePanel();
+        viewerTitle.textContent = fill(T.connecting, { name: hostName(room) });
+        viewerNote.hidden = true;
+        signal(room.host, { kind: "join" });
+        clearTimeout(joinTimer);
+        joinTimer = setTimeout(() => {  // no picture after a while: say so, and offer to try again
+            if (!video.srcObject) {
+                viewerNote.innerHTML = esc(T.no_video) + " " + button(T.retry, "viewer-retry", "brown");
+                viewerNote.hidden = false;
+            }
+        }, 15000);
+    }
+
+    async function guestTakeOffer(from, sdp) {
+        if (guestPeer) guestPeer.close();
+        guestPeer = newPeer(from);
+        guestPeer.ontrack = (event) => {
+            video.srcObject = event.streams[0];
+            viewerTitle.textContent = fill(T.watching, { name: hostName(state && state.room) });
+            viewerNote.hidden = true;
+        };
+        guestPeer.pendingIce.push(...earlyIce.splice(0));
+        await setRemote(guestPeer, sdp);
+        const answer = await guestPeer.createAnswer();
+        await guestPeer.setLocalDescription(answer);
+        signal(from, { kind: "answer", sdp: guestPeer.localDescription.toJSON() });
+    }
+
+    function stopVideo() {
+        for (const peer of peers.values()) peer.close();
+        peers.clear();
+        if (guestPeer) guestPeer.close();
+        guestPeer = null;
+        earlyIce = [];
+        video.srcObject = null;
+        viewer.hidden = true;
+        clearTimeout(joinTimer);
+    }
+
+    async function onSignal(message) {
+        const payload = message.payload || {};
+        const room = state && state.room;
+        try {
+            if (payload.kind === "join" && room && room.is_host && room.status === "sailing") {
+                await hostAnswerJoin(message.from);
+            } else if (payload.kind === "offer") {
+                await guestTakeOffer(message.from, payload.sdp);
+            } else if (payload.kind === "answer") {
+                const peer = peers.get(message.from);
+                if (peer) await setRemote(peer, payload.sdp);
+            } else if (payload.kind === "ice") {
+                const peer = peers.get(message.from) || guestPeer;
+                if (peer) await addIce(peer, payload.candidate);
+                else earlyIce.push(payload.candidate);
+            }
+        } catch (error) {
+            console.warn("coop video:", error);
+        }
+    }
+
+    viewer.addEventListener("click", async (event) => {
+        const target = event.target.closest("[data-action]");
+        if (!target) return;
+        const room = state && state.room;
+        if (target.dataset.action === "viewer-leave") {
+            if (room) await act({ action: "leave", room: room.id });
+            stopVideo();
+            render();
+        } else if (target.dataset.action === "viewer-retry") {
+            guestJoin();
+        }
+    });
+
+    // The raid ended (or the player left): the video stops.
+    function followRaid() {
+        const room = state && state.room;
+        if (!room || room.status !== "sailing") {
+            if (!viewer.hidden || peers.size || guestPeer) stopVideo();
+        } else if (!room.is_host && viewer.hidden) {
+            guestJoin();
+        }
+    }
+
     window.addEventListener("se-live", async (event) => {
         const message = event.detail || {};
+        if (message.type === "coop_signal") {
+            onSignal(message);
+            return;
+        }
         if (message.type === "coop_invite") {
             await load();
             showInvites();
@@ -312,20 +476,24 @@
         } else if (message.type === "coop_update") {
             await load();
             render();
-        } else if (message.type === "coop_sail") {  // the host set sail: the guests see the raid at sea
+            followRaid();
+        } else if (message.type === "coop_sail") {  // the host set sail: the guests watch the island
             await load();
-            openPanel();
+            render();
+            followRaid();
         }
     });
 
     load().then(() => {
         showInvites();
         render();
+        followRaid();  // a guest that reloads its page during a raid watches again
     });
     setInterval(async () => {  // without live notices (duels off), the room still follows
         if (state && (state.room || panelOpen)) {
             await load();
             render();
+            followRaid();
         }
     }, 15000);
 })();
