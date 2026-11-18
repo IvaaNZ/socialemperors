@@ -3,9 +3,8 @@ RESUMEN DEL BLOQUE E (funciones de la lista) - actualizado el 18/11/2026
 
 AVANCE DEL BLOQUE E: 100 % TERMINADO, 0 % PENDIENTE
   - Terminados: los 12 puntos (19 a 30).
-  - Falta solo encender el modo Clan en el servidor (SE_COOP=on), que
-    quedó apagado hasta que el dueño lo pruebe con jugadores reales, y
-    subir el trabajo al fork de GitHub (se sube al terminar el bloque E).
+  - El modo Clan está encendido en el servidor (SE_COOP=on) y todo el
+    trabajo está subido al fork de GitHub (18/11/2026).
   - Quedan para más adelante, fuera del porcentaje: la opción A de los
     duelos (punto 21) y las fases 3 y 4 del clan dentro del juego (punto 22).
   (Cuenta: 12 puntos al 100 % = 1.200 de 1.200.)

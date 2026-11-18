@@ -16,6 +16,11 @@ class ServerSettingsFile(unittest.TestCase):
         self.assertEqual(settings, {'SE_PVP': 'on', 'SE_CLANS': 'off', 'PORT': '5051'})
         self.assertEqual(errors, [6])
 
+    def test_a_comment_glued_to_a_value_is_not_part_of_it(self):
+        settings, errors = parse_settings('SE_COOP=on# the next comment\nSE_PVP = off #why\nPORT="50#51"\n')
+        self.assertEqual(settings, {'SE_COOP': 'on', 'SE_PVP': 'off', 'PORT': '50#51'})
+        self.assertEqual(errors, [])
+
     def test_the_file_fills_the_environment_but_the_console_wins(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / 'server.env'

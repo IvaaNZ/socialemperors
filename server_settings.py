@@ -31,6 +31,8 @@ def parse_settings(text):
         value = match.group(2).strip()
         if len(value) >= 2 and value[0] == value[-1] and value[0] in '"\'':
             value = value[1:-1]
+        elif '#' in value:  # "SE_COOP=on# comment" (a line glued to the next) is still on
+            value = value.split('#', 1)[0].strip()
         settings[match.group(1)] = value
     return settings, errors
 
