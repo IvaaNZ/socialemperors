@@ -1,0 +1,32 @@
+# Palabras prohibidas del chat global (SE_CHAT). Una palabra o frase por línea.
+# Se reemplazan por *** cuando aparecen como palabra entera, sin importar mayúsculas ni acentos.
+# Las líneas que empiezan con # no cuentan. El servidor lee los cambios solo, sin reiniciar.
+boludo
+boluda
+pelotudo
+pelotuda
+puto
+puta
+pendejo
+pendeja
+idiota
+imbecil
+estupido
+estupida
+mierda
+concha
+forro
+forra
+hijo de puta
+hdp
+cabron
+cabrona
+gilipollas
+maricon
+caralho
+porra
+merda
+fuck
+shit
+bitch
+asshole

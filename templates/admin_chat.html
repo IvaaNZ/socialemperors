@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% block title %}{{ _('Chat global') }} · Social Empires{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('css', path='management.css') }}">{% endblock %}
+{% block main_class %}management-main{% endblock %}
+{% set mute_labels = {'hour': _('1 hora'), 'day': _('1 dia'), 'week': _('1 semana'), 'forever': _('Para sempre')} %}
+{% set log_labels = {'delete': _('apagou uma mensagem de'), 'mute': _('silenciou'), 'unmute': _('tirou o silêncio de')} %}
+{% block content %}
+<div class="management-heading">
+    <div><h1>{{ _('Chat global') }}</h1><p>{{ _('Apague mensagens e silencie jogadores. As palavras proibidas ficam em config/chat_filter.txt.') }}</p></div>
+</div>
+<nav class="management-nav" aria-label="{{ _('Administração') }}">
+    <a href="{{ url_for('admin_accounts') }}">{{ _('Contas') }}</a>
+    <a href="{{ url_for('admin_villages') }}">{{ _('Vilas') }}</a>{% if duels_enabled %}<a href="{{ url_for('admin_duels') }}">{{ _('Duelos') }}</a>{% endif %}{% if clans_enabled %}<a href="{{ url_for('admin_clans') }}">{{ _('Clãs') }}</a>{% endif %}<a href="{{ url_for('admin_chat') }}" aria-current="page">{{ _('Chat global') }}</a>
+</nav>
+<section class="management-section" aria-labelledby="mute-title">
+    <h2 id="mute-title">{{ _('Silenciar um jogador') }}</h2>
+    <form action="{{ url_for('admin_chat_mute') }}" method="post" class="actions-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label class="sr-only" for="mute-account">{{ _('Jogador') }}</label>
+        <select id="mute-account" name="account" required>
+            {% for player in players %}<option value="{{ player.id }}">{{ player.name }}</option>{% endfor %}
+        </select>
+        <label class="sr-only" for="mute-time">{{ _('Tempo') }}</label>
+        <select id="mute-time" name="time">
+            {% for choice in choices %}<option value="{{ choice }}">{{ mute_labels[choice] }}</option>{% endfor %}
+        </select>
+        <label class="sr-only" for="mute-reason">{{ _('Motivo') }}</label>
+        <input id="mute-reason" name="reason" maxlength="200" placeholder="{{ _('Motivo') }}">
+        <button class="button button-secondary button-small" type="submit">{{ _('Silenciar') }}</button>
+    </form>
+    {% if mutes %}
+    <table class="management-table">
+        <thead><tr><th scope="col">{{ _('Jogador') }}</th><th scope="col">{{ _('Até') }}</th><th scope="col">{{ _('Motivo') }}</th><th scope="col"><span class="sr-only">{{ _('Ação') }}</span></th></tr></thead>
+        <tbody>
+            {% for mute in mutes %}
+            <tr>
+                <td data-label="{{ _('Jogador') }}"><strong>{{ mute.name }}</strong><span class="player-detail">{{ mute.by_name }}</span></td>
+                <td data-label="{{ _('Até') }}">{{ mute.until_label }}</td>
+                <td data-label="{{ _('Motivo') }}">{{ mute.reason or '—' }}</td>
+                <td data-label="{{ _('Ação') }}">
+                    <form action="{{ url_for('admin_chat_unmute', account_id=mute.account_id) }}" method="post" class="actions-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="button button-secondary button-small" type="submit">{{ _('Tirar silêncio') }}</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}<p>{{ _('Ninguém está silenciado.') }}</p>{% endif %}
+</section>
+<section class="management-section" aria-labelledby="messages-title">
+    <h2 id="messages-title">{{ _('Últimas mensagens') }}</h2>
+    {% if messages %}
+    <table class="management-table">
+        <thead><tr><th scope="col">{{ _('Jogador') }}</th><th scope="col">{{ _('Mensagem') }}</th><th scope="col"><span class="sr-only">{{ _('Ação') }}</span></th></tr></thead>
+        <tbody>
+            {% for message in messages %}
+            <tr>
+                <td data-label="{{ _('Jogador') }}"><strong>{% if message.tag %}[{{ message.tag }}] {% endif %}{{ message.name }}</strong><span class="player-detail">{{ message.created_label }}</span></td>
+                <td data-label="{{ _('Mensagem') }}">{{ message.text }}</td>
+                <td data-label="{{ _('Ação') }}">
+                    <form action="{{ url_for('admin_chat_delete', message_id=message.id) }}" method="post" class="actions-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="button button-secondary button-small" type="submit">{{ _('Apagar') }}</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}<p>{{ _('Ainda não há mensagens.') }}</p>{% endif %}
+</section>
+<section class="management-section" aria-labelledby="log-title">
+    <h2 id="log-title">{{ _('Atividade recente') }}</h2>
+    {% if log %}
+    <ul class="duel-resolved">
+        {% for entry in log %}<li><strong>{{ entry.admin_name }}</strong> {{ log_labels.get(entry.action, entry.action) }} <strong>{{ entry.target_name }}</strong>{% if entry.detail %} · {{ entry.detail }}{% endif %} · {{ entry.created_label }}</li>{% endfor %}
+    </ul>
+    {% else %}<p>{{ _('Nenhuma atividade ainda.') }}</p>{% endif %}
+</section>
+{% endblock %}

@@ -1181,6 +1181,9 @@ COOP_ENABLED = os.environ.get('SE_COOP', 'off').strip().lower() in ('on', '1', '
 # (soul_mixer.py, soul_mixer_web.py, swf_soul_mixer.py; tables from config/soulmixer_wiki.json).
 SOUL_MIXER_ENABLED = os.environ.get('SE_SOUL_MIXER', 'off').strip().lower() in ('on', '1', 'true', 'yes')
 from soul_mixer import revision as soul_mixer_revision
+# Block G: the global chat, a "Msj" button at the left of the game (chat.py, chat_web.py, global_chat.js).
+CHAT_ENABLED = os.environ.get('SE_CHAT', 'off').strip().lower() in ('on', '1', 'true', 'yes')
+app.jinja_env.globals['chat_enabled'] = CHAT_ENABLED
 # The menu's performance mode: each player may stop the buildings' animations (swf_perf_mode.py, game.js).
 PERF_MODE_ENABLED = os.environ.get('SE_PERF_MODE', 'on').strip().lower() in ('on', '1', 'true', 'yes')
 READABLE_UI_ENABLED = os.environ.get('SE_READABLE_UI', 'on').strip().lower() in ('on', '1', 'true', 'yes')
@@ -1248,6 +1251,9 @@ if COOP_ENABLED and CLANS_ENABLED:  # the clan raid's room (coop_web.py); its li
     from coop_web import install_coop
     install_coop(app, accounts, data_dir, village_lock, village_session, save_village)
 
+if CHAT_ENABLED:  # the global chat; its live messages use the duels' connection (SE_DUELS)
+    from chat_web import install_chat
+    install_chat(app, accounts, data_dir, village_lock, village_session)
 if SOUL_MIXER_ENABLED:  # the Soul Mixer's window and rules
     from get_game_config import get_game_config, get_name_from_item_id
     from localization import load_catalog as soul_catalog

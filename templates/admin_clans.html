@@ -9,7 +9,7 @@
 </div>
 <nav class="management-nav" aria-label="{{ _('Administração') }}">
     <a href="{{ url_for('admin_accounts') }}">{{ _('Contas') }}</a>
-    <a href="{{ url_for('admin_villages') }}">{{ _('Vilas') }}</a>{% if duels_enabled %}<a href="{{ url_for('admin_duels') }}">{{ _('Duelos') }}</a>{% endif %}<a href="{{ url_for('admin_clans') }}" aria-current="page">{{ _('Clãs') }}</a>
+    <a href="{{ url_for('admin_villages') }}">{{ _('Vilas') }}</a>{% if duels_enabled %}<a href="{{ url_for('admin_duels') }}">{{ _('Duelos') }}</a>{% endif %}<a href="{{ url_for('admin_clans') }}" aria-current="page">{{ _('Clãs') }}</a>{% if chat_enabled %}<a href="{{ url_for('admin_chat') }}">{{ _('Chat global') }}</a>{% endif %}
 </nav>
 <section class="management-section" aria-labelledby="clans-title">
     <h2 id="clans-title">{{ _('Clãs do servidor') }}</h2>

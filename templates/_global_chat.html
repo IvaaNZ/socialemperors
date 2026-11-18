@@ -1,0 +1,4 @@
+{# The global chat (SE_CHAT=on only): the "Msj" button at the left of the game and its window. #}
+<link rel="stylesheet" href="{{ url_for('css', path='global_chat.css') }}">
+<script id="chat-overlay-config" type="application/json">{{ dict(chat_overlay, csrf=csrf_token()) | tojson }}</script>
+<script src="{{ url_for('javascript', path='global_chat.js') }}" defer></script>
