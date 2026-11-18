@@ -71,6 +71,23 @@ class Coop(unittest.TestCase):
         self.assertIn("'seCoopGo'", register)
         self.assertIn("'seCoopPick'", register)
 
+    def test_the_raid_sets_sail_with_the_games_own_loading(self):
+        sail = [str(op[2]) for op in self.ops('Base', '__seCoopSail') if len(op) > 2]
+        self.assertIn('questIDtoLoad', sail)
+        self.assertIn('loadQuestMapWithSelectedArmy 1', sail)  # it counts the list of unit ids first
+
+    def test_the_guests_units_are_listed_and_ordered_without_the_hosts_selection(self):
+        units = [str(op[2]) for op in self.ops('Base', '__seCoopUnits') if len(op) > 2]
+        for name in ('arPlayerIsoFightingElements', 'IsoUnit', 'localToGlobal 1', 'iID', 'iHealth', 'maxLife'):
+            self.assertIn(name, units)
+        order = [str(op[2]) for op in self.ops('Base', '__seCoopOrder') if len(op) > 2]
+        for name in ('globalToLocal 1', 'PixelToTile 2', 'getNearestEnemy 4', 'IA_Attack 1', 'IA_Move 2'):
+            self.assertIn(name, order)
+        self.assertNotIn('seleccionarElemento 1', order)
+        register = [str(op[2]) for op in self.ops('Base', '__registerCoop') if len(op) > 2]
+        for callback in ("'seCoopSail'", "'seCoopUnits'", "'seCoopOrder'"):
+            self.assertIn(callback, register)
+
     def test_it_is_added_once(self):
         with self.assertRaises(AbcError):
             add_coop_to_abc(self.abc)

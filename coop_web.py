@@ -57,6 +57,9 @@ def overlay_texts():
         'watching': _('Assistindo ao vivo a ilha de {name}'), 'connecting': _('Conectando com a ilha de {name}…'),
         'no_video': _('Não foi possível ver a ilha ao vivo. A incursão continua.'),
         'retry': _('Tentar de novo'),
+        'command_hint': _('Toque uma das suas unidades para escolhê-la; depois toque o mapa para movê-la ou um inimigo para atacar.'),
+        'all_units': _('Todas as minhas unidades'), 'my_units': _('Minhas unidades: {count}'),
+        'none_alive': _('Suas unidades caíram. Continue assistindo à incursão.'),
         'close_room': _('Fechar a sala'), 'leave': _('Sair da sala'),
         'invite_title': _('{name} convida você para uma incursão do clã'),
         'invite_detail': _('Leve até 10 unidades da sua aldeia.'),
@@ -125,7 +128,8 @@ def install_coop(app, accounts, data_dir):
             'id': room['id'], 'quest': room['quest_id'], 'host': room['host_id'], 'is_host': room['host_id'] == me,
             'status': room['status'], 'can_sail': store.ready_to_sail(room), 'max': MAX_PLAYERS,
             'players': [{'id': p['account_id'], 'name': everyone.get(p['account_id'], '?'), 'state': p['state'],
-                         'units': len(p['team']) if p['team'] else 0, 'online': online(p['account_id'])}
+                         'units': len(p['team']) if p['team'] else 0, 'team': p['team'] or [],
+                         'online': online(p['account_id'])}
                         for p in players],
         }
 

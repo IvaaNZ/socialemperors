@@ -356,27 +356,181 @@
         peers.set(guest, peer);
         const stream = canvas.captureStream(20);
         for (const track of stream.getTracks()) peer.addTrack(track, stream);
+        // phase 4: the guest's units go to it and its orders come back on a data channel of the same connection
+        peer.channel = peer.createDataChannel("coop");
+        peer.channel.onmessage = (event) => hostTakeOrder(guest, event.data);
         const offer = await peer.createOffer();
         await peer.setLocalDescription(offer);
         signal(guest, { kind: "offer", sdp: peer.localDescription.toJSON() });
     }
 
+    // ---- phase 4, the host: whose unit is each one, the guests' units to them, their orders to the game
+    const owners = new Map();  // handle -> account id, for the raid
+    let ownerCounts = null;    // account id -> {unit id: how many still to find}
+
+    function stageSize() {
+        try {
+            const view = player().seView();
+            if (view && view.sw) return { w: view.sw, h: view.sh };
+        } catch (error) {
+            // below
+        }
+        return null;
+    }
+
+    function ownerOf(unit, room) {
+        if (owners.has(unit.h)) return owners.get(unit.h);
+        if (!ownerCounts) {
+            ownerCounts = new Map();
+            const ordered = room.players.filter((p) => p.state === "host").concat(room.players.filter((p) => p.state === "accepted"));
+            for (const p of ordered) {
+                const counts = {};
+                for (const id of p.team || []) counts[id] = (counts[id] || 0) + 1;
+                ownerCounts.set(p.id, counts);
+            }
+        }
+        // the army lands the host's units first, then each guest's: the first ones of a kind are the host's
+        let owner = room.host;
+        for (const [account, counts] of ownerCounts) {
+            if (counts[unit.id] > 0) {
+                counts[unit.id] -= 1;
+                owner = account;
+                break;
+            }
+        }
+        owners.set(unit.h, owner);
+        return owner;
+    }
+
+    function hostShareUnits() {
+        const room = state && state.room;
+        if (!room || !room.is_host || room.status !== "sailing" || !peers.size) return;
+        const game = player();
+        const size = stageSize();
+        if (!game || !size || typeof game.seCoopUnits !== "function") return;
+        let units = null;
+        try {
+            units = game.seCoopUnits();
+        } catch (error) {
+            units = null;
+        }
+        if (!Array.isArray(units)) return;
+        const mine = new Map();
+        for (const unit of units) {
+            const owner = ownerOf(unit, room);
+            if (owner === room.host) continue;
+            if (!mine.has(owner)) mine.set(owner, []);
+            mine.get(owner).push({ h: unit.h, x: unit.x / size.w, y: unit.y / size.h, hp: unit.max > 0 ? unit.hp / unit.max : 1 });
+        }
+        for (const [guest, peer] of peers) {
+            if (peer.channel && peer.channel.readyState === "open") {
+                peer.channel.send(JSON.stringify({ type: "units", units: mine.get(guest) || [] }));
+            }
+        }
+    }
+    setInterval(hostShareUnits, 250);
+
+    function hostTakeOrder(guest, data) {
+        let order = null;
+        try {
+            order = JSON.parse(data);
+        } catch (error) {
+            return;
+        }
+        const size = stageSize();
+        const game = player();
+        if (!order || order.type !== "order" || !Array.isArray(order.units) || !size || !game) return;
+        const handles = order.units.filter((h) => Number.isInteger(h) && owners.get(h) === guest);  // only its own units
+        const x = Number(order.x);
+        const y = Number(order.y);
+        if (!handles.length || !(x >= 0 && x <= 1 && y >= 0 && y <= 1)) return;
+        try {
+            const answer = game.seCoopOrder(handles, x * size.w, y * size.h);
+            if (answer !== true) console.warn("coop: the game did not take the order:", answer);
+        } catch (error) {
+            console.warn("coop order:", error);
+        }
+    }
+
     const viewer = document.createElement("div");
     viewer.className = "coop-viewer";
     viewer.hidden = true;
-    viewer.innerHTML = '<div class="coop-viewer-bar"><span class="coop-viewer-title"></span>' + button(T.leave, "viewer-leave", "red") +
-        '</div><video class="coop-video" autoplay playsinline muted></video><p class="coop-viewer-note" hidden></p>';
+    viewer.innerHTML = '<div class="coop-viewer-bar"><span class="coop-viewer-title"></span><span class="coop-viewer-units"></span>' +
+        button(T.all_units, "select-all", "brown") + button(T.leave, "viewer-leave", "red") +
+        '</div><div class="coop-screen"><video class="coop-video" autoplay playsinline muted></video><div class="coop-marks"></div></div>' +
+        '<p class="coop-hint">' + esc(T.command_hint) + '</p><p class="coop-viewer-note" hidden></p>';
     stage.appendChild(viewer);
     const video = viewer.querySelector("video");
     const viewerTitle = viewer.querySelector(".coop-viewer-title");
     const viewerNote = viewer.querySelector(".coop-viewer-note");
+    const marks = viewer.querySelector(".coop-marks");
+    const unitsLabel = viewer.querySelector(".coop-viewer-units");
+
+    // ---- phase 4, a guest: its units over the video; a touch on one chooses it, a touch elsewhere orders
+    let guestChannel = null;
+    let myUnits = [];
+    const chosen = new Set();
+
+    function pictureBox() {  // where the picture is inside the video element (object-fit: contain)
+        const box = video.getBoundingClientRect();
+        const vw = video.videoWidth || 1;
+        const vh = video.videoHeight || 1;
+        const scale = Math.min(box.width / vw, box.height / vh);
+        const w = vw * scale;
+        const h = vh * scale;
+        return { left: (box.width - w) / 2, top: (box.height - h) / 2, w, h };
+    }
+
+    function drawUnits() {
+        const pic = pictureBox();
+        for (const h of [...chosen]) if (!myUnits.some((unit) => unit.h === h)) chosen.delete(h);
+        marks.innerHTML = myUnits.map((unit) => '<button type="button" class="coop-mark' + (chosen.has(unit.h) ? " is-chosen" : "") +
+            '" data-unit="' + unit.h + '" style="left:' + (pic.left + unit.x * pic.w).toFixed(1) + "px;top:" + (pic.top + unit.y * pic.h).toFixed(1) +
+            'px"><span class="coop-mark-life" style="width:' + Math.round(Math.max(0, Math.min(1, unit.hp)) * 100) + '%"></span></button>').join("");
+        unitsLabel.textContent = myUnits.length ? fill(T.my_units, { count: myUnits.length }) : T.none_alive;
+    }
+
+    function sendOrder(x, y) {
+        if (!guestChannel || guestChannel.readyState !== "open" || !myUnits.length) return;
+        const units = chosen.size ? [...chosen] : myUnits.map((unit) => unit.h);
+        guestChannel.send(JSON.stringify({ type: "order", units, x, y }));
+        const ping = document.createElement("span");  // where the order went
+        ping.className = "coop-ping";
+        const pic = pictureBox();
+        ping.style.left = (pic.left + x * pic.w) + "px";
+        ping.style.top = (pic.top + y * pic.h) + "px";
+        marks.appendChild(ping);
+        setTimeout(() => ping.remove(), 700);
+    }
+
+    marks.addEventListener("click", (event) => {
+        const mark = event.target.closest(".coop-mark");
+        if (mark) {
+            const h = Number(mark.dataset.unit);
+            if (event.shiftKey || event.ctrlKey) {
+                if (chosen.has(h)) chosen.delete(h); else chosen.add(h);
+            } else {
+                chosen.clear();
+                chosen.add(h);
+            }
+            drawUnits();
+            return;
+        }
+        const pic = pictureBox();
+        const box = marks.getBoundingClientRect();
+        const x = (event.clientX - box.left - pic.left) / pic.w;
+        const y = (event.clientY - box.top - pic.top) / pic.h;
+        if (x >= 0 && x <= 1 && y >= 0 && y <= 1) sendOrder(x, y);
+    });
 
     function hostName(room) {
         const host = room && room.players.find((p) => p.id === room.host);
         return host ? host.name : "";
     }
 
-    function guestJoin() {
+    // The host may still be loading the island when a guest asks: the guest asks again every 5 s (4 times), then
+    // says so and offers to try again.
+    function guestJoin(attempt = 1) {
         const room = state && state.room;
         if (!room || room.status !== "sailing" || room.is_host) return;
         viewer.hidden = false;
@@ -385,17 +539,34 @@
         viewerNote.hidden = true;
         signal(room.host, { kind: "join" });
         clearTimeout(joinTimer);
-        joinTimer = setTimeout(() => {  // no picture after a while: say so, and offer to try again
-            if (!video.srcObject) {
-                viewerNote.innerHTML = esc(T.no_video) + " " + button(T.retry, "viewer-retry", "brown");
-                viewerNote.hidden = false;
+        joinTimer = setTimeout(() => {
+            if (video.srcObject) return;
+            if (attempt < 4) {
+                guestJoin(attempt + 1);
+                return;
             }
-        }, 15000);
+            viewerNote.innerHTML = esc(T.no_video) + " " + button(T.retry, "viewer-retry", "brown");
+            viewerNote.hidden = false;
+        }, 5000);
     }
 
     async function guestTakeOffer(from, sdp) {
         if (guestPeer) guestPeer.close();
         guestPeer = newPeer(from);
+        guestPeer.ondatachannel = (event) => {
+            guestChannel = event.channel;
+            guestChannel.onmessage = (message) => {
+                try {
+                    const data = JSON.parse(message.data);
+                    if (data.type === "units" && Array.isArray(data.units)) {
+                        myUnits = data.units;
+                        drawUnits();
+                    }
+                } catch (error) {
+                    // a broken message: the next one
+                }
+            };
+        };
         guestPeer.ontrack = (event) => {
             video.srcObject = event.streams[0];
             viewerTitle.textContent = fill(T.watching, { name: hostName(state && state.room) });
@@ -413,6 +584,11 @@
         peers.clear();
         if (guestPeer) guestPeer.close();
         guestPeer = null;
+        guestChannel = null;
+        myUnits = [];
+        chosen.clear();
+        owners.clear();
+        ownerCounts = null;
         earlyIce = [];
         video.srcObject = null;
         viewer.hidden = true;
@@ -444,7 +620,11 @@
         const target = event.target.closest("[data-action]");
         if (!target) return;
         const room = state && state.room;
-        if (target.dataset.action === "viewer-leave") {
+        if (target.dataset.action === "select-all") {
+            chosen.clear();
+            for (const unit of myUnits) chosen.add(unit.h);
+            drawUnits();
+        } else if (target.dataset.action === "viewer-leave") {
             if (room) await act({ action: "leave", room: room.id });
             stopVideo();
             render();

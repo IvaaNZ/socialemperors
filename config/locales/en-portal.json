@@ -901,5 +901,9 @@
   "Assistindo ao vivo a ilha de {name}": "Watching {name}'s island live",
   "Conectando com a ilha de {name}…": "Connecting to {name}'s island…",
   "Não foi possível ver a ilha ao vivo. A incursão continua.": "The island could not be shown live. The raid goes on.",
-  "Tentar de novo": "Try again"
+  "Tentar de novo": "Try again",
+  "Toque uma das suas unidades para escolhê-la; depois toque o mapa para movê-la ou um inimigo para atacar.": "Tap one of your units to choose it; then tap the map to move it or an enemy to attack.",
+  "Todas as minhas unidades": "All my units",
+  "Minhas unidades: {count}": "My units: {count}",
+  "Suas unidades caíram. Continue assistindo à incursão.": "Your units fell. Keep watching the raid."
 }

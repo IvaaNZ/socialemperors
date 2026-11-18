@@ -23,8 +23,14 @@ Two edits:
     COOP_UNITS units; its answer goes to the page the same way ('seCoopPicked' with no island).
   - Base.__seCoopSail(quest, army): the clan raid sets sail (phase 2): the kept manager loads the island with
     every player's units (PopupQuestsManager.loadQuestMapWithSelectedArmy, as after the team window).
-  - Base.__registerCoop(), called first in Base.init: ExternalInterface callbacks 'seCoopGo', 'seCoopPick' and
-    'seCoopSail'.
+  - Base.__seCoopUnits() (phase 4): the player's units alive on the island, each with a handle (its place in
+    Base.__seUnits, kept for the raid), its unit id, where it is on the stage and its life: the page shows each
+    guest its own units;
+  - Base.__seCoopOrder(handles, x, y) (phase 4): those units attack the enemy at (x, y) of the stage (the game's
+    own search, IsoEngine.getNearestEnemy, two tiles around Utils.PixelToTile of the point) or walk there
+    (IsoUnit.IA_Attack / IA_Move, as the computer's units are moved); the host's own selection is not touched;
+  - Base.__registerCoop(), called first in Base.init: ExternalInterface callbacks 'seCoopGo', 'seCoopPick',
+    'seCoopSail', 'seCoopUnits' and 'seCoopOrder'.
 
 Every new method runs inside a try/catch: an error falls back to the game's own way (Solitario).
 """
@@ -40,6 +46,7 @@ from swf_range_overlay import OPCODE_BY_NAME, _qname
 COOP_UNITS = 10
 CHOOSE_CALL, PICKED_CALL = 'seCoopChoose', 'seCoopPicked'
 GO_CALLBACK, PICK_CALLBACK, SAIL_CALLBACK = 'seCoopGo', 'seCoopPick', 'seCoopSail'
+UNITS_CALLBACK, ORDER_CALLBACK = 'seCoopUnits', 'seCoopOrder'
 GAME_MODE_NORMAL = 1
 
 
@@ -121,7 +128,8 @@ def add_coop_to_abc(abc):
     n = {name: _qname(abc, name, package) for name, package in {
         'ExternalInterface': 'flash.external', 'available': '', 'call': '', 'addCallback': '', 'x': '', 'y': '',
         'parent': '', 'removeChild': '', 'addChild': '', 'visible': ''}.items()}
-    s = {text: abc.add_string(text) for text in (CHOOSE_CALL, PICKED_CALL, GO_CALLBACK, PICK_CALLBACK, SAIL_CALLBACK)}
+    s = {text: abc.add_string(text) for text in (CHOOSE_CALL, PICKED_CALL, GO_CALLBACK, PICK_CALLBACK, SAIL_CALLBACK,
+                                                  UNITS_CALLBACK, ORDER_CALLBACK)}
     g = lambda name: ('getproperty', m[('getproperty', name)])  # noqa: E731
     lex_base = ('getlex', m[('getlex', 'Base')])
 
@@ -263,7 +271,90 @@ def add_coop_to_abc(abc):
         ('pushtrue',), ('returnvalue',),
         ('label:', 'no'), ('pushfalse',), ('returnvalue',)], 4, 4, True, error_text=True)
 
+    # ---- phase 4: the guests' units, seen and ordered from the host's game.
+    u = _used_names(abc, {
+        ('callproperty', 'PixelToTile'), ('getlex', 'Utils'), ('getproperty', 'buildingLayer'),
+        ('callproperty', 'globalToLocal'), ('callproperty', 'localToGlobal'), ('callproperty', 'getNearestEnemy'),
+        ('getproperty', 'arPlayerIsoFightingElements'), ('getlex', 'IsoUnit'), ('getproperty', 'bDead'),
+        ('getproperty', 'iID'), ('getproperty', 'iHealth'), ('getproperty', 'maxLife'),
+        ('callpropvoid', 'IA_Attack'), ('callpropvoid', 'IA_Move'), ('setproperty', 'TargetElement'),
+        ('callproperty', 'indexOf'), ('callpropvoid', 'push'), ('getproperty', 'length'), ('getproperty', 'tx'),
+        ('getproperty', 'ty'), ('getproperty', '<late>'), ('findpropstrict', 'Point'), ('constructprop', 'Point')})
+    gp = lambda name: ('getproperty', u[('getproperty', name)])  # noqa: E731
+    late = gp('<late>')
+    units_slot = slot(base_static, '__seUnits')  # the raid's units in the order they were first seen: their handles
+    for text in ('h', 'id', 'x', 'y', 'hp', 'max'):
+        s[text] = abc.add_string(text)
+    point = [('findpropstrict', u[('findpropstrict', 'Point')])]
+    new_point = lambda: point + [('pushbyte', 0), ('pushbyte', 0), ('constructprop', u[('constructprop', 'Point')], 2)]  # noqa: E731
+
+    # Base.__seCoopUnits(): [{h, id, x, y (stage), hp, max}] of the player's units alive on the island.
+    # Locals: 1 list, 2 index, 3 unit, 4 handle, 5 stage point, 6 result.
+    units = method('Base', '__seCoopUnits', 0, [
+        lex_base, ('getproperty', units_slot), ('iftrue', 'kept'),
+        lex_base, ('newarray', 0), ('setproperty', units_slot),
+        ('label:', 'kept'),
+        ('newarray', 0), ('setlocal', 6),
+        lex_base, g('Iso'), gp('arPlayerIsoFightingElements'), ('setlocal1',),
+        ('pushbyte', 0), ('setlocal2',),
+        ('label:', 'loop'), ('label',),
+        ('getlocal2',), ('getlocal1',), gp('length'), ('ifnlt', 'end'),
+        ('getlocal1',), ('getlocal2',), late, ('setlocal3',),
+        ('getlocal3',), ('getlex', u[('getlex', 'IsoUnit')]), ('istypelate',), ('iffalse', 'next'),
+        ('getlocal3',), gp('bDead'), ('iftrue', 'next'),
+        lex_base, ('getproperty', units_slot), ('getlocal3',), ('callproperty', u[('callproperty', 'indexOf')], 1),
+        ('convert_i',), ('setlocal', 4),
+        ('getlocal', 4), ('pushbyte', 0), ('ifge', 'known'),
+        lex_base, ('getproperty', units_slot), gp('length'), ('convert_i',), ('setlocal', 4),
+        lex_base, ('getproperty', units_slot), ('getlocal3',), ('callpropvoid', u[('callpropvoid', 'push')], 1),
+        ('label:', 'known'),
+        ('getlocal3',)] + new_point() + [('callproperty', u[('callproperty', 'localToGlobal')], 1), ('setlocal', 5),
+        ('getlocal', 6),
+        ('pushstring', s['h']), ('getlocal', 4),
+        ('pushstring', s['id']), ('getlocal3',), gp('iID'),
+        ('pushstring', s['x']), ('getlocal', 5), ('getproperty', n['x']),
+        ('pushstring', s['y']), ('getlocal', 5), ('getproperty', n['y']),
+        ('pushstring', s['hp']), ('getlocal3',), gp('iHealth'),
+        ('pushstring', s['max']), ('getlocal3',), gp('maxLife'),
+        ('newobject', 6), ('callpropvoid', u[('callpropvoid', 'push')], 1),
+        ('label:', 'next'), ('getlocal2',), ('increment_i',), ('setlocal2',), ('jump', 'loop'),
+        ('label:', 'end'), ('getlocal', 6), ('returnvalue',)], 16, 7, True)
+
+    # Base.__seCoopOrder(handles, x, y): the units of those handles attack the enemy at (x, y) of the stage, or
+    # walk there. Locals: 1 handles, 2-3 the point, 4 tile, 5 target, 6 index, 7 unit, 8 layer point.
+    order = method('Base', '__seCoopOrder', 3, [
+        lex_base, ('getproperty', units_slot), ('iffalse', 'no'),
+        ('getlocal0',), gp('buildingLayer'),
+        ('findpropstrict', u[('findpropstrict', 'Point')]), ('getlocal2',), ('getlocal3',),
+        ('constructprop', u[('constructprop', 'Point')], 2),
+        ('callproperty', u[('callproperty', 'globalToLocal')], 1), ('setlocal', 8),
+        ('getlex', u[('getlex', 'Utils')]), ('getlocal', 8), ('getproperty', n['x']), ('getlocal', 8), ('getproperty', n['y']),
+        ('callproperty', u[('callproperty', 'PixelToTile')], 2), ('setlocal', 4),
+        # an enemy on (or right beside) that tile: the game's own search, from the player's side
+        lex_base, g('Iso'), ('getlocal', 4), gp('tx'), ('getlocal', 4), gp('ty'), ('pushfalse',), ('pushbyte', 2),
+        ('callproperty', u[('callproperty', 'getNearestEnemy')], 4), ('setlocal', 5),
+        ('pushbyte', 0), ('setlocal', 6),
+        ('label:', 'loop'), ('label',),
+        ('getlocal', 6), ('getlocal1',), gp('length'), ('ifnlt', 'done'),
+        lex_base, ('getproperty', units_slot), ('getlocal1',), ('getlocal', 6), late, late, ('setlocal', 7),
+        ('getlocal', 7), ('iffalse', 'next'),
+        ('getlocal', 7), gp('bDead'), ('iftrue', 'next'),
+        ('getlocal', 5), ('iffalse', 'walk'),
+        ('getlocal', 7), ('getlocal', 5), ('setproperty', u[('setproperty', 'TargetElement')]),
+        ('getlocal', 7), ('getlocal', 5), ('callpropvoid', u[('callpropvoid', 'IA_Attack')], 1), ('jump', 'next'),
+        ('label:', 'walk'),
+        ('getlocal', 7), ('pushnull',), ('setproperty', u[('setproperty', 'TargetElement')]),
+        ('getlocal', 7), ('getlocal', 4), gp('tx'), ('getlocal', 4), gp('ty'),
+        ('callpropvoid', u[('callpropvoid', 'IA_Move')], 2),
+        ('label:', 'next'), ('getlocal', 6), ('increment_i',), ('setlocal', 6), ('jump', 'loop'),
+        ('label:', 'done'), ('pushtrue',), ('returnvalue',),
+        ('label:', 'no'), ('pushfalse',), ('returnvalue',)], 8, 9, True, error_text=True)
+
     register = method('Base', '__registerCoop', 0, page + [('iffalse', 'done')] + [
+        ('getlex', n['ExternalInterface']), ('pushstring', s[UNITS_CALLBACK]), ('getlocal0',), ('getproperty', units),
+        ('callpropvoid', n['addCallback'], 2),
+        ('getlex', n['ExternalInterface']), ('pushstring', s[ORDER_CALLBACK]), ('getlocal0',), ('getproperty', order),
+        ('callpropvoid', n['addCallback'], 2),
         ('getlex', n['ExternalInterface']), ('pushstring', s[SAIL_CALLBACK]), ('getlocal0',), ('getproperty', sail),
         ('callpropvoid', n['addCallback'], 2),
         ('getlex', n['ExternalInterface']), ('pushstring', s[GO_CALLBACK]), ('getlocal0',), ('getproperty', go),
