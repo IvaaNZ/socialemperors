@@ -915,5 +915,10 @@
   "Toque uma das suas unidades para escolhê-la; depois toque o mapa para movê-la ou um inimigo para atacar.": "Toca una de tus unidades para elegirla; después toca el mapa para moverla o un enemigo para atacar.",
   "Todas as minhas unidades": "Todas mis unidades",
   "Minhas unidades: {count}": "Mis unidades: {count}",
-  "Suas unidades caíram. Continue assistindo à incursão.": "Tus unidades cayeron. Sigue viendo la incursión."
+  "Suas unidades caíram. Continue assistindo à incursão.": "Tus unidades cayeron. Sigue viendo la incursión.",
+  "Vitória na incursão do clã!": "¡Victoria en la incursión del clan!",
+  "A incursão do clã terminou sem vitória.": "La incursión del clan terminó sin victoria.",
+  "Cada jogador recebe {gold} de ouro e {xp} de XP.": "Cada jugador recibe {gold} de oro y {xp} de XP.",
+  "O clã ganha {points} de prestígio.": "El clan gana {points} de prestigio.",
+  "Prestígio {points}": "Prestigio {points}"
 }

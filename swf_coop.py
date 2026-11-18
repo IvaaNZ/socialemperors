@@ -46,7 +46,7 @@ from swf_range_overlay import OPCODE_BY_NAME, _qname
 COOP_UNITS = 10
 CHOOSE_CALL, PICKED_CALL = 'seCoopChoose', 'seCoopPicked'
 GO_CALLBACK, PICK_CALLBACK, SAIL_CALLBACK = 'seCoopGo', 'seCoopPick', 'seCoopSail'
-UNITS_CALLBACK, ORDER_CALLBACK = 'seCoopUnits', 'seCoopOrder'
+UNITS_CALLBACK, ORDER_CALLBACK, BUFF_CALLBACK = 'seCoopUnits', 'seCoopOrder', 'seCoopBuff'
 GAME_MODE_NORMAL = 1
 
 
@@ -129,7 +129,7 @@ def add_coop_to_abc(abc):
         'ExternalInterface': 'flash.external', 'available': '', 'call': '', 'addCallback': '', 'x': '', 'y': '',
         'parent': '', 'removeChild': '', 'addChild': '', 'visible': ''}.items()}
     s = {text: abc.add_string(text) for text in (CHOOSE_CALL, PICKED_CALL, GO_CALLBACK, PICK_CALLBACK, SAIL_CALLBACK,
-                                                  UNITS_CALLBACK, ORDER_CALLBACK)}
+                                                  UNITS_CALLBACK, ORDER_CALLBACK, BUFF_CALLBACK)}
     g = lambda name: ('getproperty', m[('getproperty', name)])  # noqa: E731
     lex_base = ('getlex', m[('getlex', 'Base')])
 
@@ -268,6 +268,9 @@ def add_coop_to_abc(abc):
         ('getlocal3',), ('iffalse', 'no'),
         ('getlocal3',), ('getlocal1',), ('setproperty', m[('getproperty', 'questIDtoLoad')]),
         ('getlocal3',), ('getlocal2',), ('callpropvoid', m[('callpropvoid', 'loadQuestMapWithSelectedArmy')], 1),
+        # a new raid: its units and its strengthened enemies are counted from zero (phases 4 and 5)
+        lex_base, ('newarray', 0), ('setproperty', abc.add_qname('', '__seUnits')),
+        lex_base, ('newarray', 0), ('setproperty', abc.add_qname('', '__seBuffed')),
         ('pushtrue',), ('returnvalue',),
         ('label:', 'no'), ('pushfalse',), ('returnvalue',)], 4, 4, True, error_text=True)
 
@@ -279,11 +282,12 @@ def add_coop_to_abc(abc):
         ('getproperty', 'iID'), ('getproperty', 'iHealth'), ('getproperty', 'maxLife'),
         ('callpropvoid', 'IA_Attack'), ('callpropvoid', 'IA_Move'), ('setproperty', 'TargetElement'),
         ('callproperty', 'indexOf'), ('callpropvoid', 'push'), ('getproperty', 'length'), ('getproperty', 'tx'),
-        ('getproperty', 'ty'), ('getproperty', '<late>'), ('findpropstrict', 'Point'), ('constructprop', 'Point')})
+        ('getproperty', 'ty'), ('getproperty', '<late>'), ('findpropstrict', 'Point'), ('constructprop', 'Point'),
+        ('getproperty', 'arEnemyIsoFightingElements'), ('getproperty', 'uiAttack')})
     gp = lambda name: ('getproperty', u[('getproperty', name)])  # noqa: E731
     late = gp('<late>')
     units_slot = slot(base_static, '__seUnits')  # the raid's units in the order they were first seen: their handles
-    for text in ('h', 'id', 'x', 'y', 'hp', 'max'):
+    for text in ('h', 'id', 'x', 'y', 'hp', 'max', 'd'):
         s[text] = abc.add_string(text)
     point = [('findpropstrict', u[('findpropstrict', 'Point')])]
     new_point = lambda: point + [('pushbyte', 0), ('pushbyte', 0), ('constructprop', u[('constructprop', 'Point')], 2)]  # noqa: E731
@@ -318,7 +322,43 @@ def add_coop_to_abc(abc):
         ('pushstring', s['max']), ('getlocal3',), gp('maxLife'),
         ('newobject', 6), ('callpropvoid', u[('callpropvoid', 'push')], 1),
         ('label:', 'next'), ('getlocal2',), ('increment_i',), ('setlocal2',), ('jump', 'loop'),
-        ('label:', 'end'), ('getlocal', 6), ('returnvalue',)], 16, 7, True)
+        # the raid's units that died (they stay in Base.__seUnits): {h, id, d: true}, so each loss is counted
+        ('label:', 'end'),
+        lex_base, ('getproperty', units_slot), ('setlocal1',),
+        ('pushbyte', 0), ('setlocal2',),
+        ('label:', 'dead'), ('label',),
+        ('getlocal2',), ('getlocal1',), gp('length'), ('ifnlt', 'done'),
+        ('getlocal1',), ('getlocal2',), late, ('setlocal3',),
+        ('getlocal3',), gp('bDead'), ('iffalse', 'alive'),
+        ('getlocal', 6), ('pushstring', s['h']), ('getlocal2',), ('pushstring', s['id']), ('getlocal3',), gp('iID'),
+        ('pushstring', s['d']), ('pushtrue',), ('newobject', 3), ('callpropvoid', u[('callpropvoid', 'push')], 1),
+        ('label:', 'alive'), ('getlocal2',), ('increment_i',), ('setlocal2',), ('jump', 'dead'),
+        ('label:', 'done'), ('getlocal', 6), ('returnvalue',)], 16, 7, True)
+
+    # Base.__seCoopBuff(factor): the island's enemies not yet strengthened get factor times their life and attack
+    # (a clan raid is harder: COOP_PLAN.md, point 30). Locals: 1 factor, 2 list, 3 index, 4 enemy.
+    buffed_slot = slot(base_static, '__seBuffed')
+    buff = method('Base', '__seCoopBuff', 1, [
+        lex_base, ('getproperty', buffed_slot), ('iftrue', 'kept'),
+        lex_base, ('newarray', 0), ('setproperty', buffed_slot),
+        ('label:', 'kept'),
+        lex_base, g('Iso'), gp('arEnemyIsoFightingElements'), ('setlocal2',),
+        ('pushbyte', 0), ('setlocal3',),
+        ('label:', 'loop'), ('label',),
+        ('getlocal3',), ('getlocal2',), gp('length'), ('ifnlt', 'end'),
+        ('getlocal2',), ('getlocal3',), late, ('setlocal', 4),
+        ('getlocal', 4), gp('bDead'), ('iftrue', 'next'),
+        lex_base, ('getproperty', buffed_slot), ('getlocal', 4), ('callproperty', u[('callproperty', 'indexOf')], 1),
+        ('pushbyte', 0), ('ifge', 'next'),
+        lex_base, ('getproperty', buffed_slot), ('getlocal', 4), ('callpropvoid', u[('callpropvoid', 'push')], 1),
+        ('getlocal', 4), ('getlocal', 4), gp('maxLife'), ('getlocal1',), ('multiply',), ('convert_i',),
+        ('setproperty', u[('getproperty', 'maxLife')]),
+        ('getlocal', 4), ('getlocal', 4), gp('iHealth'), ('getlocal1',), ('multiply',), ('convert_i',),
+        ('setproperty', u[('getproperty', 'iHealth')]),
+        ('getlocal', 4), ('getlocal', 4), gp('uiAttack'), ('getlocal1',), ('multiply',), ('convert_u',),
+        ('setproperty', u[('getproperty', 'uiAttack')]),
+        ('label:', 'next'), ('getlocal3',), ('increment_i',), ('setlocal3',), ('jump', 'loop'),
+        ('label:', 'end'), ('pushtrue',), ('returnvalue',)], 8, 5, True, error_text=True)
 
     # Base.__seCoopOrder(handles, x, y): the units of those handles attack the enemy at (x, y) of the stage, or
     # walk there. Locals: 1 handles, 2-3 the point, 4 tile, 5 target, 6 index, 7 unit, 8 layer point.
@@ -354,6 +394,8 @@ def add_coop_to_abc(abc):
         ('getlex', n['ExternalInterface']), ('pushstring', s[UNITS_CALLBACK]), ('getlocal0',), ('getproperty', units),
         ('callpropvoid', n['addCallback'], 2),
         ('getlex', n['ExternalInterface']), ('pushstring', s[ORDER_CALLBACK]), ('getlocal0',), ('getproperty', order),
+        ('callpropvoid', n['addCallback'], 2),
+        ('getlex', n['ExternalInterface']), ('pushstring', s[BUFF_CALLBACK]), ('getlocal0',), ('getproperty', buff),
         ('callpropvoid', n['addCallback'], 2),
         ('getlex', n['ExternalInterface']), ('pushstring', s[SAIL_CALLBACK]), ('getlocal0',), ('getproperty', sail),
         ('callpropvoid', n['addCallback'], 2),

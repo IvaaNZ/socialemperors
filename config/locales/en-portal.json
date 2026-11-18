@@ -905,5 +905,10 @@
   "Toque uma das suas unidades para escolhê-la; depois toque o mapa para movê-la ou um inimigo para atacar.": "Tap one of your units to choose it; then tap the map to move it or an enemy to attack.",
   "Todas as minhas unidades": "All my units",
   "Minhas unidades: {count}": "My units: {count}",
-  "Suas unidades caíram. Continue assistindo à incursão.": "Your units fell. Keep watching the raid."
+  "Suas unidades caíram. Continue assistindo à incursão.": "Your units fell. Keep watching the raid.",
+  "Vitória na incursão do clã!": "Clan raid won!",
+  "A incursão do clã terminou sem vitória.": "The clan raid ended without a victory.",
+  "Cada jogador recebe {gold} de ouro e {xp} de XP.": "Each player gets {gold} gold and {xp} XP.",
+  "O clã ganha {points} de prestígio.": "The clan earns {points} prestige.",
+  "Prestígio {points}": "Prestige {points}"
 }

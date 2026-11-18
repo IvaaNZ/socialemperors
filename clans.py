@@ -253,7 +253,17 @@ class ClanStore:
         ('recruit_open', 'INTEGER NOT NULL DEFAULT 0'),
         ('recruit_min_level', 'INTEGER NOT NULL DEFAULT 1'),
         ('recruit_language', "TEXT NOT NULL DEFAULT 'all'"),
+        ('prestige', 'INTEGER NOT NULL DEFAULT 0'),  # point 29: adventures won by its members
     )
+
+    def add_prestige(self, clan_id, points):
+        """Point 29: an adventure island won by a member adds prestige to its clan (5 alone, 15 in a clan raid).
+        Returns the clan's prestige, or None when the clan no longer exists."""
+        with self._connection() as connection:
+            updated = connection.execute('UPDATE clans SET prestige = prestige + ? WHERE id = ?', (int(points), clan_id))
+            if not updated.rowcount:
+                return None
+            return connection.execute('SELECT prestige FROM clans WHERE id = ?', (clan_id,)).fetchone()['prestige']
 
     def _migrate(self):
         """Columns added after the first version: an existing database gets them with their defaults."""

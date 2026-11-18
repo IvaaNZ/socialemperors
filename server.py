@@ -174,6 +174,7 @@ def village_revision(userid):
     return '.'.join(value for value in (
         raids().revision(userid), village_admin().change_revision(userid), economy().revision(userid),
         season_pass_revision(village_session(userid)) if SEASON_PASS_ENABLED else '',
+        app.extensions['coop'].revision(userid) if 'coop' in app.extensions else '',  # a clan raid changed it
     ) if value)
 
 
@@ -1237,7 +1238,7 @@ if DUELS_ENABLED:
         app.extensions['duels'].result_listeners.append(app.extensions['season_pass']['on_duel'])
 if COOP_ENABLED and CLANS_ENABLED:  # the clan raid's room (coop_web.py); its live notices need SE_DUELS
     from coop_web import install_coop
-    install_coop(app, accounts, data_dir)
+    install_coop(app, accounts, data_dir, village_lock, village_session, save_village)
 
 print (" [+] Running server...")
 

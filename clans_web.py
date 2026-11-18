@@ -83,6 +83,7 @@ def overlay_texts():
         'no_clan': _('Você ainda não está em um clã. Busque um clã para entrar ou crie o seu.'),
         'search_placeholder': _('Buscar por nome ou etiqueta'), 'search': _('Buscar'),
         'members_count': _('{count} de {max} membros'), 'power': _('Poder {power}'), 'level_min': _('Nível {level}+'),
+        'prestige': _('Prestígio {points}'),
         'open': _('Aberto'), 'by_request': _('Com pedido'), 'join': _('Entrar'), 'ask': _('Pedir para entrar'),
         'requested': _('Pedido enviado'), 'cancel_request': _('Cancelar pedido'), 'view': _('Ver'), 'back': _('Voltar'),
         'leader': _('Líder: {name}'), 'your_rank': _('Seu cargo: {role}'),
@@ -468,7 +469,8 @@ def install_clans(app, accounts, village_lock, all_saves_userid, village_session
         return {'id': clan['id'], 'name': clan['name'], 'tag': clan['tag'], 'description': clan['description'],
                 'emblem': clan.get('emblem', 1), 'open': bool(clan.get('recruit_open')),
                 'min_level': clan.get('recruit_min_level', 1), 'language': clan.get('recruit_language', 'all'),
-                'members': count if count is not None else len(clan.get('members', []))}
+                'members': count if count is not None else len(clan.get('members', [])),
+                'prestige': int(clan.get('prestige') or 0)}
 
     def clan_detail(clan_id, viewer):
         clan = store.clan(clan_id)

@@ -74,7 +74,9 @@
                 '<div class="clanx-banner-text"><div class="clanx-ribbon">[' + esc(clan.tag) + "] " + esc(clan.name) + "</div>" +
                 (clan.description ? '<p class="clanx-motto">« ' + esc(clan.description) + " »</p>" : "") +
                 '<p class="clanx-facts"><span>' + esc(fill(T.power, { power: number(clan.power, lang) })) + "</span>" +
-                "<span>" + esc(fill(T.members_count, { count: clan.members, max: clan.max })) + "</span></p></div></div>";
+                "<span>" + esc(fill(T.members_count, { count: clan.members, max: clan.max })) + "</span>" +
+                (T.prestige ? "<span>" + esc(fill(T.prestige, { points: number(clan.prestige || 0, lang) })) + "</span>" : "") +
+                "</p></div></div>";
         },
 
         clan(T, state, lang, editing) {

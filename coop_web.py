@@ -14,7 +14,8 @@ import json
 from flask import abort, g, jsonify, request, session, url_for
 
 from auth import validate_csrf
-from coop import MAX_PLAYERS, TEAM_UNITS, CoopError, CoopStore
+from coop import (CLAN_REWARD, DIFFICULTY_STEP, MAX_PLAYERS, PRESTIGE_GROUP, PRESTIGE_SOLO, SOLO_REWARD, TEAM_UNITS,
+                  CoopError, CoopStore)
 import os
 
 from duels_web import is_unit_death
@@ -60,6 +61,9 @@ def overlay_texts():
         'command_hint': _('Toque uma das suas unidades para escolhê-la; depois toque o mapa para movê-la ou um inimigo para atacar.'),
         'all_units': _('Todas as minhas unidades'), 'my_units': _('Minhas unidades: {count}'),
         'none_alive': _('Suas unidades caíram. Continue assistindo à incursão.'),
+        'raid_won': _('Vitória na incursão do clã!'), 'raid_lost': _('A incursão do clã terminou sem vitória.'),
+        'raid_share': _('Cada jogador recebe {gold} de ouro e {xp} de XP.'),
+        'raid_prestige': _('O clã ganha {points} de prestígio.'),
         'close_room': _('Fechar a sala'), 'leave': _('Sair da sala'),
         'invite_title': _('{name} convida você para uma incursão do clã'),
         'invite_detail': _('Leve até 10 unidades da sua aldeia.'),
@@ -76,7 +80,16 @@ def overlay_texts():
     }
 
 
-def install_coop(app, accounts, data_dir):
+def scaled_end_quest(item, factor):
+    """An end_quest command with its gold and experience times factor (the island's reward), and its data."""
+    data = json.loads(item['args'][0])
+    resources = data.get('resources', {})
+    for key in ('g', 'x'):
+        resources[key] = int(int(resources.get(key, 0)) * factor)
+    return dict(item, args=[json.dumps(data)] + list(item['args'][1:])), data
+
+
+def install_coop(app, accounts, data_dir, village_lock=None, village_session=None, save_village=None):
     """Register the room's routes (SE_COOP=on with SE_CLANS=on)."""
     clans = app.extensions.get('clans')
     if clans is None:
@@ -229,19 +242,99 @@ def install_coop(app, accounts, data_dir):
         live.send_to(target, {'type': 'coop_signal', 'room': room['id'], 'from': account['id'], 'payload': payload})
         return jsonify({'ok': True})
 
+    def village_of(account_id):
+        account = accounts().get(account_id)
+        return account['village_id'] if account else None
+
+    def credit(village_id, gold, xp):
+        """A guest's share of the island, into its home village."""
+        if not village_id or village_lock is None:
+            return
+        with village_lock:
+            save = village_session(village_id)
+            home = save['maps'][0]
+            home['coins'] = int(home.get('coins', 0)) + gold
+            home['xp'] = int(home.get('xp', 0)) + xp
+            save_village(village_id)
+
+    def lose_unit(village_id, unit_id):
+        """A unit lost in a raid leaves its owner's village: one of that kind on the home map."""
+        if not village_id or village_lock is None:
+            return False
+        with village_lock:
+            save = village_session(village_id)
+            items = save['maps'][0]['items']
+            for item in items:
+                if item and int(item[0]) == unit_id:
+                    items.remove(item)
+                    save_village(village_id)
+                    return True
+        return False
+
+    def end_raid(room, data, players):
+        """The host's island ended: each player's share, the clan's prestige, the guests told."""
+        win = int(data.get('win', 0)) == 1
+        gold = int(data.get('resources', {}).get('g', 0))
+        xp = int(data.get('resources', {}).get('x', 0))
+        for player in players:
+            if player['state'] == 'accepted':
+                credit(village_of(player['account_id']), gold, xp)
+            store.village_changed(village_of(player['account_id']))  # their open games reload
+        prestige = None
+        if win and len(players) >= 2:
+            prestige = clans.add_prestige(room['clan_id'], PRESTIGE_GROUP)
+        store.finish(room['id'])
+        live = hub()
+        if live is not None:
+            for player in players:
+                live.send_to(player['account_id'], {'type': 'coop_end', 'room': room['id'], 'win': win, 'gold': gold,
+                                                    'xp': xp, 'prestige': PRESTIGE_GROUP if prestige is not None else 0})
+        print(f" [coop] raid {room['id']} ended: win={win}, {gold} gold and {xp} XP each for {len(players)} players")
+
     def filter_commands(userid, commands):
-        """During a raid at sea, the host's game reports the deaths of every player's units: none of them may
-        leave the host's village. Phase 5 gives each loss to its owner; until then nobody loses units."""
+        """The game's commands, before the village applies them:
+          * the host of a raid at sea: unit deaths dropped (they mix every player's units; the host's page reports
+            each loss to its owner, coop_api_death), and the island's end gives each player CLAN_REWARD of it;
+          * anyone else: an island ended alone gives SOLO_REWARD of it, and prestige to the player's clan if won.
+        The guests' games are in their own villages: their deaths count as always."""
         account_id = next((row['id'] for row in accounts().list_accounts() if row.get('village_id') == userid), None)
-        if account_id is None or store.sailing_room_of(account_id) is None:
-            return commands
+        room = store.sailing_room_of(account_id) if account_id is not None else None
+        hosting = room is not None and room['host_id'] == account_id
         kept = []
         for item in commands:
-            if is_unit_death(item):
+            if hosting and is_unit_death(item):
                 print(f" [coop] raid command dropped for {userid}: {item.get('cmd')}({item.get('args')})")
-            else:
-                kept.append(item)
+                continue
+            if item.get('cmd') == 'end_quest' and item.get('args'):
+                try:
+                    if hosting:
+                        item, data = scaled_end_quest(item, CLAN_REWARD)
+                        players = [p for p in room['players'] if p['state'] in ('host', 'accepted') and p['team']]
+                        end_raid(room, data, players)
+                    else:
+                        item, data = scaled_end_quest(item, SOLO_REWARD)
+                        membership = clans.membership(account_id) if account_id is not None else None
+                        if int(data.get('win', 0)) == 1 and membership:
+                            clans.add_prestige(membership['clan_id'], PRESTIGE_SOLO)
+                except (ValueError, TypeError, KeyError, IndexError) as error:
+                    print(f" [coop] end_quest left as it was for {userid}: {error}")
+            kept.append(item)
         return kept
+
+    @app.post('/coop/api/death', endpoint='coop_api_death')
+    def coop_api_death():
+        """The host's page: a unit of the raid died; it leaves its owner's village (once)."""
+        account = api_player()
+        validate_csrf()
+        try:
+            room_id, handle = int(request.form.get('room', '')), int(request.form.get('handle', ''))
+            owner, unit = int(request.form.get('owner', '')), int(request.form.get('unit', ''))
+            first = store.record_death(account['id'], room_id, handle, owner, unit)
+        except (ValueError, CoopError):
+            return jsonify({'ok': False}), 400
+        removed = lose_unit(village_of(owner), unit) if first else False
+        print(f" [coop] raid {room_id}: unit {unit} of player {owner} died" + (' (left its village)' if removed else ''))
+        return jsonify({'ok': True, 'removed': removed})
 
     app.extensions['coop_command_filter'] = filter_commands
 
@@ -251,6 +344,7 @@ def install_coop(app, accounts, data_dir):
             return {}
         return {'coop_overlay': {'state': url_for('coop_api_state'), 'action': url_for('coop_api_action'),
                                  'signal': url_for('coop_api_signal'), 'ice': ice_servers(),
+                                 'death': url_for('coop_api_death'), 'difficulty': DIFFICULTY_STEP,
                                  'texts': overlay_texts()}}
 
     return store

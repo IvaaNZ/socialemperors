@@ -402,12 +402,50 @@
         return owner;
     }
 
+    const reportedDeaths = new Set();  // handles already told to the server (it counts each once anyway)
+    let lastBuff = 0;
+
+    async function reportDeath(room, unit, owner) {
+        reportedDeaths.add(unit.h);
+        const data = new FormData();
+        data.append("csrf_token", config.csrf);
+        data.append("room", room.id);
+        data.append("handle", unit.h);
+        data.append("owner", owner);
+        data.append("unit", unit.id);
+        try {
+            await fetch(config.death, { method: "POST", body: data, credentials: "same-origin" });
+        } catch (error) {
+            reportedDeaths.delete(unit.h);  // the next round tries again
+        }
+    }
+
+    function onIsland(game) {  // the island is loaded (not the home village: gameMode 1)
+        try {
+            const hud = game.seHudState();
+            return Boolean(hud) && hud.mode !== 1;
+        } catch (error) {
+            return false;
+        }
+    }
+
+    // The host, every 250 ms during a raid: the raid's units (deaths go to the server with their owner), the
+    // island's enemies strengthened for the players beyond the first (point 30), and each guest its own units.
     function hostShareUnits() {
         const room = state && state.room;
-        if (!room || !room.is_host || room.status !== "sailing" || !peers.size) return;
+        if (!room || !room.is_host || room.status !== "sailing") return;
         const game = player();
         const size = stageSize();
-        if (!game || !size || typeof game.seCoopUnits !== "function") return;
+        if (!game || !size || typeof game.seCoopUnits !== "function" || !onIsland(game)) return;
+        const players = room.players.filter((p) => p.state === "host" || p.state === "accepted").length;
+        if (players > 1 && Date.now() - lastBuff > 1000) {
+            lastBuff = Date.now();
+            try {
+                game.seCoopBuff(1 + (config.difficulty || 0) * (players - 1));
+            } catch (error) {
+                // the next second
+            }
+        }
         let units = null;
         try {
             units = game.seCoopUnits();
@@ -418,12 +456,16 @@
         const mine = new Map();
         for (const unit of units) {
             const owner = ownerOf(unit, room);
+            if (unit.d) {
+                if (!reportedDeaths.has(unit.h)) reportDeath(room, unit, owner);
+                continue;
+            }
             if (owner === room.host) continue;
             if (!mine.has(owner)) mine.set(owner, []);
             mine.get(owner).push({ h: unit.h, x: unit.x / size.w, y: unit.y / size.h, hp: unit.max > 0 ? unit.hp / unit.max : 1 });
         }
         for (const [guest, peer] of peers) {
-            if (peer.channel && peer.channel.readyState === "open") {
+            if (peer.channel && peer.channel.readyState === "open") {  // (no guest watching: nothing to send)
                 peer.channel.send(JSON.stringify({ type: "units", units: mine.get(guest) || [] }));
             }
         }
@@ -589,6 +631,7 @@
         chosen.clear();
         owners.clear();
         ownerCounts = null;
+        reportedDeaths.clear();
         earlyIce = [];
         video.srcObject = null;
         viewer.hidden = true;
@@ -657,6 +700,13 @@
             await load();
             render();
             followRaid();
+        } else if (message.type === "coop_end") {  // the island ended: everyone's share
+            stopVideo();
+            await load();
+            render();
+            const lines = [fill(T.raid_share, { gold: message.gold, xp: message.xp })];
+            if (message.prestige) lines.push(fill(T.raid_prestige, { points: message.prestige }));
+            showNotice(message.win ? T.raid_won : T.raid_lost, [button(T.close, "notice-close")], lines.join(" "));
         } else if (message.type === "coop_sail") {  // the host set sail: the guests watch the island
             await load();
             render();

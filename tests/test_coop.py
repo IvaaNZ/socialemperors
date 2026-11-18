@@ -110,10 +110,66 @@ class Rooms(unittest.TestCase):
         self.assertEqual(room['status'], 'done')
         self.assertIsNone(self.store.sailing_room_of(2))
 
+    def sailing(self):
+        self.store.invite(1, self.room['id'], 2, 10)
+        self.store.respond(2, self.room['id'], True)
+        self.store.set_team(2, self.room['id'], [9, 9])
+        return self.store.sail(1, self.room['id'])
+
+    def test_each_death_counts_once_for_its_owner_and_never_more_than_it_brought(self):
+        self.sailing()
+        self.assertTrue(self.store.record_death(1, self.room['id'], 7, 2, 9))
+        self.assertFalse(self.store.record_death(1, self.room['id'], 7, 2, 9))  # the same unit again
+        self.assertTrue(self.store.record_death(1, self.room['id'], 8, 2, 9))
+        with self.assertRaises(CoopError):
+            self.store.record_death(1, self.room['id'], 9, 2, 9)  # it brought two
+        with self.assertRaises(CoopError):
+            self.store.record_death(1, self.room['id'], 10, 2, 5)  # not in its team
+        with self.assertRaises(CoopError):
+            self.store.record_death(2, self.room['id'], 11, 1, 5)  # only the host reports
+        self.assertEqual([d['handle'] for d in self.store.deaths(self.room['id'])], [7, 8])
+
+    def test_the_end_closes_the_raid_and_the_villages_reload(self):
+        self.sailing()
+        self.assertEqual(self.store.revision('village-2'), '')
+        self.store.village_changed('village-2')
+        self.store.village_changed('village-2')
+        self.assertEqual(self.store.revision('village-2'), 'coop2')
+        self.assertEqual(self.store.finish(self.room['id'])['status'], 'done')
+        self.assertIsNone(self.store.finish(self.room['id']))
+        self.assertIsNone(self.store.sailing_room_of(2))
+
     def test_a_room_left_alone_closes(self):
         self.clock.now += ROOM_IDLE_SECONDS + 1
         self.assertIsNone(self.store.room_of(1))
         self.assertEqual(self.store.room(self.room['id'])['status'], 'cancelled')
+
+
+class Rewards(unittest.TestCase):
+    def test_the_islands_gold_and_xp_are_scaled_and_the_rest_kept(self):
+        import json
+
+        from coop import CLAN_REWARD, SOLO_REWARD
+        from coop_web import scaled_end_quest
+        item = {'cmd': 'end_quest', 'args': [json.dumps({'map': 0, 'resources': {'g': 1000, 'x': 300}, 'win': 1,
+                                                          'quest_id': '100000006', 'difficulty': 1})]}
+        clan, data = scaled_end_quest(item, CLAN_REWARD)
+        self.assertEqual(data['resources'], {'g': 700, 'x': 210})
+        self.assertEqual(json.loads(clan['args'][0])['quest_id'], '100000006')
+        solo, data = scaled_end_quest(item, SOLO_REWARD)
+        self.assertEqual(data['resources'], {'g': 1200, 'x': 360})
+        self.assertEqual(json.loads(item['args'][0])['resources']['g'], 1000)  # the original command is untouched
+
+
+class Prestige(unittest.TestCase):
+    def test_a_clan_gathers_prestige(self):
+        from clans import ClanStore
+        with tempfile.TemporaryDirectory() as folder:
+            store = ClanStore(Path(folder) / 'clans.sqlite3')
+            clan = store.create(1, 'Huevitos', 'PRO')
+            self.assertEqual(store.add_prestige(clan['id'], 5), 5)
+            self.assertEqual(store.add_prestige(clan['id'], 15), 20)
+            self.assertIsNone(store.add_prestige(999, 5))
 
 
 class IceServers(unittest.TestCase):

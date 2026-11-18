@@ -16,6 +16,11 @@ MAX_PLAYERS = 3
 TEAM_UNITS = 10
 ROOM_IDLE_SECONDS = 30 * 60
 RAID_SECONDS = 2 * 60 * 60  # a raid at sea that never reported its end closes after this
+# Point 30 (the owner's choices, 2026-11-17): each raid player gets the island's reward -30%; alone, +20%. The
+# island's enemies get +50% life and attack for each player beyond the first.
+CLAN_REWARD, SOLO_REWARD, DIFFICULTY_STEP = 0.7, 1.2, 0.5
+# Point 29: prestige for the clan: an island won alone, or a clan raid won with 2 or 3 players.
+PRESTIGE_SOLO, PRESTIGE_GROUP = 5, 15
 ACTIVE_STATES = ('host', 'invited', 'accepted')
 
 
@@ -67,6 +72,18 @@ class CoopStore:
                     PRIMARY KEY (room_id, account_id)
                 );
                 CREATE INDEX IF NOT EXISTS room_players_account ON room_players (account_id);
+                CREATE TABLE IF NOT EXISTS room_deaths (   -- phase 5: each unit lost once, by its owner
+                    room_id INTEGER NOT NULL,
+                    handle INTEGER NOT NULL,
+                    account_id INTEGER NOT NULL,
+                    unit_id INTEGER NOT NULL,
+                    at REAL NOT NULL,
+                    PRIMARY KEY (room_id, handle)
+                );
+                CREATE TABLE IF NOT EXISTS village_changes (  -- a village changed by a raid: its open game reloads
+                    village_id TEXT PRIMARY KEY,
+                    changes INTEGER NOT NULL
+                );
             """)
 
     def _connection(self):
@@ -245,6 +262,53 @@ class CoopStore:
                                    (self.clock(), room_id, account_id))
                 self._touch(connection, room_id)
             return self._room(connection, room_id)
+
+    # -- phase 5 --
+    def record_death(self, host_id, room_id, handle, owner_id, unit_id):
+        """A unit of the raid died (reported by the host's page, which knows whose it is): True the first time.
+        Only units of the owner's team, never more of a kind than it brought."""
+        with self.lock, self._connection() as connection, connection:
+            room = self._room(connection, room_id)
+            if not room or room['status'] != 'sailing':
+                raise CoopError('gone')
+            if room['host_id'] != host_id:
+                raise CoopError('forbidden')
+            owner = next((p for p in room['players'] if p['account_id'] == owner_id and p['state'] in ('host', 'accepted')), None)
+            if not owner or not owner['team'] or unit_id not in owner['team']:
+                raise CoopError('forbidden')
+            if connection.execute('SELECT 1 FROM room_deaths WHERE room_id = ? AND handle = ?', (room_id, handle)).fetchone():
+                return False
+            lost = connection.execute('SELECT COUNT(*) AS n FROM room_deaths WHERE room_id = ? AND account_id = ? AND unit_id = ?',
+                                      (room_id, owner_id, unit_id)).fetchone()['n']
+            if lost >= owner['team'].count(unit_id):
+                raise CoopError('forbidden')
+            connection.execute('INSERT INTO room_deaths (room_id, handle, account_id, unit_id, at) VALUES (?, ?, ?, ?, ?)',
+                               (room_id, handle, owner_id, unit_id, self.clock()))
+            return True
+
+    def deaths(self, room_id):
+        with self.lock, self._connection() as connection:
+            return [dict(row) for row in connection.execute('SELECT * FROM room_deaths WHERE room_id = ? ORDER BY at', (room_id,))]
+
+    def finish(self, room_id):
+        """The host's island ended: the raid is over. Returns the room, or None when it was not at sea."""
+        with self.lock, self._connection() as connection, connection:
+            room = self._room(connection, room_id)
+            if not room or room['status'] != 'sailing':
+                return None
+            connection.execute("UPDATE rooms SET status = 'done', updated_at = ? WHERE id = ?", (self.clock(), room_id))
+            return self._room(connection, room_id)
+
+    def village_changed(self, village_id):
+        with self.lock, self._connection() as connection, connection:
+            connection.execute("""INSERT INTO village_changes (village_id, changes) VALUES (?, 1)
+                                  ON CONFLICT (village_id) DO UPDATE SET changes = changes + 1""", (village_id,))
+
+    def revision(self, village_id):
+        """'' until a raid changed the village; then a number that grows with each change."""
+        with self.lock, self._connection() as connection:
+            row = connection.execute('SELECT changes FROM village_changes WHERE village_id = ?', (village_id,)).fetchone()
+            return f'coop{row["changes"]}' if row else ''
 
     def ready_to_sail(self, room):
         """At least one guest with a team, every accepted player with one, and the host's."""
