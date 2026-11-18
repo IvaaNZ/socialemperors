@@ -1,11 +1,19 @@
-RESUMEN DEL BLOQUE E (funciones de la lista) - actualizado el 13/11/2026
+RESUMEN DEL BLOQUE E (funciones de la lista) - actualizado el 17/11/2026
 =======================================================================
 
-Avance del bloque E: 7 de 12 puntos terminados (19 a 25), más pedidos
-extra (área de ataque, habilidades automáticas, botón PvP, arenas PvP y
-actualizador automático). Del 22 quedan las fases 3 y 4 del clan dentro
-del juego.
-El detalle completo está en TareaDFinalizada.txt (secciones 15, 16 y 17).
+AVANCE DEL BLOQUE E: 82 % TERMINADO, 18 % PENDIENTE
+  - Terminados: 9 de 12 puntos (19 a 27).
+  - En curso: el 28 (aventuras con el clan), al 80 %: faltan las
+    recompensas y las pérdidas de cada jugador (fase 5).
+  - Sin empezar: el 29 (prestigio del clan) y el 30 (dificultad y reparto
+    de recursos de las aventuras), que se hacen junto con la fase 5 del 28.
+  (Cuenta: 9 puntos al 100 % + el 28 al 80 % = 980 de 1.200 = 82 %.)
+
+Más pedidos extra (área de ataque, habilidades automáticas, botón PvP,
+arenas PvP, actualizador automático, pantalla completa, celular y
+rendimiento). Del 22 quedan las fases 3 y 4 del clan dentro del juego.
+El detalle completo está en TareaDFinalizada.txt (secciones 15, 16 y 17)
+y en DECISIONS.md.
 
 
 PUNTO 19. PANEL DE ADMINISTRACIÓN MÁS COMPLETO ................... 100 %
@@ -210,13 +218,87 @@ botones Clan, PvP y Pase ahora tienen su propia columna (antes el juego solo
 mostraba 2 íconos y PvP desaparecía los lunes). SE_SEASON_PASS=on.
 
 
+PUNTO 26. MEJORAR EL HUD ........................................... 100 %
+-----------------------------------------------------------------------
+Una capa nueva alrededor del juego, al estilo "Empires Reborn", con el arte
+original del juego (SE_HUD=on):
+  - Barra de recursos arriba (nivel, experiencia, oro, madera, comida,
+    piedra y dinero con su botón "+"), reloj con el clima, nombre del
+    imperio y población junto al globo "mundo".
+  - Nombres debajo de los botones de la barra de abajo, botón "Menú",
+    cofre "Bono diario" con su cuenta regresiva y botón "Más" que agrupa el
+    Premio y las opciones del juego.
+  - Clan, PvP y Pase contra el borde derecho; el libro de hechizos en la
+    esquina de abajo a la izquierda.
+Pantalla completa en el navegador (SE_VIEW=on): el juego llena toda la
+ventana, sin el zoom de la derecha, con zoom suave con la rueda o con dos
+dedos, y el botón de pantalla completa del propio juego también funciona.
+Celular: en vertical la barra pasa a dos filas y los botones se agrandan;
+al girar el celular, las ventanas abiertas del juego siguen centradas.
+
+PEDIDO EXTRA. RENDIMIENTO (más FPS)
+-----------------------------------------------------------------------
+Más de 60 FPS no es posible: el juego está hecho para 30 y a 60 iría el
+doble de rápido. Se acercó a 30 estables:
+  - El mouse sobre los edificios ya no redibuja el edificio en cada
+    movimiento (SE_FAST_HOVER): arrastrando el mapa, de ~9 a ~14 FPS.
+  - Imagen "fluida" por defecto en pantallas grandes y celulares (botón
+    "Imagen: fluida / nítida" en el Menú): en 1920x1080, de 17 a 22 FPS.
+  - "Modo rendimiento" en el Menú (SE_PERF_MODE, activado por defecto):
+    los edificios dejan de animarse (banderas y adornos); de ~21 a 26 FPS
+    quieto y de 18 a 24 FPS arrastrando el mapa.
+
+
+PUNTO 27. MEJORAR LA IA DE COMBATE ................................. 100 %
+-----------------------------------------------------------------------
+Antes todas las unidades y torres atacaban al enemigo más cercano. Ahora,
+para los dos bandos (SE_SMART_AI=on):
+  - Objetivos inteligentes: prefieren a los curanderos, a los casi muertos
+    y a las unidades que atacan edificios; dejan para el final los
+    edificios inofensivos. Las torres defienden mejor la aldea.
+  - Ayuda en grupo: si golpean a una unidad, sus compañeros cercanos van
+    contra el atacante.
+  - Retirada de heridos: un enemigo con menos del 30 % de vida retrocede
+    una vez hacia su curandero o su grupo. Las unidades del jugador no se
+    retiran solas: obedecen sus órdenes.
+
+
+PUNTO 28. AVENTURAS EN SOLITARIO O CON EL CLAN ...................... 80 %
+-----------------------------------------------------------------------
+Pedido: elegir Solitario o Clan, 10 unidades por persona en el clan y
+botón para elegir las unidades. El dueño eligió el modo Clan EN VIVO:
+hasta 3 miembros del clan en la misma isla, el anfitrión simula la batalla
+y los invitados la ven como video. Plan en COOP_PLAN.md.
+  - Hecho y encendido: todas las islas abren "Elige tu equipo" antes de
+    zarpar (antes solo 5; en las demás iba todo el ejército).
+  - Hecho (apagado hasta terminar, SE_COOP=off):
+      Fase 1. Al tocar una isla se elige "Solitario" (hasta 20 unidades) o
+              "Con el clan" (hasta 10). Sala de la incursión: invitar a
+              miembros conectados, aviso en vivo, cada uno elige sus
+              unidades y el anfitrión ve quién está listo.
+      Fase 2. El anfitrión zarpa con las unidades de todos.
+      Fase 3. Los invitados ven la isla del anfitrión en vivo, como video
+              (unos 20 cuadros por segundo, de navegador a navegador).
+      Fase 4. Cada invitado ve sus unidades marcadas sobre el video y les
+              da órdenes: tocar una para elegirla y tocar el mapa para
+              moverla o un enemigo para atacar.
+  - Falta (fase 5): recompensas repartidas, pérdidas de cada jugador en su
+    aldea y prestigio del clan (puntos 29 y 30). Después se enciende.
+
+
 PUNTOS QUE SIGUEN
 -----------------
-  23. Clima y ciclo día/noche ......................................... 100 %
-  24. Editor de mundo ................................................. 100 %
-  25. Pase de temporada gratuito ...................................... 100 %
-  26. Mejorar el HUD .................................................... 0 %
-  27. Mejorar la IA de combate .......................................... 0 %
-  28. Aventuras en solitario o con el clan, 10 unidades elegidas ........ 0 %
-  29. Prestigio del clan por aventuras (5 solo, 15 en grupo de 3) ....... 0 %
-  30. Dificultad y reparto de recursos de las aventuras ................. 0 %
+  19. Panel de administración más completo ........................... 100 %
+  20. Balance de unidades y misiones ................................. 100 %
+  21. Duelos PvP en vivo y ranked (opción B) ......................... 100 %
+  22. Clanes ......................................................... 100 %
+  23. Clima y ciclo día/noche ........................................ 100 %
+  24. Editor de mundo ................................................ 100 %
+  25. Pase de temporada gratuito ..................................... 100 %
+  26. Mejorar el HUD ................................................. 100 %
+  27. Mejorar la IA de combate ....................................... 100 %
+  28. Aventuras en solitario o con el clan, 10 unidades elegidas ...... 80 %
+  29. Prestigio del clan por aventuras (5 solo, 15 en grupo de 3) ...... 0 %
+  30. Dificultad y reparto de recursos de las aventuras ................ 0 %
+  ---------------------------------------------------------------------
+  TOTAL DEL BLOQUE E ............................ 82 % hecho, 18 % pendiente
