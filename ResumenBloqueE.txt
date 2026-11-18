@@ -1,13 +1,14 @@
-RESUMEN DEL BLOQUE E (funciones de la lista) - actualizado el 17/11/2026
+RESUMEN DEL BLOQUE E (funciones de la lista) - actualizado el 18/11/2026
 =======================================================================
 
-AVANCE DEL BLOQUE E: 82 % TERMINADO, 18 % PENDIENTE
-  - Terminados: 9 de 12 puntos (19 a 27).
-  - En curso: el 28 (aventuras con el clan), al 80 %: faltan las
-    recompensas y las pérdidas de cada jugador (fase 5).
-  - Sin empezar: el 29 (prestigio del clan) y el 30 (dificultad y reparto
-    de recursos de las aventuras), que se hacen junto con la fase 5 del 28.
-  (Cuenta: 9 puntos al 100 % + el 28 al 80 % = 980 de 1.200 = 82 %.)
+AVANCE DEL BLOQUE E: 100 % TERMINADO, 0 % PENDIENTE
+  - Terminados: los 12 puntos (19 a 30).
+  - Falta solo encender el modo Clan en el servidor (SE_COOP=on), que
+    quedó apagado hasta que el dueño lo pruebe con jugadores reales, y
+    subir el trabajo al fork de GitHub (se sube al terminar el bloque E).
+  - Quedan para más adelante, fuera del porcentaje: la opción A de los
+    duelos (punto 21) y las fases 3 y 4 del clan dentro del juego (punto 22).
+  (Cuenta: 12 puntos al 100 % = 1.200 de 1.200.)
 
 Más pedidos extra (área de ataque, habilidades automáticas, botón PvP,
 arenas PvP, actualizador automático, pantalla completa, celular y
@@ -263,7 +264,7 @@ para los dos bandos (SE_SMART_AI=on):
     retiran solas: obedecen sus órdenes.
 
 
-PUNTO 28. AVENTURAS EN SOLITARIO O CON EL CLAN ...................... 80 %
+PUNTO 28. AVENTURAS EN SOLITARIO O CON EL CLAN ..................... 100 %
 -----------------------------------------------------------------------
 Pedido: elegir Solitario o Clan, 10 unidades por persona en el clan y
 botón para elegir las unidades. El dueño eligió el modo Clan EN VIVO:
@@ -282,8 +283,30 @@ y los invitados la ven como video. Plan en COOP_PLAN.md.
       Fase 4. Cada invitado ve sus unidades marcadas sobre el video y les
               da órdenes: tocar una para elegirla y tocar el mapa para
               moverla o un enemigo para atacar.
-  - Falta (fase 5): recompensas repartidas, pérdidas de cada jugador en su
-    aldea y prestigio del clan (puntos 29 y 30). Después se enciende.
+      Fase 5. Al terminar la isla, recompensas, pérdidas de cada jugador y
+              prestigio (puntos 29 y 30, abajo).
+  - Se enciende con SE_COOP=on en server.env cuando el dueño lo decida.
+
+
+PUNTO 29. PRESTIGIO DEL CLAN POR AVENTURAS ......................... 100 %
+-----------------------------------------------------------------------
+Los clanes suman Prestigio, que se ve en la ventana del clan:
+  - Una isla de aventura ganada en Solitario: +5 al clan del jugador.
+  - Una incursión del clan ganada con 2 o 3 jugadores: +15 al clan.
+
+
+PUNTO 30. DIFICULTAD Y REPARTO DE RECURSOS DE LAS AVENTURAS ........ 100 %
+-----------------------------------------------------------------------
+  - Recompensas: en Clan, cada jugador recibe lo que da la isla menos el
+    30 % (si la isla da 1.000 de oro, cada uno recibe 700); en Solitario,
+    un 20 % más (1.200). Igual con la experiencia.
+  - Dificultad: en Clan, los enemigos tienen +50 % de vida y ataque por
+    cada jugador extra (+50 % con 2 jugadores, +100 % con 3). Solitario
+    queda igual.
+  - Pérdidas: cada jugador pierde en su aldea solo las unidades suyas que
+    murieron en la isla.
+  Probado: con 90 de oro y 18 de XP en la isla, cada uno de los 2
+  jugadores recibió 62 de oro y 12 de XP.
 
 
 PUNTOS QUE SIGUEN
@@ -297,8 +320,8 @@ PUNTOS QUE SIGUEN
   25. Pase de temporada gratuito ..................................... 100 %
   26. Mejorar el HUD ................................................. 100 %
   27. Mejorar la IA de combate ....................................... 100 %
-  28. Aventuras en solitario o con el clan, 10 unidades elegidas ...... 80 %
-  29. Prestigio del clan por aventuras (5 solo, 15 en grupo de 3) ...... 0 %
-  30. Dificultad y reparto de recursos de las aventuras ................ 0 %
+  28. Aventuras en solitario o con el clan, 10 unidades elegidas ..... 100 %
+  29. Prestigio del clan por aventuras (5 solo, 15 en grupo) .......... 100 %
+  30. Dificultad y reparto de recursos de las aventuras ............... 100 %
   ---------------------------------------------------------------------
-  TOTAL DEL BLOQUE E ............................ 82 % hecho, 18 % pendiente
+  TOTAL DEL BLOQUE E ............................ 100 % hecho, 0 % pendiente
