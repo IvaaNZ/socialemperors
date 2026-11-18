@@ -175,6 +175,7 @@ def village_revision(userid):
         raids().revision(userid), village_admin().change_revision(userid), economy().revision(userid),
         season_pass_revision(village_session(userid)) if SEASON_PASS_ENABLED else '',
         app.extensions['coop'].revision(userid) if 'coop' in app.extensions else '',  # a clan raid changed it
+        soul_mixer_revision(village_session(userid)) if SOUL_MIXER_ENABLED else '',  # a mix started or ended
     ) if value)
 
 
@@ -932,6 +933,9 @@ def localized_game_movie(language=None):
     if COOP_ENABLED:  # Solitario or Clan before an adventure; the clan raid's team (swf_coop.py, COOP_PLAN.md)
         from swf_coop import add_coop
         translated = add_coop(translated)
+    if SOUL_MIXER_ENABLED:  # tapping the Soul Mixer opens the page's window (swf_soul_mixer.py, soul_mixer.py)
+        from swf_soul_mixer import add_soul_mixer
+        translated = add_soul_mixer(translated)
     if PERF_MODE_ENABLED:  # the player may stop the buildings' animations from the menu (swf_perf_mode.py)
         from swf_perf_mode import add_perf_mode
         translated = add_perf_mode(translated)
@@ -1173,6 +1177,10 @@ SMART_AI_ENABLED = os.environ.get('SE_SMART_AI', 'on').strip().lower() in ('on',
 QUEST_TEAMS_ENABLED = os.environ.get('SE_QUEST_TEAMS', 'on').strip().lower() in ('on', '1', 'true', 'yes')
 # Point 28: adventures alone or with the clan, live (COOP_PLAN.md). Off until the live raid works.
 COOP_ENABLED = os.environ.get('SE_COOP', 'off').strip().lower() in ('on', '1', 'true', 'yes')
+# The Soul Mixer (building 1529): two units in, a new one out after a wait; the window is the page's
+# (soul_mixer.py, soul_mixer_web.py, swf_soul_mixer.py; tables from config/soulmixer_wiki.json).
+SOUL_MIXER_ENABLED = os.environ.get('SE_SOUL_MIXER', 'off').strip().lower() in ('on', '1', 'true', 'yes')
+from soul_mixer import revision as soul_mixer_revision
 # The menu's performance mode: each player may stop the buildings' animations (swf_perf_mode.py, game.js).
 PERF_MODE_ENABLED = os.environ.get('SE_PERF_MODE', 'on').strip().lower() in ('on', '1', 'true', 'yes')
 READABLE_UI_ENABLED = os.environ.get('SE_READABLE_UI', 'on').strip().lower() in ('on', '1', 'true', 'yes')
@@ -1239,6 +1247,18 @@ if DUELS_ENABLED:
 if COOP_ENABLED and CLANS_ENABLED:  # the clan raid's room (coop_web.py); its live notices need SE_DUELS
     from coop_web import install_coop
     install_coop(app, accounts, data_dir, village_lock, village_session, save_village)
+
+if SOUL_MIXER_ENABLED:  # the Soul Mixer's window and rules
+    from get_game_config import get_game_config, get_name_from_item_id
+    from localization import load_catalog as soul_catalog
+    from soul_mixer_web import install_soul_mixer
+    soul_texts = lru_cache(maxsize=4)(soul_catalog)  # the item names of one language, read once
+
+    def soul_unit_name(item_id):
+        name = get_name_from_item_id(int(item_id)) or str(item_id)
+        return soul_texts(portal_language()).get(name, name)
+    install_soul_mixer(app, village_lock, village_session, save_village,
+                       {int(item['id']): item for item in get_game_config()['items']}, soul_unit_name, ASSETS_DIR)
 
 print (" [+] Running server...")
 

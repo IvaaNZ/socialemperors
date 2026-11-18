@@ -1,0 +1,5 @@
+{# The Soul Mixer's window (SE_SOUL_MIXER=on only): tapping the building in the game opens it. Same look as the clan window. #}
+<link rel="stylesheet" href="{{ url_for('css', path='clan_overlay.css') }}">
+<link rel="stylesheet" href="{{ url_for('css', path='soul_mixer_overlay.css') }}">
+<script id="soul-mixer-overlay-config" type="application/json">{{ dict(soul_mixer_overlay, csrf=csrf_token()) | tojson }}</script>
+<script src="{{ url_for('javascript', path='soul_mixer_overlay.js') }}" defer></script>

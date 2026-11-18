@@ -1,0 +1,4427 @@
+{
+ "_about": "The Soul Mixer's tables, rebuilt because the game's own were never preserved (tools/soul_mixer_wiki.py makes this file; DECISIONS.md, 20 October 2026). Used only when the game's config has no Soul Mixer tables of its own, so a genuine original config replaces it.",
+ "_from": "Copied on 18 November 2026 from github.com/TamalAdebisi/socialemperors (GPL-3.0, like this project), file config/soulmixer_wiki.json, made by its tools/soul_mixer_wiki.py. soul_mixer.py reads it.",
+ "sources": {
+  "wiki": "Social Empires Tips Wiki, \"Soul Mixer Combinations\" (socialempirestips.fandom.com), as saved by the owner on 20 October 2026",
+  "strength": "ours: the unit's attack times life over its attack interval, ranked from 10 to 399 (the gods, colossi and newest dragon sets from 400 to 520, where the original rolls a random result)",
+  "recipe": "ours: moved by a seeded search so the wiki's recipes can give their results through the original's mixing rules (seed 1, 40000 steps)",
+  "wait": "the wiki's 3 hours for the weakest to its 5 days 10 hours for the strongest, growing evenly by rank (ours, between those)"
+ },
+ "globals": {
+  "SOUL_MIXER_MIN_LEVEL": {
+   "value": 8,
+   "source": "ours: the level the shop sells the Soul Mixer at; the wiki doesn't say"
+  },
+  "SOUL_MIXER_POWERUPS_LEVELS": {
+   "value": [
+    {
+     "cash_cost": 1,
+     "order_increment": 0
+    },
+    {
+     "cash_cost": 2,
+     "order_increment": 0
+    },
+    {
+     "cash_cost": 3,
+     "order_increment": 0
+    },
+    {
+     "cash_cost": 4,
+     "order_increment": 0
+    },
+    {
+     "cash_cost": 5,
+     "order_increment": 0
+    },
+    {
+     "cash_cost": 6,
+     "order_increment": 0
+    },
+    {
+     "cash_cost": 7,
+     "order_increment": 0
+    }
+   ],
+   "source": "wiki: \"+1 = 1 Cash Powerup\", \"+3 = 1 Cash + 2 Cash\", up to \"+7\"; ours: 3 to 7 cash beyond, and each power-up one unit up"
+  }
+ },
+ "recipes": [
+  {
+   "result": "Bull Extreme Dragon",
+   "parents": [
+    "Golden Extreme Dragon",
+    "Forest Extreme Dragon"
+   ],
+   "powerups": 0,
+   "chance": 0.083,
+   "source": "wiki"
+  },
+  {
+   "result": "Frost Extreme Dragon",
+   "parents": [
+    "Green Bahamut Dragon",
+    "Forest Extreme Dragon"
+   ],
+   "powerups": 0,
+   "chance": 0.083,
+   "source": "wiki"
+  },
+  {
+   "result": "3-Head Primal Dragon",
+   "parents": [
+    "Galaxy Dragon",
+    "Black Bahamut Dragon"
+   ],
+   "powerups": 0,
+   "chance": 0,
+   "source": "wiki"
+  },
+  {
+   "result": "3-Head Primal Dragon",
+   "parents": [
+    "Fire Extreme Dragon",
+    "Wind Extreme Dragon"
+   ],
+   "powerups": 1,
+   "chance": 0.25,
+   "source": "wiki"
+  },
+  {
+   "result": "Golden Extreme Dragon",
+   "parents": [
+    "3-Head Primal Dragon",
+    "Black Bahamut Dragon"
+   ],
+   "powerups": 0,
+   "chance": 0.167,
+   "source": "wiki"
+  },
+  {
+   "result": "Golden Extreme Dragon",
+   "parents": [
+    "Rainbow Dragon",
+    "Hermes Spearman"
+   ],
+   "powerups": 0,
+   "chance": 0.25,
+   "source": "wiki"
+  },
+  {
+   "result": "Golden Extreme Dragon",
+   "parents": [
+    "Galaxy Dragon",
+    "2-Head Frostfire Dragon"
+   ],
+   "powerups": 0,
+   "chance": 0.083,
+   "source": "wiki"
+  },
+  {
+   "result": "Golden Extreme Dragon",
+   "parents": [
+    "Bull Extreme Dragon",
+    "2-Head Frostfire Dragon"
+   ],
+   "powerups": 0,
+   "chance": 0.083,
+   "source": "wiki"
+  },
+  {
+   "result": "Electric Dynasty Dragon",
+   "parents": [
+    "Galaxy Dragon",
+    "Rainbow Dragon"
+   ],
+   "powerups": 0,
+   "chance": 0.083,
+   "source": "wiki"
+  },
+  {
+   "result": "Electric Dynasty Dragon",
+   "parents": [
+    "Rainbow Dragon",
+    "2-Head Frostfire Dragon"
+   ],
+   "powerups": 0,
+   "chance": 0.167,
+   "source": "wiki"
+  },
+  {
+   "result": "Electric Dynasty Dragon",
+   "parents": [
+    "Rainbow Dragon",
+    "King Kong"
+   ],
+   "powerups": 0,
+   "chance": 0.167,
+   "source": "wiki"
+  },
+  {
+   "result": "Star Dragon",
+   "parents": [
+    "Soul Extreme Dragon",
+    "Soul Extreme Dragon"
+   ],
+   "powerups": 3,
+   "chance": 0.25,
+   "source": "wiki"
+  },
+  {
+   "result": "Star Dragon",
+   "parents": [
+    "Green Bahamut Dragon",
+    "Rainbow Dragon"
+   ],
+   "powerups": 0,
+   "chance": 0.083,
+   "source": "wiki"
+  },
+  {
+   "result": "Orc Dragon",
+   "parents": [
+    "Swordsman",
+    "Soul Extreme Dragon"
+   ],
+   "powerups": 0,
+   "chance": 0.167,
+   "source": "wiki"
+  },
+  {
+   "result": "Orc Dragon",
+   "parents": [
+    "Burning Tiger",
+    "King Kong"
+   ],
+   "powerups": 0,
+   "chance": 0.167,
+   "source": "wiki"
+  },
+  {
+   "result": "Orc Dragon",
+   "parents": [
+    "Valkyrie",
+    "Valkyrie"
+   ],
+   "powerups": 0,
+   "chance": 0.167,
+   "source": "wiki"
+  },
+  {
+   "result": "Orc Dragon",
+   "parents": [
+    "Stormy Dragon",
+    "Furious Dragon"
+   ],
+   "powerups": 0,
+   "chance": 0,
+   "source": "wiki"
+  },
+  {
+   "result": "Sky Bahamut Dragon",
+   "parents": [
+    "Soul Extreme Dragon",
+    "Wind Extreme Dragon"
+   ],
+   "powerups": 1,
+   "chance": 0.083,
+   "source": "wiki"
+  },
+  {
+   "result": "Sky Bahamut Dragon",
+   "parents": [
+    "Green Bahamut Dragon",
+    "Fire Extreme Dragon"
+   ],
+   "powerups": 2,
+   "chance": 0.25,
+   "source": "wiki"
+  },
+  {
+   "result": "Paladin Bahamut Dragon",
+   "parents": [
+    "Medieval Golden Slayer",
+    "Green Extreme Dragon"
+   ],
+   "powerups": 1,
+   "chance": 0.083,
+   "source": "wiki"
+  },
+  {
+   "result": "Paladin Bahamut Dragon",
+   "parents": [
+    "Galaxy Dragon",
+    "2-Head Frostfire Dragon"
+   ],
+   "powerups": 0,
+   "chance": 0.083,
+   "source": "wiki"
+  },
+  {
+   "result": "Paladin Bahamut Dragon",
+   "parents": [
+    "Galaxy Dragon",
+    "Rainbow Dragon"
+   ],
+   "powerups": 0,
+   "chance": 0.083,
+   "source": "wiki"
+  },
+  {
+   "result": "3-Head Dragon",
+   "parents": [
+    "Medieval Golden Slayer",
+    "Green Extreme Dragon"
+   ],
+   "powerups": 0,
+   "chance": 0.333,
+   "source": "wiki"
+  },
+  {
+   "result": "3-Head Dragon",
+   "parents": [
+    "Rainbow Dragon",
+    "Galaxy Dragon"
+   ],
+   "powerups": 0,
+   "chance": 0.333,
+   "source": "wiki"
+  },
+  {
+   "result": "Death Warrior",
+   "parents": [
+    "Epic 2-Head Dragon",
+    "Rainbow Dragon"
+   ],
+   "powerups": 7,
+   "chance": 0.167,
+   "source": "wiki"
+  },
+  {
+   "result": "Colossal Cobra",
+   "parents": [
+    "Tiger Spider",
+    "Medusa"
+   ],
+   "powerups": 1,
+   "chance": 0.167,
+   "source": "wiki"
+  },
+  {
+   "result": "Colossal Cobra",
+   "parents": [
+    "Furious Dragon",
+    "Lightning Draggy"
+   ],
+   "powerups": 0,
+   "chance": 0.083,
+   "source": "wiki"
+  },
+  {
+   "result": "Evil Demon",
+   "parents": [
+    "Tiger Spider",
+    "Medusa"
+   ],
+   "powerups": 0,
+   "chance": 0.083,
+   "source": "wiki"
+  },
+  {
+   "result": "Mad Balrog",
+   "parents": [
+    "Stormy Dragon",
+    "Colossal Cobra"
+   ],
+   "powerups": 1,
+   "chance": 0.167,
+   "source": "wiki"
+  },
+  {
+   "result": "Medieval Ether Messiah",
+   "parents": [
+    "Golden Dragon",
+    "Stratos Titan"
+   ],
+   "powerups": 0,
+   "chance": 0.167,
+   "source": "wiki"
+  },
+  {
+   "result": "Medieval Ether Messiah",
+   "parents": [
+    "Furious Dragon",
+    "Ramses II"
+   ],
+   "powerups": 0,
+   "chance": 0.083,
+   "source": "wiki"
+  },
+  {
+   "result": "Medieval Ether Messiah",
+   "parents": [
+    "Forest Extreme Dragon",
+    "Draggy"
+   ],
+   "powerups": 0,
+   "chance": 0.083,
+   "source": "wiki"
+  },
+  {
+   "result": "Green Phoenix",
+   "parents": [
+    "Orc Battering Ram",
+    "Tiger Spider"
+   ],
+   "powerups": 0,
+   "chance": 0.25,
+   "source": "wiki"
+  },
+  {
+   "result": "Green Phoenix",
+   "parents": [
+    "Rainbow Dragon",
+    "Tiger Spider"
+   ],
+   "powerups": 0,
+   "chance": 0.25,
+   "source": "wiki"
+  },
+  {
+   "result": "Dragon Hunter II",
+   "parents": [
+    "Ramses II",
+    "Furious Dragon"
+   ],
+   "powerups": 0,
+   "chance": 0.167,
+   "source": "wiki"
+  },
+  {
+   "result": "Necro Dark Lord",
+   "parents": [
+    "Ramses II",
+    "Priest Orc"
+   ],
+   "powerups": 0,
+   "chance": 0.167,
+   "source": "wiki"
+  },
+  {
+   "result": "Golden Golem",
+   "parents": [
+    "Draggy",
+    "Nice Troll"
+   ],
+   "powerups": 0,
+   "chance": 0.167,
+   "source": "wiki"
+  },
+  {
+   "result": "Monster Hunter",
+   "parents": [
+    "Infernal Demon",
+    "Giant Viper"
+   ],
+   "powerups": 0,
+   "chance": 0.167,
+   "source": "wiki"
+  },
+  {
+   "result": "Advanced Catapult",
+   "parents": [
+    "Draggy",
+    "Nice Troll"
+   ],
+   "powerups": 0,
+   "chance": 0.167,
+   "source": "wiki"
+  }
+ ],
+ "units": {
+  "502": {
+   "name": "Healer",
+   "breeding_order": 10,
+   "sm_training_time": 10800,
+   "source": "strength"
+  },
+  "516": {
+   "name": "Light Archer",
+   "breeding_order": 11,
+   "sm_training_time": 10800,
+   "source": "strength"
+  },
+  "582": {
+   "name": "Boat",
+   "breeding_order": 11,
+   "sm_training_time": 10800,
+   "source": "strength"
+  },
+  "543": {
+   "name": "Eagle",
+   "breeding_order": 12,
+   "sm_training_time": 10800,
+   "source": "strength"
+  },
+  "520": {
+   "name": "Scorpion",
+   "breeding_order": 13,
+   "sm_training_time": 10800,
+   "source": "strength"
+  },
+  "517": {
+   "name": "Medium Archer",
+   "breeding_order": 14,
+   "sm_training_time": 11400,
+   "source": "strength"
+  },
+  "569": {
+   "name": "Monk",
+   "breeding_order": 14,
+   "sm_training_time": 11400,
+   "source": "strength"
+  },
+  "532": {
+   "name": "Rehabbed Troll",
+   "breeding_order": 15,
+   "sm_training_time": 11400,
+   "source": "strength"
+  },
+  "509": {
+   "name": "Spearman",
+   "breeding_order": 16,
+   "sm_training_time": 11400,
+   "source": "strength"
+  },
+  "546": {
+   "name": "Penguin",
+   "breeding_order": 16,
+   "sm_training_time": 11400,
+   "source": "strength"
+  },
+  "518": {
+   "name": "Heavy Archer",
+   "breeding_order": 17,
+   "sm_training_time": 11400,
+   "source": "strength"
+  },
+  "512": {
+   "name": "Light Knight",
+   "breeding_order": 19,
+   "sm_training_time": 11400,
+   "source": "strength"
+  },
+  "521": {
+   "name": "Catapult",
+   "breeding_order": 19,
+   "sm_training_time": 11400,
+   "source": "strength"
+  },
+  "572": {
+   "name": "Light Archer Knight",
+   "breeding_order": 20,
+   "sm_training_time": 11400,
+   "source": "strength"
+  },
+  "522": {
+   "name": "Cannon",
+   "breeding_order": 21,
+   "sm_training_time": 12000,
+   "source": "strength"
+  },
+  "2309": {
+   "name": "Devourer",
+   "breeding_order": 21,
+   "sm_training_time": 12000,
+   "source": "strength"
+  },
+  "515": {
+   "name": "Medium Archer Knight",
+   "breeding_order": 22,
+   "sm_training_time": 12000,
+   "source": "strength"
+  },
+  "519": {
+   "name": "Ram",
+   "breeding_order": 23,
+   "sm_training_time": 12000,
+   "source": "strength"
+  },
+  "511": {
+   "name": "Long Swordsman",
+   "breeding_order": 24,
+   "sm_training_time": 12000,
+   "source": "strength"
+  },
+  "2276": {
+   "name": "Spawn Savage Draggy",
+   "breeding_order": 24,
+   "sm_training_time": 12000,
+   "source": "strength"
+  },
+  "749": {
+   "name": "Medusa",
+   "breeding_order": 25,
+   "sm_training_time": 12000,
+   "source": "recipe"
+  },
+  "2371": {
+   "name": "Dark Devourer",
+   "breeding_order": 25,
+   "sm_training_time": 12000,
+   "source": "strength"
+  },
+  "568": {
+   "name": "Fire Cannon",
+   "breeding_order": 26,
+   "sm_training_time": 12000,
+   "source": "strength"
+  },
+  "718": {
+   "name": "Skeleton",
+   "breeding_order": 26,
+   "sm_training_time": 12000,
+   "source": "strength"
+  },
+  "513": {
+   "name": "Medium Knight",
+   "breeding_order": 27,
+   "sm_training_time": 12000,
+   "source": "strength"
+  },
+  "573": {
+   "name": "Heavy Archer Knight",
+   "breeding_order": 28,
+   "sm_training_time": 12600,
+   "source": "strength"
+  },
+  "577": {
+   "name": "Chinese Archer",
+   "breeding_order": 29,
+   "sm_training_time": 12600,
+   "source": "strength"
+  },
+  "616": {
+   "name": "Scarab",
+   "breeding_order": 29,
+   "sm_training_time": 12600,
+   "source": "strength"
+  },
+  "634": {
+   "name": "Elf Ballista",
+   "breeding_order": 30,
+   "sm_training_time": 12600,
+   "source": "strength"
+  },
+  "540": {
+   "name": "Powerful Archer",
+   "breeding_order": 31,
+   "sm_training_time": 12600,
+   "source": "strength"
+  },
+  "574": {
+   "name": "Powerful Archer Knight",
+   "breeding_order": 31,
+   "sm_training_time": 12600,
+   "source": "strength"
+  },
+  "611": {
+   "name": "Royal Archer Knight",
+   "breeding_order": 32,
+   "sm_training_time": 12600,
+   "source": "strength"
+  },
+  "535": {
+   "name": "Ranger",
+   "breeding_order": 33,
+   "sm_training_time": 12600,
+   "source": "strength"
+  },
+  "507": {
+   "name": "Elite Swordsman",
+   "breeding_order": 34,
+   "sm_training_time": 12600,
+   "source": "strength"
+  },
+  "576": {
+   "name": "Alliance Knight",
+   "breeding_order": 34,
+   "sm_training_time": 12600,
+   "source": "strength"
+  },
+  "563": {
+   "name": "Skeleton",
+   "breeding_order": 35,
+   "sm_training_time": 13200,
+   "source": "strength"
+  },
+  "2306": {
+   "name": "Ent Ancient Draggy",
+   "breeding_order": 36,
+   "sm_training_time": 13200,
+   "source": "strength"
+  },
+  "514": {
+   "name": "Heavy Knight",
+   "breeding_order": 37,
+   "sm_training_time": 13200,
+   "source": "strength"
+  },
+  "609": {
+   "name": "Royal Archer",
+   "breeding_order": 38,
+   "sm_training_time": 13200,
+   "source": "strength"
+  },
+  "537": {
+   "name": "Stone Golem",
+   "breeding_order": 39,
+   "sm_training_time": 13200,
+   "source": "strength"
+  },
+  "544": {
+   "name": "Yeti",
+   "breeding_order": 39,
+   "sm_training_time": 13200,
+   "source": "strength"
+  },
+  "659": {
+   "name": "Infernal Minion",
+   "breeding_order": 40,
+   "sm_training_time": 13200,
+   "source": "strength"
+  },
+  "620": {
+   "name": "Atlantis Archer",
+   "breeding_order": 41,
+   "sm_training_time": 13800,
+   "source": "strength"
+  },
+  "779": {
+   "name": "Ulises",
+   "breeding_order": 41,
+   "sm_training_time": 13800,
+   "source": "strength"
+  },
+  "751": {
+   "name": "Hermes",
+   "breeding_order": 42,
+   "sm_training_time": 13800,
+   "source": "strength"
+  },
+  "783": {
+   "name": "Little Spiky Spider",
+   "breeding_order": 43,
+   "sm_training_time": 13800,
+   "source": "strength"
+  },
+  "607": {
+   "name": "Axe Viking",
+   "breeding_order": 44,
+   "sm_training_time": 13800,
+   "source": "strength"
+  },
+  "627": {
+   "name": "Elf Archer",
+   "breeding_order": 44,
+   "sm_training_time": 13800,
+   "source": "strength"
+  },
+  "508": {
+   "name": "Elite Knight",
+   "breeding_order": 45,
+   "sm_training_time": 13800,
+   "source": "strength"
+  },
+  "539": {
+   "name": "Powerful Swordsman",
+   "breeding_order": 46,
+   "sm_training_time": 13800,
+   "source": "strength"
+  },
+  "802": {
+   "name": "Necro Fork Soldier",
+   "breeding_order": 46,
+   "sm_training_time": 13800,
+   "source": "strength"
+  },
+  "622": {
+   "name": "Seahorse",
+   "breeding_order": 47,
+   "sm_training_time": 14400,
+   "source": "strength"
+  },
+  "646": {
+   "name": "Infernal Archer",
+   "breeding_order": 48,
+   "sm_training_time": 14400,
+   "source": "strength"
+  },
+  "619": {
+   "name": "Atlantis Warrior",
+   "breeding_order": 49,
+   "sm_training_time": 14400,
+   "source": "strength"
+  },
+  "633": {
+   "name": "Elf Royal Archer",
+   "breeding_order": 49,
+   "sm_training_time": 14400,
+   "source": "strength"
+  },
+  "703": {
+   "name": "Celestial Archer",
+   "breeding_order": 50,
+   "sm_training_time": 14400,
+   "source": "strength"
+  },
+  "626": {
+   "name": "Elf Warrior",
+   "breeding_order": 51,
+   "sm_training_time": 14400,
+   "source": "strength"
+  },
+  "628": {
+   "name": "Elf Druid",
+   "breeding_order": 51,
+   "sm_training_time": 14400,
+   "source": "strength"
+  },
+  "730": {
+   "name": "Scarecrow",
+   "breeding_order": 52,
+   "sm_training_time": 15000,
+   "source": "strength"
+  },
+  "763": {
+   "name": "Lythos Minion",
+   "breeding_order": 53,
+   "sm_training_time": 15000,
+   "source": "strength"
+  },
+  "578": {
+   "name": "Aztec Warrior",
+   "breeding_order": 54,
+   "sm_training_time": 15000,
+   "source": "strength"
+  },
+  "2189": {
+   "name": "Forest Bug",
+   "breeding_order": 54,
+   "sm_training_time": 15000,
+   "source": "strength"
+  },
+  "533": {
+   "name": "Warrior Princess",
+   "breeding_order": 55,
+   "sm_training_time": 15000,
+   "source": "strength"
+  },
+  "541": {
+   "name": "Powerful Knight",
+   "breeding_order": 56,
+   "sm_training_time": 15000,
+   "source": "strength"
+  },
+  "613": {
+   "name": "Egyptian Warrior",
+   "breeding_order": 56,
+   "sm_training_time": 15000,
+   "source": "strength"
+  },
+  "640": {
+   "name": "Rhino Rider",
+   "breeding_order": 57,
+   "sm_training_time": 15000,
+   "source": "strength"
+  },
+  "608": {
+   "name": "Royal Swordsman",
+   "breeding_order": 58,
+   "sm_training_time": 15600,
+   "source": "strength"
+  },
+  "809": {
+   "name": "Necro Archer",
+   "breeding_order": 59,
+   "sm_training_time": 15600,
+   "source": "strength"
+  },
+  "606": {
+   "name": "Viking",
+   "breeding_order": 60,
+   "sm_training_time": 15600,
+   "source": "strength"
+  },
+  "731": {
+   "name": "Black Witch",
+   "breeding_order": 61,
+   "sm_training_time": 15600,
+   "source": "strength"
+  },
+  "878": {
+   "name": "Mini Anubis",
+   "breeding_order": 61,
+   "sm_training_time": 15600,
+   "source": "strength"
+  },
+  "797": {
+   "name": "Axe Skeleton",
+   "breeding_order": 62,
+   "sm_training_time": 15600,
+   "source": "strength"
+  },
+  "621": {
+   "name": "Crab Knight",
+   "breeding_order": 63,
+   "sm_training_time": 16200,
+   "source": "strength"
+  },
+  "818": {
+   "name": "Skeleton Archer",
+   "breeding_order": 64,
+   "sm_training_time": 16200,
+   "source": "strength"
+  },
+  "819": {
+   "name": "Snake Charmer",
+   "breeding_order": 64,
+   "sm_training_time": 16200,
+   "source": "strength"
+  },
+  "553": {
+   "name": "Wizard",
+   "breeding_order": 66,
+   "sm_training_time": 16200,
+   "source": "strength"
+  },
+  "636": {
+   "name": "Ent Spirit",
+   "breeding_order": 66,
+   "sm_training_time": 16200,
+   "source": "strength"
+  },
+  "898": {
+   "name": "Scarab Minion",
+   "breeding_order": 67,
+   "sm_training_time": 16200,
+   "source": "strength"
+  },
+  "534": {
+   "name": "Prince Arthur",
+   "breeding_order": 68,
+   "sm_training_time": 16800,
+   "source": "strength"
+  },
+  "612": {
+   "name": "Anubis Avatar",
+   "breeding_order": 69,
+   "sm_training_time": 16800,
+   "source": "strength"
+  },
+  "733": {
+   "name": "Dracula",
+   "breeding_order": 69,
+   "sm_training_time": 16800,
+   "source": "strength"
+  },
+  "865": {
+   "name": "Guardian Archer",
+   "breeding_order": 70,
+   "sm_training_time": 16800,
+   "source": "strength"
+  },
+  "560": {
+   "name": "Elite Master Knight",
+   "breeding_order": 71,
+   "sm_training_time": 16800,
+   "source": "strength"
+  },
+  "2012": {
+   "name": "Imperial Elf Catapult",
+   "breeding_order": 71,
+   "sm_training_time": 16800,
+   "source": "strength"
+  },
+  "610": {
+   "name": "Royal Knight",
+   "breeding_order": 72,
+   "sm_training_time": 16800,
+   "source": "strength"
+  },
+  "866": {
+   "name": "Isis Healer",
+   "breeding_order": 73,
+   "sm_training_time": 17400,
+   "source": "strength"
+  },
+  "557": {
+   "name": "High Elf",
+   "breeding_order": 74,
+   "sm_training_time": 17400,
+   "source": "strength"
+  },
+  "759": {
+   "name": "Valkyr",
+   "breeding_order": 74,
+   "sm_training_time": 17400,
+   "source": "strength"
+  },
+  "614": {
+   "name": "Camel Rider",
+   "breeding_order": 75,
+   "sm_training_time": 17400,
+   "source": "strength"
+  },
+  "570": {
+   "name": "Engineer",
+   "breeding_order": 76,
+   "sm_training_time": 17400,
+   "source": "strength"
+  },
+  "632": {
+   "name": "Royal Elf",
+   "breeding_order": 76,
+   "sm_training_time": 17400,
+   "source": "strength"
+  },
+  "687": {
+   "name": "Rhino Rider",
+   "breeding_order": 77,
+   "sm_training_time": 18000,
+   "source": "strength"
+  },
+  "701": {
+   "name": "Celestial Soldier",
+   "breeding_order": 78,
+   "sm_training_time": 18000,
+   "source": "strength"
+  },
+  "652": {
+   "name": "Red Wizard",
+   "breeding_order": 79,
+   "sm_training_time": 18000,
+   "source": "strength"
+  },
+  "760": {
+   "name": "Hermes Swordsman",
+   "breeding_order": 79,
+   "sm_training_time": 18000,
+   "source": "strength"
+  },
+  "2006": {
+   "name": "Imperial Elf Archer",
+   "breeding_order": 80,
+   "sm_training_time": 18000,
+   "source": "strength"
+  },
+  "618": {
+   "name": "King Arthur",
+   "breeding_order": 81,
+   "sm_training_time": 18000,
+   "source": "strength"
+  },
+  "2021": {
+   "name": "Elven Crossbow",
+   "breeding_order": 81,
+   "sm_training_time": 18000,
+   "source": "strength"
+  },
+  "750": {
+   "name": "Icarus",
+   "breeding_order": 82,
+   "sm_training_time": 18600,
+   "source": "strength"
+  },
+  "629": {
+   "name": "Elf Tiger",
+   "breeding_order": 83,
+   "sm_training_time": 18600,
+   "source": "strength"
+  },
+  "639": {
+   "name": "White Eagle",
+   "breeding_order": 84,
+   "sm_training_time": 18600,
+   "source": "strength"
+  },
+  "2372": {
+   "name": "Dark Spider",
+   "breeding_order": 84,
+   "sm_training_time": 18600,
+   "source": "strength"
+  },
+  "705": {
+   "name": "Celestial Lancer",
+   "breeding_order": 85,
+   "sm_training_time": 18600,
+   "source": "strength"
+  },
+  "808": {
+   "name": "Sword Skeleton",
+   "breeding_order": 86,
+   "sm_training_time": 19200,
+   "source": "strength"
+  },
+  "870": {
+   "name": "Guardian Axe",
+   "breeding_order": 87,
+   "sm_training_time": 19200,
+   "source": "strength"
+  },
+  "683": {
+   "name": "Earth Wizard",
+   "breeding_order": 90,
+   "sm_training_time": 19800,
+   "source": "strength"
+  },
+  "648": {
+   "name": "Infernal Halberdier",
+   "breeding_order": 91,
+   "sm_training_time": 19800,
+   "source": "strength"
+  },
+  "729": {
+   "name": "Mr. Bones",
+   "breeding_order": 91,
+   "sm_training_time": 19800,
+   "source": "strength"
+  },
+  "2106": {
+   "name": "Spearman Gladiator",
+   "breeding_order": 92,
+   "sm_training_time": 19800,
+   "source": "strength"
+  },
+  "769": {
+   "name": "Dark Punky Draggy",
+   "breeding_order": 93,
+   "sm_training_time": 19800,
+   "source": "strength"
+  },
+  "698": {
+   "name": "Green Draggy",
+   "breeding_order": 94,
+   "sm_training_time": 19800,
+   "source": "strength"
+  },
+  "2028": {
+   "name": "Archer Orc",
+   "breeding_order": 94,
+   "sm_training_time": 19800,
+   "source": "strength"
+  },
+  "699": {
+   "name": "Celestial Priest",
+   "breeding_order": 95,
+   "sm_training_time": 20400,
+   "source": "strength"
+  },
+  "638": {
+   "name": "Draggy",
+   "breeding_order": 96,
+   "sm_training_time": 20400,
+   "source": "recipe"
+  },
+  "719": {
+   "name": "Black Ninja",
+   "breeding_order": 96,
+   "sm_training_time": 20400,
+   "source": "strength"
+  },
+  "768": {
+   "name": "Heavy Draggy",
+   "breeding_order": 96,
+   "sm_training_time": 20400,
+   "source": "strength"
+  },
+  "784": {
+   "name": "Horned Draggy",
+   "breeding_order": 97,
+   "sm_training_time": 20400,
+   "source": "strength"
+  },
+  "863": {
+   "name": "Guardian Swordsman",
+   "breeding_order": 98,
+   "sm_training_time": 20400,
+   "source": "strength"
+  },
+  "644": {
+   "name": "Infernal Warrior",
+   "breeding_order": 99,
+   "sm_training_time": 21000,
+   "source": "strength"
+  },
+  "710": {
+   "name": "Golden Draggie",
+   "breeding_order": 99,
+   "sm_training_time": 21000,
+   "source": "strength"
+  },
+  "662": {
+   "name": "Winged Knight",
+   "breeding_order": 100,
+   "sm_training_time": 21000,
+   "source": "strength"
+  },
+  "706": {
+   "name": "White Wizard",
+   "breeding_order": 101,
+   "sm_training_time": 21000,
+   "source": "strength"
+  },
+  "825": {
+   "name": "Necro Doublesword",
+   "breeding_order": 101,
+   "sm_training_time": 21000,
+   "source": "strength"
+  },
+  "725": {
+   "name": "Black Draggy",
+   "breeding_order": 102,
+   "sm_training_time": 21600,
+   "source": "strength"
+  },
+  "790": {
+   "name": "Crystal Draggy",
+   "breeding_order": 103,
+   "sm_training_time": 21600,
+   "source": "strength"
+  },
+  "813": {
+   "name": "Rubies Draggy",
+   "breeding_order": 104,
+   "sm_training_time": 21600,
+   "source": "strength"
+  },
+  "814": {
+   "name": "Celestial Draggy",
+   "breeding_order": 104,
+   "sm_training_time": 21600,
+   "source": "strength"
+  },
+  "615": {
+   "name": "Mummy",
+   "breeding_order": 105,
+   "sm_training_time": 21600,
+   "source": "strength"
+  },
+  "555": {
+   "name": "Willy Wallace",
+   "breeding_order": 106,
+   "sm_training_time": 22200,
+   "source": "strength"
+  },
+  "623": {
+   "name": "Neptune",
+   "breeding_order": 106,
+   "sm_training_time": 22200,
+   "source": "strength"
+  },
+  "602": {
+   "name": "Mobile Tower",
+   "breeding_order": 107,
+   "sm_training_time": 22200,
+   "source": "strength"
+  },
+  "655": {
+   "name": "Winged Paladin",
+   "breeding_order": 108,
+   "sm_training_time": 22200,
+   "source": "strength"
+  },
+  "2005": {
+   "name": "Imperial Elf Sword",
+   "breeding_order": 108,
+   "sm_training_time": 22200,
+   "source": "strength"
+  },
+  "647": {
+   "name": "Infernal Knight",
+   "breeding_order": 109,
+   "sm_training_time": 22200,
+   "source": "strength"
+  },
+  "712": {
+   "name": "Black Wizard",
+   "breeding_order": 110,
+   "sm_training_time": 22800,
+   "source": "strength"
+  },
+  "704": {
+   "name": "Celestial Reaper",
+   "breeding_order": 111,
+   "sm_training_time": 22800,
+   "source": "strength"
+  },
+  "734": {
+   "name": "Ghost",
+   "breeding_order": 111,
+   "sm_training_time": 22800,
+   "source": "strength"
+  },
+  "820": {
+   "name": "Death Draggy",
+   "breeding_order": 112,
+   "sm_training_time": 22800,
+   "source": "strength"
+  },
+  "663": {
+   "name": "Spartan Swordsman",
+   "breeding_order": 113,
+   "sm_training_time": 23400,
+   "source": "strength"
+  },
+  "2027": {
+   "name": "Crusher Orc",
+   "breeding_order": 113,
+   "sm_training_time": 23400,
+   "source": "strength"
+  },
+  "2103": {
+   "name": "Slayer Minion",
+   "breeding_order": 114,
+   "sm_training_time": 23400,
+   "source": "strength"
+  },
+  "2104": {
+   "name": "Tornado Heaven",
+   "breeding_order": 115,
+   "sm_training_time": 23400,
+   "source": "strength"
+  },
+  "727": {
+   "name": "Water Wizard",
+   "breeding_order": 116,
+   "sm_training_time": 23400,
+   "source": "strength"
+  },
+  "849": {
+   "name": "Vulcano Draggy",
+   "breeding_order": 116,
+   "sm_training_time": 23400,
+   "source": "strength"
+  },
+  "556": {
+   "name": "Thor",
+   "breeding_order": 117,
+   "sm_training_time": 24000,
+   "source": "strength"
+  },
+  "603": {
+   "name": "Elephant Rider",
+   "breeding_order": 118,
+   "sm_training_time": 24000,
+   "source": "strength"
+  },
+  "702": {
+   "name": "Celestial Mech",
+   "breeding_order": 118,
+   "sm_training_time": 24000,
+   "source": "strength"
+  },
+  "771": {
+   "name": "Antimatter Wizard",
+   "breeding_order": 119,
+   "sm_training_time": 24000,
+   "source": "strength"
+  },
+  "850": {
+   "name": "Bahamut Draggy",
+   "breeding_order": 120,
+   "sm_training_time": 24600,
+   "source": "strength"
+  },
+  "854": {
+   "name": "Red Bahamut Draggy",
+   "breeding_order": 121,
+   "sm_training_time": 24600,
+   "source": "strength"
+  },
+  "868": {
+   "name": "Electric Bahamut Draggy",
+   "breeding_order": 121,
+   "sm_training_time": 24600,
+   "source": "strength"
+  },
+  "2312": {
+   "name": "Impaler",
+   "breeding_order": 122,
+   "sm_training_time": 24600,
+   "source": "strength"
+  },
+  "700": {
+   "name": "Gryphon Knight",
+   "breeding_order": 123,
+   "sm_training_time": 24600,
+   "source": "strength"
+  },
+  "2105": {
+   "name": "Sword Gladiator",
+   "breeding_order": 123,
+   "sm_training_time": 24600,
+   "source": "strength"
+  },
+  "876": {
+   "name": "Golden  Bahamut Draggy",
+   "breeding_order": 124,
+   "sm_training_time": 25200,
+   "source": "strength"
+  },
+  "732": {
+   "name": "Frankenstein",
+   "breeding_order": 125,
+   "sm_training_time": 25200,
+   "source": "strength"
+  },
+  "774": {
+   "name": "Aquiles",
+   "breeding_order": 126,
+   "sm_training_time": 25200,
+   "source": "strength"
+  },
+  "2118": {
+   "name": "Priest Gladiator Pet",
+   "breeding_order": 126,
+   "sm_training_time": 25200,
+   "source": "strength"
+  },
+  "643": {
+   "name": "Black Elephant",
+   "breeding_order": 127,
+   "sm_training_time": 25800,
+   "source": "strength"
+  },
+  "796": {
+   "name": "Sun Wizard",
+   "breeding_order": 128,
+   "sm_training_time": 25800,
+   "source": "strength"
+  },
+  "890": {
+   "name": "Pharaoh Draggy",
+   "breeding_order": 128,
+   "sm_training_time": 25800,
+   "source": "strength"
+  },
+  "2046": {
+   "name": "TNT Orc",
+   "breeding_order": 129,
+   "sm_training_time": 25800,
+   "source": "strength"
+  },
+  "753": {
+   "name": "Scorpion",
+   "breeding_order": 130,
+   "sm_training_time": 26400,
+   "source": "strength"
+  },
+  "2054": {
+   "name": "Priest Orc",
+   "breeding_order": 131,
+   "sm_training_time": 26400,
+   "source": "recipe"
+  },
+  "2076": {
+   "name": "Vulcano Minion",
+   "breeding_order": 131,
+   "sm_training_time": 26400,
+   "source": "strength"
+  },
+  "2078": {
+   "name": "Elemental Forest Minion",
+   "breeding_order": 131,
+   "sm_training_time": 26400,
+   "source": "strength"
+  },
+  "2083": {
+   "name": "Evil Crows Whirlwind",
+   "breeding_order": 132,
+   "sm_training_time": 26400,
+   "source": "strength"
+  },
+  "2084": {
+   "name": "Elemental Water Minion",
+   "breeding_order": 133,
+   "sm_training_time": 27000,
+   "source": "strength"
+  },
+  "2088": {
+   "name": "Infraworld Minion",
+   "breeding_order": 133,
+   "sm_training_time": 27000,
+   "source": "strength"
+  },
+  "2091": {
+   "name": "Elemental Soul Minion",
+   "breeding_order": 134,
+   "sm_training_time": 27000,
+   "source": "strength"
+  },
+  "2092": {
+   "name": "Elemental Light Minion",
+   "breeding_order": 135,
+   "sm_training_time": 27000,
+   "source": "strength"
+  },
+  "860": {
+   "name": "Ramses II",
+   "breeding_order": 136,
+   "sm_training_time": 27600,
+   "source": "recipe"
+  },
+  "2095": {
+   "name": "Heaven Colossus Minion",
+   "breeding_order": 136,
+   "sm_training_time": 27600,
+   "source": "strength"
+  },
+  "2096": {
+   "name": "Elemental Water Minion",
+   "breeding_order": 136,
+   "sm_training_time": 27600,
+   "source": "strength"
+  },
+  "815": {
+   "name": "Necro Dark Lord",
+   "breeding_order": 137,
+   "sm_training_time": 27600,
+   "source": "recipe"
+  },
+  "2124": {
+   "name": "Sky Whirlwind",
+   "breeding_order": 137,
+   "sm_training_time": 27600,
+   "source": "strength"
+  },
+  "2147": {
+   "name": "Whirlwind Minion",
+   "breeding_order": 138,
+   "sm_training_time": 27600,
+   "source": "strength"
+  },
+  "2154": {
+   "name": "Sand Storm Whirlwind",
+   "breeding_order": 138,
+   "sm_training_time": 27600,
+   "source": "strength"
+  },
+  "2314": {
+   "name": "Ent Ancient Twister",
+   "breeding_order": 139,
+   "sm_training_time": 28200,
+   "source": "strength"
+  },
+  "2382": {
+   "name": "Vulcano Minion",
+   "breeding_order": 140,
+   "sm_training_time": 28200,
+   "source": "strength"
+  },
+  "721": {
+   "name": "Amazon Warrior",
+   "breeding_order": 141,
+   "sm_training_time": 28200,
+   "source": "strength"
+  },
+  "2146": {
+   "name": "Swamp Minion",
+   "breeding_order": 141,
+   "sm_training_time": 28200,
+   "source": "strength"
+  },
+  "892": {
+   "name": "Black Bahamut Draggy",
+   "breeding_order": 142,
+   "sm_training_time": 28800,
+   "source": "strength"
+  },
+  "822": {
+   "name": "Dragon Rider I",
+   "breeding_order": 143,
+   "sm_training_time": 28800,
+   "source": "strength"
+  },
+  "882": {
+   "name": "Turkish Archer",
+   "breeding_order": 143,
+   "sm_training_time": 28800,
+   "source": "strength"
+  },
+  "2116": {
+   "name": "Mace Gladiator",
+   "breeding_order": 144,
+   "sm_training_time": 28800,
+   "source": "strength"
+  },
+  "2158": {
+   "name": "Caesar Gladiator Minion",
+   "breeding_order": 145,
+   "sm_training_time": 29400,
+   "source": "strength"
+  },
+  "2001": {
+   "name": "Paladin Bahamut Draggy",
+   "breeding_order": 146,
+   "sm_training_time": 29400,
+   "source": "strength"
+  },
+  "2374": {
+   "name": "Dark Abomination",
+   "breeding_order": 146,
+   "sm_training_time": 29400,
+   "source": "strength"
+  },
+  "2082": {
+   "name": "Elemental Forest Minion",
+   "breeding_order": 147,
+   "sm_training_time": 30000,
+   "source": "strength"
+  },
+  "542": {
+   "name": "Ship",
+   "breeding_order": 148,
+   "sm_training_time": 30000,
+   "source": "strength"
+  },
+  "583": {
+   "name": "Zeppelin",
+   "breeding_order": 149,
+   "sm_training_time": 30000,
+   "source": "strength"
+  },
+  "694": {
+   "name": "Red Samurai",
+   "breeding_order": 150,
+   "sm_training_time": 30600,
+   "source": "strength"
+  },
+  "736": {
+   "name": "Epic 2-Head Dragon",
+   "breeding_order": 151,
+   "sm_training_time": 30600,
+   "source": "recipe"
+  },
+  "823": {
+   "name": "Dragon Rider II",
+   "breeding_order": 151,
+   "sm_training_time": 30600,
+   "source": "strength"
+  },
+  "2014": {
+   "name": "Dynasty Draggy",
+   "breeding_order": 151,
+   "sm_training_time": 30600,
+   "source": "strength"
+  },
+  "799": {
+   "name": "Necro Horseman",
+   "breeding_order": 152,
+   "sm_training_time": 30600,
+   "source": "strength"
+  },
+  "660": {
+   "name": "Spartan Champion",
+   "breeding_order": 153,
+   "sm_training_time": 31200,
+   "source": "strength"
+  },
+  "752": {
+   "name": "Minotaur",
+   "breeding_order": 153,
+   "sm_training_time": 31200,
+   "source": "strength"
+  },
+  "2017": {
+   "name": "Electric Dynasty Draggy",
+   "breeding_order": 154,
+   "sm_training_time": 31200,
+   "source": "strength"
+  },
+  "2024": {
+   "name": "Frostfire Draggy",
+   "breeding_order": 155,
+   "sm_training_time": 31800,
+   "source": "strength"
+  },
+  "2025": {
+   "name": "Fire Draggy",
+   "breeding_order": 156,
+   "sm_training_time": 31800,
+   "source": "strength"
+  },
+  "2033": {
+   "name": "Jade Dynasty Draggy",
+   "breeding_order": 156,
+   "sm_training_time": 31800,
+   "source": "strength"
+  },
+  "2040": {
+   "name": "Solar Draggy",
+   "breeding_order": 157,
+   "sm_training_time": 31800,
+   "source": "strength"
+  },
+  "795": {
+   "name": "Necro Warrior",
+   "breeding_order": 158,
+   "sm_training_time": 32400,
+   "source": "strength"
+  },
+  "2310": {
+   "name": "Atrocity",
+   "breeding_order": 158,
+   "sm_training_time": 32400,
+   "source": "strength"
+  },
+  "715": {
+   "name": "Grim Reaper",
+   "breeding_order": 159,
+   "sm_training_time": 32400,
+   "source": "strength"
+  },
+  "2044": {
+   "name": "2-Head Holydeath Draggy",
+   "breeding_order": 160,
+   "sm_training_time": 33000,
+   "source": "strength"
+  },
+  "661": {
+   "name": "Barbarian",
+   "breeding_order": 161,
+   "sm_training_time": 33000,
+   "source": "strength"
+  },
+  "2115": {
+   "name": "Dark Evil God Minion",
+   "breeding_order": 161,
+   "sm_training_time": 33000,
+   "source": "strength"
+  },
+  "754": {
+   "name": "Cerberus",
+   "breeding_order": 162,
+   "sm_training_time": 33000,
+   "source": "strength"
+  },
+  "630": {
+   "name": "Summoned Golem",
+   "breeding_order": 163,
+   "sm_training_time": 33600,
+   "source": "strength"
+  },
+  "811": {
+   "name": "Necro Winged Warrior",
+   "breeding_order": 163,
+   "sm_training_time": 33600,
+   "source": "strength"
+  },
+  "631": {
+   "name": "Summoned Yeti",
+   "breeding_order": 164,
+   "sm_training_time": 33600,
+   "source": "strength"
+  },
+  "824": {
+   "name": "Dragon Rider III",
+   "breeding_order": 165,
+   "sm_training_time": 34200,
+   "source": "strength"
+  },
+  "874": {
+   "name": "Dragon Hunter III",
+   "breeding_order": 166,
+   "sm_training_time": 34200,
+   "source": "strength"
+  },
+  "2049": {
+   "name": "Galaxy Draggy",
+   "breeding_order": 166,
+   "sm_training_time": 34200,
+   "source": "strength"
+  },
+  "2064": {
+   "name": "Star Draggy",
+   "breeding_order": 167,
+   "sm_training_time": 34200,
+   "source": "strength"
+  },
+  "803": {
+   "name": "Necro  Multi-arms",
+   "breeding_order": 168,
+   "sm_training_time": 34800,
+   "source": "strength"
+  },
+  "2070": {
+   "name": "Golden Dynasty Draggy",
+   "breeding_order": 168,
+   "sm_training_time": 34800,
+   "source": "strength"
+  },
+  "2122": {
+   "name": "Sky Bahamut Draggy",
+   "breeding_order": 169,
+   "sm_training_time": 34800,
+   "source": "strength"
+  },
+  "804": {
+   "name": "Necro Executioner",
+   "breeding_order": 170,
+   "sm_training_time": 35400,
+   "source": "strength"
+  },
+  "780": {
+   "name": "Harpy",
+   "breeding_order": 171,
+   "sm_training_time": 35400,
+   "source": "strength"
+  },
+  "821": {
+   "name": "Necro Ghost",
+   "breeding_order": 171,
+   "sm_training_time": 35400,
+   "source": "strength"
+  },
+  "2149": {
+   "name": "Genesis Earth God Minion",
+   "breeding_order": 172,
+   "sm_training_time": 36000,
+   "source": "strength"
+  },
+  "2159": {
+   "name": "Genesis Wind Minion",
+   "breeding_order": 173,
+   "sm_training_time": 36000,
+   "source": "strength"
+  },
+  "2161": {
+   "name": "Genesis Shadow Minion",
+   "breeding_order": 173,
+   "sm_training_time": 36000,
+   "source": "strength"
+  },
+  "2168": {
+   "name": "Genesis Ice Minion",
+   "breeding_order": 174,
+   "sm_training_time": 36000,
+   "source": "strength"
+  },
+  "2170": {
+   "name": "Genesis Iron Minion",
+   "breeding_order": 175,
+   "sm_training_time": 36600,
+   "source": "strength"
+  },
+  "711": {
+   "name": "Celestial Supreme",
+   "breeding_order": 176,
+   "sm_training_time": 36600,
+   "source": "strength"
+  },
+  "2130": {
+   "name": "Hell Abyss Draggy",
+   "breeding_order": 176,
+   "sm_training_time": 36600,
+   "source": "strength"
+  },
+  "637": {
+   "name": "Rockdriller",
+   "breeding_order": 177,
+   "sm_training_time": 37200,
+   "source": "strength"
+  },
+  "724": {
+   "name": "Avenging Paladin",
+   "breeding_order": 178,
+   "sm_training_time": 37200,
+   "source": "strength"
+  },
+  "789": {
+   "name": "Hercules",
+   "breeding_order": 178,
+   "sm_training_time": 37200,
+   "source": "strength"
+  },
+  "642": {
+   "name": "Black Yeti",
+   "breeding_order": 180,
+   "sm_training_time": 37800,
+   "source": "strength"
+  },
+  "645": {
+   "name": "Infernal Demon",
+   "breeding_order": 180,
+   "sm_training_time": 37800,
+   "source": "recipe"
+  },
+  "756": {
+   "name": "Centaur",
+   "breeding_order": 181,
+   "sm_training_time": 38400,
+   "source": "strength"
+  },
+  "810": {
+   "name": "Necro Priest",
+   "breeding_order": 181,
+   "sm_training_time": 38400,
+   "source": "strength"
+  },
+  "635": {
+   "name": "Ent",
+   "breeding_order": 182,
+   "sm_training_time": 38400,
+   "source": "strength"
+  },
+  "654": {
+   "name": "Demon Crusher",
+   "breeding_order": 183,
+   "sm_training_time": 39000,
+   "source": "strength"
+  },
+  "2133": {
+   "name": "3-Head Primal Draggy",
+   "breeding_order": 183,
+   "sm_training_time": 39000,
+   "source": "strength"
+  },
+  "2141": {
+   "name": "Green Extreme Draggy",
+   "breeding_order": 184,
+   "sm_training_time": 39000,
+   "source": "strength"
+  },
+  "2172": {
+   "name": "Electric Extreme Draggy",
+   "breeding_order": 185,
+   "sm_training_time": 39600,
+   "source": "strength"
+  },
+  "2175": {
+   "name": "Golden Extreme Draggy",
+   "breeding_order": 186,
+   "sm_training_time": 39600,
+   "source": "strength"
+  },
+  "2178": {
+   "name": "Fire Extreme Draggy",
+   "breeding_order": 186,
+   "sm_training_time": 39600,
+   "source": "strength"
+  },
+  "2181": {
+   "name": "Bull Extreme Draggy",
+   "breeding_order": 187,
+   "sm_training_time": 40200,
+   "source": "strength"
+  },
+  "2184": {
+   "name": "Frost Extreme Draggy",
+   "breeding_order": 188,
+   "sm_training_time": 40200,
+   "source": "strength"
+  },
+  "2187": {
+   "name": "Forest Extreme Draggy",
+   "breeding_order": 188,
+   "sm_training_time": 40200,
+   "source": "strength"
+  },
+  "2191": {
+   "name": "Wind Extreme Draggy",
+   "breeding_order": 189,
+   "sm_training_time": 40800,
+   "source": "strength"
+  },
+  "2194": {
+   "name": "Soul Extreme Draggy",
+   "breeding_order": 190,
+   "sm_training_time": 40800,
+   "source": "strength"
+  },
+  "801": {
+   "name": "Necro  Harvester",
+   "breeding_order": 191,
+   "sm_training_time": 41400,
+   "source": "strength"
+  },
+  "867": {
+   "name": "Horus Herald",
+   "breeding_order": 191,
+   "sm_training_time": 41400,
+   "source": "strength"
+  },
+  "886": {
+   "name": "Megahealing Angel",
+   "breeding_order": 192,
+   "sm_training_time": 41400,
+   "source": "strength"
+  },
+  "2004": {
+   "name": "Supreme Bahamut Draggy",
+   "breeding_order": 193,
+   "sm_training_time": 42000,
+   "source": "strength"
+  },
+  "2009": {
+   "name": "Imperial Elf Knight",
+   "breeding_order": 193,
+   "sm_training_time": 42000,
+   "source": "strength"
+  },
+  "762": {
+   "name": "Stratos Titan",
+   "breeding_order": 194,
+   "sm_training_time": 42000,
+   "source": "recipe"
+  },
+  "714": {
+   "name": "Two-Headed Dragon",
+   "breeding_order": 195,
+   "sm_training_time": 42600,
+   "source": "strength"
+  },
+  "653": {
+   "name": "Giant Viper",
+   "breeding_order": 196,
+   "sm_training_time": 42600,
+   "source": "recipe"
+  },
+  "735": {
+   "name": "Werewolf",
+   "breeding_order": 196,
+   "sm_training_time": 42600,
+   "source": "strength"
+  },
+  "773": {
+   "name": "Poseidon",
+   "breeding_order": 196,
+   "sm_training_time": 42600,
+   "source": "strength"
+  },
+  "894": {
+   "name": "Monster Hunter",
+   "breeding_order": 197,
+   "sm_training_time": 43200,
+   "source": "recipe"
+  },
+  "794": {
+   "name": "Necro Paladin",
+   "breeding_order": 198,
+   "sm_training_time": 43200,
+   "source": "strength"
+  },
+  "707": {
+   "name": "Scary Zombie",
+   "breeding_order": 199,
+   "sm_training_time": 43800,
+   "source": "strength"
+  },
+  "2030": {
+   "name": "Orc Spear Warrior",
+   "breeding_order": 200,
+   "sm_training_time": 43800,
+   "source": "strength"
+  },
+  "2242": {
+   "name": "Savage Draggy",
+   "breeding_order": 201,
+   "sm_training_time": 44400,
+   "source": "strength"
+  },
+  "2245": {
+   "name": "Scorch Savage Draggy",
+   "breeding_order": 201,
+   "sm_training_time": 44400,
+   "source": "strength"
+  },
+  "2248": {
+   "name": "Shock Savage Draggy",
+   "breeding_order": 202,
+   "sm_training_time": 44400,
+   "source": "strength"
+  },
+  "716": {
+   "name": "Monster Mole",
+   "breeding_order": 203,
+   "sm_training_time": 45000,
+   "source": "strength"
+  },
+  "2007": {
+   "name": "Elf Priest",
+   "breeding_order": 203,
+   "sm_training_time": 45000,
+   "source": "strength"
+  },
+  "650": {
+   "name": "Balrog",
+   "breeding_order": 204,
+   "sm_training_time": 45000,
+   "source": "strength"
+  },
+  "713": {
+   "name": "T-Rex",
+   "breeding_order": 205,
+   "sm_training_time": 45600,
+   "source": "strength"
+  },
+  "2029": {
+   "name": "Boar Axe Rider",
+   "breeding_order": 206,
+   "sm_training_time": 46200,
+   "source": "strength"
+  },
+  "873": {
+   "name": "Dragon Hunter II",
+   "breeding_order": 208,
+   "sm_training_time": 46800,
+   "source": "recipe"
+  },
+  "2010": {
+   "name": "Imperial Elf Axe",
+   "breeding_order": 208,
+   "sm_training_time": 46800,
+   "source": "strength"
+  },
+  "2251": {
+   "name": "Rock Savage Draggy",
+   "breeding_order": 208,
+   "sm_training_time": 46800,
+   "source": "strength"
+  },
+  "2257": {
+   "name": "Diamonds Savage Draggy",
+   "breeding_order": 209,
+   "sm_training_time": 46800,
+   "source": "strength"
+  },
+  "2260": {
+   "name": "Space Savage Draggy",
+   "breeding_order": 210,
+   "sm_training_time": 47400,
+   "source": "strength"
+  },
+  "651": {
+   "name": "Lightning Draggy",
+   "breeding_order": 211,
+   "sm_training_time": 48000,
+   "source": "recipe"
+  },
+  "2282": {
+   "name": "Ancient Draggy",
+   "breeding_order": 211,
+   "sm_training_time": 48000,
+   "source": "strength"
+  },
+  "2285": {
+   "name": "Shaman Ancient Draggy",
+   "breeding_order": 211,
+   "sm_training_time": 48000,
+   "source": "strength"
+  },
+  "2288": {
+   "name": "Saint George Draggy",
+   "breeding_order": 212,
+   "sm_training_time": 48000,
+   "source": "strength"
+  },
+  "2290": {
+   "name": "Rune Ancient Draggy",
+   "breeding_order": 213,
+   "sm_training_time": 48600,
+   "source": "strength"
+  },
+  "2296": {
+   "name": "Corpse Ancient Draggy",
+   "breeding_order": 213,
+   "sm_training_time": 48600,
+   "source": "strength"
+  },
+  "2303": {
+   "name": "Hellborn Ancient Draggy",
+   "breeding_order": 214,
+   "sm_training_time": 48600,
+   "source": "strength"
+  },
+  "2316": {
+   "name": "Fireborn Bahamut Draggy",
+   "breeding_order": 215,
+   "sm_training_time": 49200,
+   "source": "strength"
+  },
+  "708": {
+   "name": "Golden Dragon",
+   "breeding_order": 216,
+   "sm_training_time": 49200,
+   "source": "recipe"
+  },
+  "2319": {
+   "name": "Wraith Extreme Draggy",
+   "breeding_order": 216,
+   "sm_training_time": 49200,
+   "source": "strength"
+  },
+  "2331": {
+   "name": "Night Enel Draggy",
+   "breeding_order": 216,
+   "sm_training_time": 49200,
+   "source": "strength"
+  },
+  "2101": {
+   "name": "Medieval Ether Messiah",
+   "breeding_order": 217,
+   "sm_training_time": 49800,
+   "source": "recipe"
+  },
+  "2322": {
+   "name": "Waterborn Bahamut Draggy",
+   "breeding_order": 217,
+   "sm_training_time": 49800,
+   "source": "strength"
+  },
+  "2325": {
+   "name": "Ivory Dinasty Draggy",
+   "breeding_order": 218,
+   "sm_training_time": 50400,
+   "source": "strength"
+  },
+  "2334": {
+   "name": "Rock Extreme Draggy",
+   "breeding_order": 218,
+   "sm_training_time": 50400,
+   "source": "strength"
+  },
+  "2340": {
+   "name": "Thunder Forge Draggy",
+   "breeding_order": 219,
+   "sm_training_time": 50400,
+   "source": "strength"
+  },
+  "2337": {
+   "name": "Fire Cerberus Draggy",
+   "breeding_order": 220,
+   "sm_training_time": 51000,
+   "source": "strength"
+  },
+  "2342": {
+   "name": "Venom Cerberus Draggy",
+   "breeding_order": 221,
+   "sm_training_time": 51600,
+   "source": "strength"
+  },
+  "2343": {
+   "name": "Bones Cerberus Draggy",
+   "breeding_order": 221,
+   "sm_training_time": 51600,
+   "source": "strength"
+  },
+  "2345": {
+   "name": "Wolf Ancient Draggy",
+   "breeding_order": 222,
+   "sm_training_time": 51600,
+   "source": "strength"
+  },
+  "2348": {
+   "name": "Red Armor Draggy",
+   "breeding_order": 223,
+   "sm_training_time": 52200,
+   "source": "strength"
+  },
+  "2352": {
+   "name": "Golden Armor Draggy",
+   "breeding_order": 223,
+   "sm_training_time": 52200,
+   "source": "strength"
+  },
+  "2072": {
+   "name": "Evil Demon",
+   "breeding_order": 224,
+   "sm_training_time": 52800,
+   "source": "recipe"
+  },
+  "2355": {
+   "name": "Abyss Ancient Draggy",
+   "breeding_order": 224,
+   "sm_training_time": 52800,
+   "source": "strength"
+  },
+  "2358": {
+   "name": "Platinum Armor Draggy",
+   "breeding_order": 225,
+   "sm_training_time": 52800,
+   "source": "strength"
+  },
+  "869": {
+   "name": "Horus Gryphon",
+   "breeding_order": 226,
+   "sm_training_time": 53400,
+   "source": "strength"
+  },
+  "2008": {
+   "name": "Reptile Knight",
+   "breeding_order": 226,
+   "sm_training_time": 53400,
+   "source": "strength"
+  },
+  "872": {
+   "name": "Dragon Hunter",
+   "breeding_order": 227,
+   "sm_training_time": 53400,
+   "source": "strength"
+  },
+  "722": {
+   "name": "Fire T-Rex",
+   "breeding_order": 228,
+   "sm_training_time": 54000,
+   "source": "strength"
+  },
+  "2117": {
+   "name": "Priest Gladiator",
+   "breeding_order": 228,
+   "sm_training_time": 54000,
+   "source": "strength"
+  },
+  "748": {
+   "name": "Cyclops",
+   "breeding_order": 230,
+   "sm_training_time": 54600,
+   "source": "strength"
+  },
+  "709": {
+   "name": "Colossal Cobra",
+   "breeding_order": 231,
+   "sm_training_time": 55200,
+   "source": "recipe"
+  },
+  "782": {
+   "name": "Spiky Spider",
+   "breeding_order": 231,
+   "sm_training_time": 55200,
+   "source": "strength"
+  },
+  "836": {
+   "name": "Two-Headed Dragon Rider",
+   "breeding_order": 231,
+   "sm_training_time": 55200,
+   "source": "strength"
+  },
+  "745": {
+   "name": "Godzilla",
+   "breeding_order": 232,
+   "sm_training_time": 55800,
+   "source": "strength"
+  },
+  "737": {
+   "name": "T-Rex Knight",
+   "breeding_order": 233,
+   "sm_training_time": 56400,
+   "source": "strength"
+  },
+  "883": {
+   "name": "Limit Wizard",
+   "breeding_order": 233,
+   "sm_training_time": 56400,
+   "source": "strength"
+  },
+  "885": {
+   "name": "Turkish Horseman",
+   "breeding_order": 234,
+   "sm_training_time": 56400,
+   "source": "strength"
+  },
+  "649": {
+   "name": "Furious Dragon",
+   "breeding_order": 235,
+   "sm_training_time": 57000,
+   "source": "recipe"
+  },
+  "2361": {
+   "name": "Bull Armor Draggy",
+   "breeding_order": 235,
+   "sm_training_time": 57000,
+   "source": "strength"
+  },
+  "2367": {
+   "name": "Devil Ancient Draggy",
+   "breeding_order": 236,
+   "sm_training_time": 57600,
+   "source": "strength"
+  },
+  "817": {
+   "name": "Necro Rhino",
+   "breeding_order": 237,
+   "sm_training_time": 57600,
+   "source": "strength"
+  },
+  "684": {
+   "name": "Stormy Dragon",
+   "breeding_order": 238,
+   "sm_training_time": 58200,
+   "source": "recipe"
+  },
+  "741": {
+   "name": "Snowy Kong",
+   "breeding_order": 238,
+   "sm_training_time": 58200,
+   "source": "strength"
+  },
+  "2061": {
+   "name": "Dual Axe Orc",
+   "breeding_order": 238,
+   "sm_training_time": 58200,
+   "source": "strength"
+  },
+  "695": {
+   "name": "Sayan Dragon",
+   "breeding_order": 239,
+   "sm_training_time": 58800,
+   "source": "strength"
+  },
+  "831": {
+   "name": "Mad Balrog",
+   "breeding_order": 239,
+   "sm_training_time": 58800,
+   "source": "recipe"
+  },
+  "641": {
+   "name": "Golden Golem",
+   "breeding_order": 241,
+   "sm_training_time": 59400,
+   "source": "recipe"
+  },
+  "781": {
+   "name": "Vulcano",
+   "breeding_order": 241,
+   "sm_training_time": 59400,
+   "source": "strength"
+  },
+  "791": {
+   "name": "Albino Werewolf",
+   "breeding_order": 241,
+   "sm_training_time": 59400,
+   "source": "strength"
+  },
+  "861": {
+   "name": "Sphinx",
+   "breeding_order": 242,
+   "sm_training_time": 60000,
+   "source": "strength"
+  },
+  "723": {
+   "name": "Black Dragon",
+   "breeding_order": 243,
+   "sm_training_time": 60600,
+   "source": "strength"
+  },
+  "2110": {
+   "name": "Souls Whirlwind",
+   "breeding_order": 243,
+   "sm_training_time": 60600,
+   "source": "strength"
+  },
+  "746": {
+   "name": "Pumpkin Monster",
+   "breeding_order": 244,
+   "sm_training_time": 60600,
+   "source": "strength"
+  },
+  "755": {
+   "name": "Pyros Titan",
+   "breeding_order": 245,
+   "sm_training_time": 61200,
+   "source": "strength"
+  },
+  "770": {
+   "name": "Giant Mamooth",
+   "breeding_order": 246,
+   "sm_training_time": 61800,
+   "source": "strength"
+  },
+  "871": {
+   "name": "Cobra Rider",
+   "breeding_order": 246,
+   "sm_training_time": 61800,
+   "source": "strength"
+  },
+  "2068": {
+   "name": "Boomerang Orc",
+   "breeding_order": 247,
+   "sm_training_time": 62400,
+   "source": "strength"
+  },
+  "757": {
+   "name": "Lythos Titan",
+   "breeding_order": 248,
+   "sm_training_time": 63000,
+   "source": "strength"
+  },
+  "816": {
+   "name": "Necro Worm",
+   "breeding_order": 248,
+   "sm_training_time": 63000,
+   "source": "strength"
+  },
+  "2108": {
+   "name": "Demolisher Gladiator",
+   "breeding_order": 249,
+   "sm_training_time": 63000,
+   "source": "strength"
+  },
+  "767": {
+   "name": "Advanced Catapult",
+   "breeding_order": 251,
+   "sm_training_time": 64200,
+   "source": "recipe"
+  },
+  "805": {
+   "name": "Necro Shark Monster",
+   "breeding_order": 251,
+   "sm_training_time": 64200,
+   "source": "strength"
+  },
+  "2052": {
+   "name": "Attack Booster Wizard",
+   "breeding_order": 251,
+   "sm_training_time": 64200,
+   "source": "strength"
+  },
+  "765": {
+   "name": "Hades",
+   "breeding_order": 252,
+   "sm_training_time": 64800,
+   "source": "strength"
+  },
+  "838": {
+   "name": "Epic 2-Head Dragon Rider",
+   "breeding_order": 253,
+   "sm_training_time": 64800,
+   "source": "strength"
+  },
+  "2020": {
+   "name": "Silver Paladin",
+   "breeding_order": 253,
+   "sm_training_time": 64800,
+   "source": "strength"
+  },
+  "758": {
+   "name": "Infernal Dragon",
+   "breeding_order": 255,
+   "sm_training_time": 66000,
+   "source": "strength"
+  },
+  "744": {
+   "name": "The Phoenix",
+   "breeding_order": 256,
+   "sm_training_time": 66600,
+   "source": "strength"
+  },
+  "880": {
+   "name": "Turkish Swordsman",
+   "breeding_order": 257,
+   "sm_training_time": 67200,
+   "source": "strength"
+  },
+  "766": {
+   "name": "Heavy Dragon",
+   "breeding_order": 258,
+   "sm_training_time": 67800,
+   "source": "strength"
+  },
+  "776": {
+   "name": "Atomic Godzilla",
+   "breeding_order": 258,
+   "sm_training_time": 67800,
+   "source": "strength"
+  },
+  "829": {
+   "name": "Punisher Knight",
+   "breeding_order": 259,
+   "sm_training_time": 67800,
+   "source": "strength"
+  },
+  "897": {
+   "name": "Scarab Rider",
+   "breeding_order": 260,
+   "sm_training_time": 68400,
+   "source": "strength"
+  },
+  "772": {
+   "name": "Hidros Titan",
+   "breeding_order": 261,
+   "sm_training_time": 69000,
+   "source": "strength"
+  },
+  "788": {
+   "name": "Ares",
+   "breeding_order": 261,
+   "sm_training_time": 69000,
+   "source": "strength"
+  },
+  "792": {
+   "name": "Giant Cyclops",
+   "breeding_order": 262,
+   "sm_training_time": 69600,
+   "source": "strength"
+  },
+  "800": {
+   "name": "Necro  Gollum",
+   "breeding_order": 263,
+   "sm_training_time": 70200,
+   "source": "strength"
+  },
+  "807": {
+   "name": "Necro  Abomination",
+   "breeding_order": 263,
+   "sm_training_time": 70200,
+   "source": "strength"
+  },
+  "879": {
+   "name": "Anubis God",
+   "breeding_order": 264,
+   "sm_training_time": 70800,
+   "source": "strength"
+  },
+  "775": {
+   "name": "Blue Phoenix",
+   "breeding_order": 265,
+   "sm_training_time": 70800,
+   "source": "strength"
+  },
+  "2128": {
+   "name": "Queen Beast Spawn",
+   "breeding_order": 266,
+   "sm_training_time": 71400,
+   "source": "strength"
+  },
+  "2186": {
+   "name": "Forest Extreme Dragon",
+   "breeding_order": 266,
+   "sm_training_time": 71400,
+   "source": "recipe"
+  },
+  "786": {
+   "name": "Manticora",
+   "breeding_order": 267,
+   "sm_training_time": 72000,
+   "source": "strength"
+  },
+  "812": {
+   "name": "Necro Gryphon Knight",
+   "breeding_order": 268,
+   "sm_training_time": 72600,
+   "source": "strength"
+  },
+  "2011": {
+   "name": "Imperial Elf Gryphon",
+   "breeding_order": 268,
+   "sm_training_time": 72600,
+   "source": "strength"
+  },
+  "787": {
+   "name": "Chimera",
+   "breeding_order": 269,
+   "sm_training_time": 73200,
+   "source": "strength"
+  },
+  "881": {
+   "name": "Turkish Axeman",
+   "breeding_order": 270,
+   "sm_training_time": 73800,
+   "source": "strength"
+  },
+  "2107": {
+   "name": "Knight Gladiator",
+   "breeding_order": 271,
+   "sm_training_time": 74400,
+   "source": "strength"
+  },
+  "778": {
+   "name": "God Zeus",
+   "breeding_order": 272,
+   "sm_training_time": 75000,
+   "source": "strength"
+  },
+  "806": {
+   "name": "Necro King",
+   "breeding_order": 273,
+   "sm_training_time": 75600,
+   "source": "strength"
+  },
+  "2031": {
+   "name": "Spider Orc Rider",
+   "breeding_order": 273,
+   "sm_training_time": 75600,
+   "source": "strength"
+  },
+  "832": {
+   "name": "Furious Dragon Rider",
+   "breeding_order": 275,
+   "sm_training_time": 76800,
+   "source": "strength"
+  },
+  "827": {
+   "name": "Evil Scorpion",
+   "breeding_order": 276,
+   "sm_training_time": 77400,
+   "source": "strength"
+  },
+  "2019": {
+   "name": "Red Bull Rider",
+   "breeding_order": 277,
+   "sm_training_time": 77400,
+   "source": "strength"
+  },
+  "777": {
+   "name": "Crystal Dragon",
+   "breeding_order": 278,
+   "sm_training_time": 78000,
+   "source": "strength"
+  },
+  "833": {
+   "name": "Stormy Dragon Rider",
+   "breeding_order": 278,
+   "sm_training_time": 78000,
+   "source": "strength"
+  },
+  "798": {
+   "name": "Rubies Dragon",
+   "breeding_order": 279,
+   "sm_training_time": 78600,
+   "source": "strength"
+  },
+  "793": {
+   "name": "Angelical Dragon",
+   "breeding_order": 281,
+   "sm_training_time": 79800,
+   "source": "strength"
+  },
+  "884": {
+   "name": "Tuthankamon",
+   "breeding_order": 281,
+   "sm_training_time": 79800,
+   "source": "strength"
+  },
+  "896": {
+   "name": "Chameleon",
+   "breeding_order": 282,
+   "sm_training_time": 80400,
+   "source": "strength"
+  },
+  "899": {
+   "name": "Super Chameleon",
+   "breeding_order": 283,
+   "sm_training_time": 81000,
+   "source": "strength"
+  },
+  "2022": {
+   "name": "Elven Eagle Rider",
+   "breeding_order": 283,
+   "sm_training_time": 81000,
+   "source": "strength"
+  },
+  "2062": {
+   "name": "Wyvern Rider",
+   "breeding_order": 284,
+   "sm_training_time": 81600,
+   "source": "strength"
+  },
+  "785": {
+   "name": "Furious Bull Dragon",
+   "breeding_order": 285,
+   "sm_training_time": 82200,
+   "source": "strength"
+  },
+  "2073": {
+   "name": "Death Warrior",
+   "breeding_order": 285,
+   "sm_training_time": 82200,
+   "source": "recipe"
+  },
+  "834": {
+   "name": "Sayan Dragon Rider",
+   "breeding_order": 286,
+   "sm_training_time": 82800,
+   "source": "strength"
+  },
+  "2036": {
+   "name": "Golden Paladin",
+   "breeding_order": 286,
+   "sm_training_time": 82800,
+   "source": "strength"
+  },
+  "2047": {
+   "name": "Big Basher Orc",
+   "breeding_order": 287,
+   "sm_training_time": 83400,
+   "source": "strength"
+  },
+  "837": {
+   "name": "Black Dragon Rider",
+   "breeding_order": 288,
+   "sm_training_time": 84000,
+   "source": "strength"
+  },
+  "2055": {
+   "name": "Soul Eater",
+   "breeding_order": 288,
+   "sm_training_time": 84000,
+   "source": "strength"
+  },
+  "826": {
+   "name": "Death Dragon",
+   "breeding_order": 289,
+   "sm_training_time": 84600,
+   "source": "strength"
+  },
+  "830": {
+   "name": "Spectrum Dragon",
+   "breeding_order": 290,
+   "sm_training_time": 85800,
+   "source": "strength"
+  },
+  "2135": {
+   "name": "4-Weapons Gladiator",
+   "breeding_order": 291,
+   "sm_training_time": 86400,
+   "source": "strength"
+  },
+  "2150": {
+   "name": "Devil Gladiator",
+   "breeding_order": 291,
+   "sm_training_time": 86400,
+   "source": "strength"
+  },
+  "828": {
+   "name": "Furious Zeus",
+   "breeding_order": 292,
+   "sm_training_time": 87000,
+   "source": "strength"
+  },
+  "835": {
+   "name": "Golden Dragon Rider",
+   "breeding_order": 293,
+   "sm_training_time": 87600,
+   "source": "strength"
+  },
+  "2125": {
+   "name": "Lion Soul Gladiator",
+   "breeding_order": 293,
+   "sm_training_time": 87600,
+   "source": "strength"
+  },
+  "2056": {
+   "name": "Black Lizard Rider",
+   "breeding_order": 294,
+   "sm_training_time": 88200,
+   "source": "strength"
+  },
+  "2060": {
+   "name": "Brutal Slasher",
+   "breeding_order": 295,
+   "sm_training_time": 88800,
+   "source": "strength"
+  },
+  "2109": {
+   "name": "Lizard Gladiator",
+   "breeding_order": 296,
+   "sm_training_time": 89400,
+   "source": "strength"
+  },
+  "2081": {
+   "name": "Fire Soul Eater",
+   "breeding_order": 297,
+   "sm_training_time": 90000,
+   "source": "strength"
+  },
+  "2136": {
+   "name": "Centaur Gladiator",
+   "breeding_order": 298,
+   "sm_training_time": 90600,
+   "source": "strength"
+  },
+  "2144": {
+   "name": "Minotaur Gladiator",
+   "breeding_order": 298,
+   "sm_training_time": 90600,
+   "source": "strength"
+  },
+  "2164": {
+   "name": "Dwarf Priest",
+   "breeding_order": 299,
+   "sm_training_time": 91200,
+   "source": "strength"
+  },
+  "2165": {
+   "name": "Dwarven Catapult",
+   "breeding_order": 300,
+   "sm_training_time": 91800,
+   "source": "strength"
+  },
+  "536": {
+   "name": "Nice Troll",
+   "breeding_order": 301,
+   "sm_training_time": 93000,
+   "source": "recipe"
+  },
+  "2143": {
+   "name": "Blade Gladiator",
+   "breeding_order": 301,
+   "sm_training_time": 93000,
+   "source": "strength"
+  },
+  "2163": {
+   "name": "Dwarf Axe",
+   "breeding_order": 301,
+   "sm_training_time": 93000,
+   "source": "strength"
+  },
+  "2067": {
+   "name": "Invisible Killer",
+   "breeding_order": 303,
+   "sm_training_time": 94200,
+   "source": "strength"
+  },
+  "2126": {
+   "name": "Bull Gladiator",
+   "breeding_order": 303,
+   "sm_training_time": 94200,
+   "source": "strength"
+  },
+  "847": {
+   "name": "Vulcano Dragon",
+   "breeding_order": 304,
+   "sm_training_time": 94800,
+   "source": "strength"
+  },
+  "848": {
+   "name": "Giant Bat",
+   "breeding_order": 305,
+   "sm_training_time": 95400,
+   "source": "strength"
+  },
+  "2042": {
+   "name": "Vulcano Golem",
+   "breeding_order": 305,
+   "sm_training_time": 95400,
+   "source": "strength"
+  },
+  "839": {
+   "name": "Infernal Dragon Rider",
+   "breeding_order": 306,
+   "sm_training_time": 96000,
+   "source": "strength"
+  },
+  "742": {
+   "name": "Tiger Spider",
+   "breeding_order": 307,
+   "sm_training_time": 97200,
+   "source": "recipe"
+  },
+  "2053": {
+   "name": "Metal T-Rex",
+   "breeding_order": 307,
+   "sm_training_time": 97200,
+   "source": "strength"
+  },
+  "840": {
+   "name": "Heavy Dragon Rider",
+   "breeding_order": 308,
+   "sm_training_time": 97800,
+   "source": "strength"
+  },
+  "2151": {
+   "name": "Chariot Gladiator",
+   "breeding_order": 308,
+   "sm_training_time": 97800,
+   "source": "strength"
+  },
+  "2059": {
+   "name": "Sword Lion Warrior",
+   "breeding_order": 309,
+   "sm_training_time": 98400,
+   "source": "strength"
+  },
+  "2066": {
+   "name": "2-Head Orc",
+   "breeding_order": 310,
+   "sm_training_time": 99000,
+   "source": "strength"
+  },
+  "853": {
+   "name": "Red Bahamut Dragon",
+   "breeding_order": 311,
+   "sm_training_time": 99600,
+   "source": "strength"
+  },
+  "2112": {
+   "name": "Evil Demon",
+   "breeding_order": 313,
+   "sm_training_time": 101400,
+   "source": "strength"
+  },
+  "862": {
+   "name": "Electric Bahamut Dragon",
+   "breeding_order": 314,
+   "sm_training_time": 102000,
+   "source": "strength"
+  },
+  "841": {
+   "name": "Crystal Dragon Rider",
+   "breeding_order": 315,
+   "sm_training_time": 102600,
+   "source": "strength"
+  },
+  "843": {
+   "name": "Angelical Dragon Rider",
+   "breeding_order": 315,
+   "sm_training_time": 102600,
+   "source": "strength"
+  },
+  "842": {
+   "name": "Furious Bull Dragon Rider",
+   "breeding_order": 316,
+   "sm_training_time": 103800,
+   "source": "strength"
+  },
+  "2157": {
+   "name": "Caesar Gladiator",
+   "breeding_order": 317,
+   "sm_training_time": 104400,
+   "source": "strength"
+  },
+  "2087": {
+   "name": "Luring Warrior",
+   "breeding_order": 318,
+   "sm_training_time": 105000,
+   "source": "strength"
+  },
+  "2097": {
+   "name": "Black Phoenix",
+   "breeding_order": 318,
+   "sm_training_time": 105000,
+   "source": "strength"
+  },
+  "2100": {
+   "name": "Reptile Warrior",
+   "breeding_order": 319,
+   "sm_training_time": 106200,
+   "source": "strength"
+  },
+  "875": {
+   "name": "Golden Bahamut Dragon",
+   "breeding_order": 320,
+   "sm_training_time": 106800,
+   "source": "strength"
+  },
+  "2098": {
+   "name": "Antimatter Golem",
+   "breeding_order": 320,
+   "sm_training_time": 106800,
+   "source": "strength"
+  },
+  "844": {
+   "name": "Rubies Dragon Rider",
+   "breeding_order": 321,
+   "sm_training_time": 107400,
+   "source": "strength"
+  },
+  "2114": {
+   "name": "Atlas Titan",
+   "breeding_order": 322,
+   "sm_training_time": 108600,
+   "source": "strength"
+  },
+  "845": {
+   "name": "Death Dragon Rider",
+   "breeding_order": 323,
+   "sm_training_time": 109200,
+   "source": "strength"
+  },
+  "888": {
+   "name": "Pharaoh Bahamut Dragon",
+   "breeding_order": 323,
+   "sm_training_time": 109200,
+   "source": "strength"
+  },
+  "2127": {
+   "name": "Queen Beast",
+   "breeding_order": 324,
+   "sm_training_time": 109800,
+   "source": "strength"
+  },
+  "2138": {
+   "name": "Predator Lizard",
+   "breeding_order": 325,
+   "sm_training_time": 111000,
+   "source": "strength"
+  },
+  "851": {
+   "name": "Vulcano Dragon Rider",
+   "breeding_order": 326,
+   "sm_training_time": 111600,
+   "source": "strength"
+  },
+  "2137": {
+   "name": "Swamp Monster",
+   "breeding_order": 327,
+   "sm_training_time": 112200,
+   "source": "strength"
+  },
+  "2145": {
+   "name": "Ice Golem",
+   "breeding_order": 328,
+   "sm_training_time": 113400,
+   "source": "strength"
+  },
+  "852": {
+   "name": "Green Bahamut Rider",
+   "breeding_order": 329,
+   "sm_training_time": 114000,
+   "source": "strength"
+  },
+  "2140": {
+   "name": "Green Extreme Dragon",
+   "breeding_order": 329,
+   "sm_training_time": 114000,
+   "source": "recipe"
+  },
+  "891": {
+   "name": "Black Bahamut Dragon",
+   "breeding_order": 330,
+   "sm_training_time": 115200,
+   "source": "recipe"
+  },
+  "2013": {
+   "name": "Dynasty Dragon",
+   "breeding_order": 330,
+   "sm_training_time": 115200,
+   "source": "strength"
+  },
+  "2102": {
+   "name": "Medieval Samurai",
+   "breeding_order": 330,
+   "sm_training_time": 115200,
+   "source": "strength"
+  },
+  "2177": {
+   "name": "Fire Extreme Dragon",
+   "breeding_order": 330,
+   "sm_training_time": 115200,
+   "source": "recipe"
+  },
+  "855": {
+   "name": "Red Bahamut Rider",
+   "breeding_order": 331,
+   "sm_training_time": 115800,
+   "source": "strength"
+  },
+  "2037": {
+   "name": "Rainbow Dragon",
+   "breeding_order": 331,
+   "sm_training_time": 115800,
+   "source": "recipe"
+  },
+  "2074": {
+   "name": "Orc Battering Ram",
+   "breeding_order": 331,
+   "sm_training_time": 115800,
+   "source": "recipe"
+  },
+  "856": {
+   "name": "Green Phoenix",
+   "breeding_order": 333,
+   "sm_training_time": 117600,
+   "source": "recipe"
+  },
+  "864": {
+   "name": "Electric Bahamut Dragon Rider",
+   "breeding_order": 333,
+   "sm_training_time": 117600,
+   "source": "strength"
+  },
+  "2183": {
+   "name": "Frost Extreme Dragon",
+   "breeding_order": 334,
+   "sm_training_time": 118200,
+   "source": "recipe"
+  },
+  "2032": {
+   "name": "Jade Dynasty Dragon",
+   "breeding_order": 335,
+   "sm_training_time": 119400,
+   "source": "strength"
+  },
+  "2039": {
+   "name": "Solar Dragon",
+   "breeding_order": 336,
+   "sm_training_time": 120000,
+   "source": "strength"
+  },
+  "2043": {
+   "name": "2-Head Holydeath Dragon",
+   "breeding_order": 337,
+   "sm_training_time": 121200,
+   "source": "strength"
+  },
+  "877": {
+   "name": "Golden Bahamut Rider",
+   "breeding_order": 338,
+   "sm_training_time": 121800,
+   "source": "strength"
+  },
+  "2180": {
+   "name": "Bull Extreme Dragon",
+   "breeding_order": 339,
+   "sm_training_time": 123000,
+   "source": "recipe"
+  },
+  "743": {
+   "name": "Krazy Kamikaze",
+   "breeding_order": 340,
+   "sm_training_time": 123600,
+   "source": "strength"
+  },
+  "889": {
+   "name": "Pharaoh Bahamut Dragon Rider",
+   "breeding_order": 340,
+   "sm_training_time": 123600,
+   "source": "strength"
+  },
+  "2048": {
+   "name": "Galaxy Dragon",
+   "breeding_order": 340,
+   "sm_training_time": 123600,
+   "source": "recipe"
+  },
+  "2099": {
+   "name": "Medieval Golden Slayer",
+   "breeding_order": 340,
+   "sm_training_time": 123600,
+   "source": "recipe"
+  },
+  "2057": {
+   "name": "3-Head Dragon",
+   "breeding_order": 343,
+   "sm_training_time": 126600,
+   "source": "recipe"
+  },
+  "2069": {
+   "name": "Golden Dynasty Dragon",
+   "breeding_order": 343,
+   "sm_training_time": 126600,
+   "source": "strength"
+  },
+  "2311": {
+   "name": "Blow-Bug",
+   "breeding_order": 343,
+   "sm_training_time": 126600,
+   "source": "strength"
+  },
+  "893": {
+   "name": "Black Bahamut Rider",
+   "breeding_order": 344,
+   "sm_training_time": 127200,
+   "source": "strength"
+  },
+  "2000": {
+   "name": "Paladin Bahamut Dragon",
+   "breeding_order": 345,
+   "sm_training_time": 128400,
+   "source": "recipe"
+  },
+  "2002": {
+   "name": "Paladin Bahamut Rider",
+   "breeding_order": 345,
+   "sm_training_time": 128400,
+   "source": "strength"
+  },
+  "2015": {
+   "name": "Dynasty Dragon Rider",
+   "breeding_order": 345,
+   "sm_training_time": 128400,
+   "source": "strength"
+  },
+  "2373": {
+   "name": "Dark Blow-Bug",
+   "breeding_order": 346,
+   "sm_training_time": 129600,
+   "source": "strength"
+  },
+  "717": {
+   "name": "King Kong",
+   "breeding_order": 347,
+   "sm_training_time": 130200,
+   "source": "recipe"
+  },
+  "2018": {
+   "name": "Electric Dynasty Dragon Rider",
+   "breeding_order": 347,
+   "sm_training_time": 130200,
+   "source": "strength"
+  },
+  "2023": {
+   "name": "2-Head Frostfire Dragon",
+   "breeding_order": 347,
+   "sm_training_time": 130200,
+   "source": "recipe"
+  },
+  "2016": {
+   "name": "Electric Dynasty Dragon",
+   "breeding_order": 348,
+   "sm_training_time": 131400,
+   "source": "recipe"
+  },
+  "2026": {
+   "name": "2-Head Frostfire Dragon Rider",
+   "breeding_order": 348,
+   "sm_training_time": 131400,
+   "source": "strength"
+  },
+  "2034": {
+   "name": "Jade Dynasty Dragon Rider",
+   "breeding_order": 348,
+   "sm_training_time": 131400,
+   "source": "strength"
+  },
+  "2038": {
+   "name": "Rainbow Dragon Rider",
+   "breeding_order": 349,
+   "sm_training_time": 132000,
+   "source": "strength"
+  },
+  "2041": {
+   "name": "Solar Dragon Rider",
+   "breeding_order": 350,
+   "sm_training_time": 133200,
+   "source": "strength"
+  },
+  "2045": {
+   "name": "2-Head Holydeath Dragon Rider",
+   "breeding_order": 350,
+   "sm_training_time": 133200,
+   "source": "strength"
+  },
+  "2051": {
+   "name": "Chuck Norris Bahamut Dragon",
+   "breeding_order": 351,
+   "sm_training_time": 134400,
+   "source": "strength"
+  },
+  "2050": {
+   "name": "Galaxy Dragon Rider",
+   "breeding_order": 352,
+   "sm_training_time": 135000,
+   "source": "strength"
+  },
+  "2058": {
+   "name": "3-Head Dragon Rider",
+   "breeding_order": 353,
+   "sm_training_time": 136200,
+   "source": "strength"
+  },
+  "2065": {
+   "name": "Star Dragon Rider",
+   "breeding_order": 353,
+   "sm_training_time": 136200,
+   "source": "strength"
+  },
+  "2071": {
+   "name": "Golden Dynasty Dragon Rider",
+   "breeding_order": 354,
+   "sm_training_time": 137400,
+   "source": "strength"
+  },
+  "761": {
+   "name": "Hermes Spearman",
+   "breeding_order": 355,
+   "sm_training_time": 138000,
+   "source": "recipe"
+  },
+  "2129": {
+   "name": "Hell Abyss Dragon",
+   "breeding_order": 355,
+   "sm_training_time": 138000,
+   "source": "strength"
+  },
+  "2174": {
+   "name": "Golden Extreme Dragon",
+   "breeding_order": 357,
+   "sm_training_time": 140400,
+   "source": "recipe"
+  },
+  "2123": {
+   "name": "Sky Bahamut Dragon Rider",
+   "breeding_order": 358,
+   "sm_training_time": 141600,
+   "source": "strength"
+  },
+  "2171": {
+   "name": "Electric Extreme Dragon",
+   "breeding_order": 358,
+   "sm_training_time": 141600,
+   "source": "strength"
+  },
+  "2190": {
+   "name": "Wind Extreme Dragon",
+   "breeding_order": 358,
+   "sm_training_time": 141600,
+   "source": "recipe"
+  },
+  "2193": {
+   "name": "Soul Extreme Dragon",
+   "breeding_order": 358,
+   "sm_training_time": 141600,
+   "source": "recipe"
+  },
+  "2131": {
+   "name": "Hell Abyss Dragon Rider",
+   "breeding_order": 360,
+   "sm_training_time": 143400,
+   "source": "strength"
+  },
+  "2132": {
+   "name": "3-Head Primal Dragon",
+   "breeding_order": 361,
+   "sm_training_time": 144600,
+   "source": "recipe"
+  },
+  "2134": {
+   "name": "3-Head Primal Dragon Rider",
+   "breeding_order": 361,
+   "sm_training_time": 144600,
+   "source": "strength"
+  },
+  "2063": {
+   "name": "Star Dragon",
+   "breeding_order": 362,
+   "sm_training_time": 145800,
+   "source": "recipe"
+  },
+  "575": {
+   "name": "Kamikaze",
+   "breeding_order": 363,
+   "sm_training_time": 146400,
+   "source": "strength"
+  },
+  "846": {
+   "name": "Green Bahamut Dragon",
+   "breeding_order": 363,
+   "sm_training_time": 146400,
+   "source": "recipe"
+  },
+  "2142": {
+   "name": "Green Extreme Dragon Rider",
+   "breeding_order": 363,
+   "sm_training_time": 146400,
+   "source": "strength"
+  },
+  "2173": {
+   "name": "Electric Extreme Dragon Rider",
+   "breeding_order": 365,
+   "sm_training_time": 148800,
+   "source": "strength"
+  },
+  "2176": {
+   "name": "Golden Extreme Dragon Rider",
+   "breeding_order": 366,
+   "sm_training_time": 150000,
+   "source": "strength"
+  },
+  "2121": {
+   "name": "Sky Bahamut Dragon",
+   "breeding_order": 367,
+   "sm_training_time": 151200,
+   "source": "recipe"
+  },
+  "2179": {
+   "name": "Fire Extreme Dragon Rider",
+   "breeding_order": 367,
+   "sm_training_time": 151200,
+   "source": "strength"
+  },
+  "2182": {
+   "name": "Bull Extreme Dragon Rider",
+   "breeding_order": 368,
+   "sm_training_time": 152400,
+   "source": "strength"
+  },
+  "2185": {
+   "name": "Frost Extreme Dragon Rider",
+   "breeding_order": 368,
+   "sm_training_time": 152400,
+   "source": "strength"
+  },
+  "2188": {
+   "name": "Forest Extreme Dragon Rider",
+   "breeding_order": 370,
+   "sm_training_time": 154200,
+   "source": "strength"
+  },
+  "2192": {
+   "name": "Wind Extreme Dragon Rider",
+   "breeding_order": 371,
+   "sm_training_time": 155400,
+   "source": "strength"
+  },
+  "2195": {
+   "name": "Soul Extreme Dragon Rider",
+   "breeding_order": 372,
+   "sm_training_time": 156600,
+   "source": "strength"
+  },
+  "686": {
+   "name": "Infernal Kamikaze",
+   "breeding_order": 373,
+   "sm_training_time": 157800,
+   "source": "strength"
+  },
+  "2241": {
+   "name": "Savage Dragon",
+   "breeding_order": 374,
+   "sm_training_time": 159000,
+   "source": "strength"
+  },
+  "2243": {
+   "name": "Savage Dragon Rider",
+   "breeding_order": 375,
+   "sm_training_time": 160200,
+   "source": "strength"
+  },
+  "2244": {
+   "name": "Scorch Savage Dragon",
+   "breeding_order": 375,
+   "sm_training_time": 160200,
+   "source": "strength"
+  },
+  "2247": {
+   "name": "Shock Savage Dragon",
+   "breeding_order": 376,
+   "sm_training_time": 161400,
+   "source": "strength"
+  },
+  "2287": {
+   "name": "Saint George Dragon",
+   "breeding_order": 377,
+   "sm_training_time": 162600,
+   "source": "strength"
+  },
+  "2246": {
+   "name": "Scorch Savage Dragon Rider",
+   "breeding_order": 378,
+   "sm_training_time": 163800,
+   "source": "strength"
+  },
+  "2250": {
+   "name": "Rock Savage Dragon",
+   "breeding_order": 378,
+   "sm_training_time": 163800,
+   "source": "strength"
+  },
+  "2256": {
+   "name": "Diamonds Savage Dragon",
+   "breeding_order": 379,
+   "sm_training_time": 165000,
+   "source": "strength"
+  },
+  "2249": {
+   "name": "Shock Savage Dragon Rider",
+   "breeding_order": 380,
+   "sm_training_time": 166200,
+   "source": "strength"
+  },
+  "2259": {
+   "name": "Space Savage Dragon",
+   "breeding_order": 380,
+   "sm_training_time": 166200,
+   "source": "strength"
+  },
+  "510": {
+   "name": "Swordsman",
+   "breeding_order": 381,
+   "sm_training_time": 167400,
+   "source": "recipe"
+  },
+  "554": {
+   "name": "Valkyrie",
+   "breeding_order": 381,
+   "sm_training_time": 167400,
+   "source": "recipe"
+  },
+  "2035": {
+   "name": "Burning Tiger",
+   "breeding_order": 381,
+   "sm_training_time": 167400,
+   "source": "recipe"
+  },
+  "2275": {
+   "name": "Spawn Savage Dragon",
+   "breeding_order": 381,
+   "sm_training_time": 167400,
+   "source": "strength"
+  },
+  "887": {
+   "name": "Orc Dragon",
+   "breeding_order": 382,
+   "sm_training_time": 168600,
+   "source": "recipe"
+  },
+  "2252": {
+   "name": "Rock Savage Dragon Rider",
+   "breeding_order": 382,
+   "sm_training_time": 168600,
+   "source": "strength"
+  },
+  "2258": {
+   "name": "Diamonds Savage Dragon Rider",
+   "breeding_order": 383,
+   "sm_training_time": 169800,
+   "source": "strength"
+  },
+  "2267": {
+   "name": "Easter Dragon",
+   "breeding_order": 383,
+   "sm_training_time": 169800,
+   "source": "strength"
+  },
+  "2261": {
+   "name": "Space Savage Dragon Rider",
+   "breeding_order": 384,
+   "sm_training_time": 171600,
+   "source": "strength"
+  },
+  "2272": {
+   "name": "Demon Dragon",
+   "breeding_order": 385,
+   "sm_training_time": 172800,
+   "source": "strength"
+  },
+  "2277": {
+   "name": "Spawn Savage Dragon Rider",
+   "breeding_order": 385,
+   "sm_training_time": 172800,
+   "source": "strength"
+  },
+  "2268": {
+   "name": "Easter Dragon Rider",
+   "breeding_order": 386,
+   "sm_training_time": 174000,
+   "source": "strength"
+  },
+  "2269": {
+   "name": "Forge Dragon",
+   "breeding_order": 387,
+   "sm_training_time": 175200,
+   "source": "strength"
+  },
+  "2271": {
+   "name": "Forge Dragon Rider",
+   "breeding_order": 388,
+   "sm_training_time": 176400,
+   "source": "strength"
+  },
+  "2274": {
+   "name": "Demon Dragon Rider",
+   "breeding_order": 388,
+   "sm_training_time": 176400,
+   "source": "strength"
+  },
+  "2326": {
+   "name": "Ivory Dinasty Dragon Rider",
+   "breeding_order": 389,
+   "sm_training_time": 177600,
+   "source": "strength"
+  },
+  "2315": {
+   "name": "Fireborn Bahamut Dragon",
+   "breeding_order": 390,
+   "sm_training_time": 178800,
+   "source": "strength"
+  },
+  "2324": {
+   "name": "Ivory Dinasty Dragon",
+   "breeding_order": 390,
+   "sm_training_time": 178800,
+   "source": "strength"
+  },
+  "2318": {
+   "name": "Wraith Extreme Dragon",
+   "breeding_order": 391,
+   "sm_training_time": 180600,
+   "source": "strength"
+  },
+  "2321": {
+   "name": "Waterborn Bahamut Dragon",
+   "breeding_order": 392,
+   "sm_training_time": 181800,
+   "source": "strength"
+  },
+  "2317": {
+   "name": "Fireborn Bahamut Dragon Rider",
+   "breeding_order": 393,
+   "sm_training_time": 183000,
+   "source": "strength"
+  },
+  "2339": {
+   "name": "Thunder Forge Dragon",
+   "breeding_order": 393,
+   "sm_training_time": 183000,
+   "source": "strength"
+  },
+  "2330": {
+   "name": "Night Enel Dragon",
+   "breeding_order": 394,
+   "sm_training_time": 184200,
+   "source": "strength"
+  },
+  "2320": {
+   "name": "Wraith Extreme Dragon Rider",
+   "breeding_order": 395,
+   "sm_training_time": 186000,
+   "source": "strength"
+  },
+  "2333": {
+   "name": "Rock Extreme Dragon",
+   "breeding_order": 395,
+   "sm_training_time": 186000,
+   "source": "strength"
+  },
+  "2323": {
+   "name": "Waterborn Bahamut Dragon Rider",
+   "breeding_order": 396,
+   "sm_training_time": 187200,
+   "source": "strength"
+  },
+  "2341": {
+   "name": "Thunder Forge Dragon Rider",
+   "breeding_order": 397,
+   "sm_training_time": 188400,
+   "source": "strength"
+  },
+  "2332": {
+   "name": "Night Enel Dragon Rider",
+   "breeding_order": 398,
+   "sm_training_time": 190200,
+   "source": "strength"
+  },
+  "2335": {
+   "name": "Rock Extreme Dragon Rider",
+   "breeding_order": 398,
+   "sm_training_time": 190200,
+   "source": "strength"
+  },
+  "2003": {
+   "name": "Supreme Bahamut Dragon",
+   "breeding_order": 399,
+   "sm_training_time": 191400,
+   "source": "strength"
+  },
+  "764": {
+   "name": "Rodas Colossus",
+   "breeding_order": 400,
+   "sm_training_time": 192600,
+   "source": "strength"
+  },
+  "2197": {
+   "name": "Golden Epic Draggy",
+   "breeding_order": 401,
+   "sm_training_time": 194400,
+   "source": "strength"
+  },
+  "2200": {
+   "name": "Black Epic Draggy",
+   "breeding_order": 402,
+   "sm_training_time": 195600,
+   "source": "strength"
+  },
+  "2203": {
+   "name": "Electric Epic Draggy",
+   "breeding_order": 403,
+   "sm_training_time": 197400,
+   "source": "strength"
+  },
+  "2206": {
+   "name": "Jewel Epic Draggy",
+   "breeding_order": 404,
+   "sm_training_time": 198600,
+   "source": "strength"
+  },
+  "2209": {
+   "name": "Red-Hot Epic Draggy",
+   "breeding_order": 405,
+   "sm_training_time": 199800,
+   "source": "strength"
+  },
+  "2212": {
+   "name": "Neon Epic Draggy",
+   "breeding_order": 406,
+   "sm_training_time": 201600,
+   "source": "strength"
+  },
+  "2215": {
+   "name": "Skull Epic Draggy",
+   "breeding_order": 407,
+   "sm_training_time": 202800,
+   "source": "strength"
+  },
+  "2218": {
+   "name": "Shogun Epic Draggy",
+   "breeding_order": 408,
+   "sm_training_time": 204600,
+   "source": "strength"
+  },
+  "2221": {
+   "name": "Taiji Epic Draggy",
+   "breeding_order": 409,
+   "sm_training_time": 205800,
+   "source": "strength"
+  },
+  "2224": {
+   "name": "Enel Epic Draggy",
+   "breeding_order": 410,
+   "sm_training_time": 207600,
+   "source": "strength"
+  },
+  "2227": {
+   "name": "Red Djinn Draggy",
+   "breeding_order": 411,
+   "sm_training_time": 209400,
+   "source": "strength"
+  },
+  "2233": {
+   "name": "Blue Fire Djinn Draggy",
+   "breeding_order": 412,
+   "sm_training_time": 210600,
+   "source": "strength"
+  },
+  "2230": {
+   "name": "Nebula Epic Draggy",
+   "breeding_order": 413,
+   "sm_training_time": 212400,
+   "source": "strength"
+  },
+  "2239": {
+   "name": "Thunder Epic Draggy",
+   "breeding_order": 414,
+   "sm_training_time": 213600,
+   "source": "strength"
+  },
+  "2254": {
+   "name": "Laser Epic Draggy",
+   "breeding_order": 415,
+   "sm_training_time": 215400,
+   "source": "strength"
+  },
+  "2279": {
+   "name": "Dark Shogun Epic Draggy",
+   "breeding_order": 416,
+   "sm_training_time": 217200,
+   "source": "strength"
+  },
+  "2328": {
+   "name": "Ghost Epic Draggy",
+   "breeding_order": 417,
+   "sm_training_time": 218400,
+   "source": "strength"
+  },
+  "2293": {
+   "name": "Black Demon Epic Draggy",
+   "breeding_order": 418,
+   "sm_training_time": 220200,
+   "source": "strength"
+  },
+  "2364": {
+   "name": "Night Forge Draggy",
+   "breeding_order": 419,
+   "sm_training_time": 222000,
+   "source": "strength"
+  },
+  "2086": {
+   "name": "Elemental Water Colossus",
+   "breeding_order": 421,
+   "sm_training_time": 225000,
+   "source": "strength"
+  },
+  "2094": {
+   "name": "Elemental Light Colossus",
+   "breeding_order": 422,
+   "sm_training_time": 226800,
+   "source": "strength"
+  },
+  "2077": {
+   "name": "Elemental Fire Colossus",
+   "breeding_order": 423,
+   "sm_training_time": 228600,
+   "source": "strength"
+  },
+  "2080": {
+   "name": "Elemental Forest Colossus",
+   "breeding_order": 424,
+   "sm_training_time": 230400,
+   "source": "strength"
+  },
+  "2090": {
+   "name": "Elemental Soul Colossus",
+   "breeding_order": 425,
+   "sm_training_time": 232200,
+   "source": "strength"
+  },
+  "2093": {
+   "name": "Elemental Light God",
+   "breeding_order": 426,
+   "sm_training_time": 233400,
+   "source": "strength"
+  },
+  "2079": {
+   "name": "Elemental Forest God",
+   "breeding_order": 427,
+   "sm_training_time": 235200,
+   "source": "strength"
+  },
+  "2075": {
+   "name": "Elemental Fire God",
+   "breeding_order": 428,
+   "sm_training_time": 237000,
+   "source": "strength"
+  },
+  "2153": {
+   "name": "Tiny Fire God",
+   "breeding_order": 429,
+   "sm_training_time": 238800,
+   "source": "strength"
+  },
+  "2166": {
+   "name": "Tiny Light God",
+   "breeding_order": 430,
+   "sm_training_time": 240600,
+   "source": "strength"
+  },
+  "2085": {
+   "name": "Elemental Water God",
+   "breeding_order": 431,
+   "sm_training_time": 242400,
+   "source": "strength"
+  },
+  "2155": {
+   "name": "Tiny Water God",
+   "breeding_order": 432,
+   "sm_training_time": 244200,
+   "source": "strength"
+  },
+  "2089": {
+   "name": "Elemental Soul God",
+   "breeding_order": 433,
+   "sm_training_time": 246000,
+   "source": "strength"
+  },
+  "2152": {
+   "name": "Genesis Earth Colossus",
+   "breeding_order": 434,
+   "sm_training_time": 247800,
+   "source": "strength"
+  },
+  "2162": {
+   "name": "Genesis Wind Colossus",
+   "breeding_order": 435,
+   "sm_training_time": 249600,
+   "source": "strength"
+  },
+  "2113": {
+   "name": "Dark Evil God",
+   "breeding_order": 436,
+   "sm_training_time": 251400,
+   "source": "strength"
+  },
+  "2237": {
+   "name": "Genesis Iron Colossus",
+   "breeding_order": 437,
+   "sm_training_time": 253200,
+   "source": "strength"
+  },
+  "2235": {
+   "name": "Genesis Ice Colossus",
+   "breeding_order": 438,
+   "sm_training_time": 255600,
+   "source": "strength"
+  },
+  "2236": {
+   "name": "Genesis Shadow Colossus",
+   "breeding_order": 439,
+   "sm_training_time": 257400,
+   "source": "strength"
+  },
+  "2169": {
+   "name": "Genesis Iron God",
+   "breeding_order": 440,
+   "sm_training_time": 259200,
+   "source": "strength"
+  },
+  "2160": {
+   "name": "Genesis Shadow God",
+   "breeding_order": 441,
+   "sm_training_time": 261000,
+   "source": "strength"
+  },
+  "2167": {
+   "name": "Genesis Ice God",
+   "breeding_order": 442,
+   "sm_training_time": 262800,
+   "source": "strength"
+  },
+  "2148": {
+   "name": "Genesis Earth God",
+   "breeding_order": 443,
+   "sm_training_time": 265200,
+   "source": "strength"
+  },
+  "2156": {
+   "name": "Genesis Wind God",
+   "breeding_order": 444,
+   "sm_training_time": 267000,
+   "source": "strength"
+  },
+  "2199": {
+   "name": "Black Epic Dragon",
+   "breeding_order": 445,
+   "sm_training_time": 268800,
+   "source": "strength"
+  },
+  "2202": {
+   "name": "Electric Epic Dragon",
+   "breeding_order": 446,
+   "sm_training_time": 270600,
+   "source": "strength"
+  },
+  "2196": {
+   "name": "Golden Epic Dragon",
+   "breeding_order": 447,
+   "sm_training_time": 273000,
+   "source": "strength"
+  },
+  "2198": {
+   "name": "Golden Epic Dragon Rider",
+   "breeding_order": 448,
+   "sm_training_time": 274800,
+   "source": "strength"
+  },
+  "2205": {
+   "name": "Jewel Epic Dragon",
+   "breeding_order": 449,
+   "sm_training_time": 277200,
+   "source": "strength"
+  },
+  "2201": {
+   "name": "Black Epic Dragon Rider",
+   "breeding_order": 450,
+   "sm_training_time": 279000,
+   "source": "strength"
+  },
+  "2208": {
+   "name": "Red-Hot Epic Dragon",
+   "breeding_order": 451,
+   "sm_training_time": 280800,
+   "source": "strength"
+  },
+  "2207": {
+   "name": "Jewel Epic Dragon Rider",
+   "breeding_order": 452,
+   "sm_training_time": 283200,
+   "source": "strength"
+  },
+  "2211": {
+   "name": "Neon Epic Dragon",
+   "breeding_order": 453,
+   "sm_training_time": 285000,
+   "source": "strength"
+  },
+  "2204": {
+   "name": "Electric Epic Dragon Rider",
+   "breeding_order": 454,
+   "sm_training_time": 287400,
+   "source": "strength"
+  },
+  "2210": {
+   "name": "Red-Hot Epic Dragon Rider",
+   "breeding_order": 455,
+   "sm_training_time": 289200,
+   "source": "strength"
+  },
+  "2214": {
+   "name": "Skull Epic Dragon",
+   "breeding_order": 456,
+   "sm_training_time": 291600,
+   "source": "strength"
+  },
+  "2213": {
+   "name": "Neon Epic Dragon Rider",
+   "breeding_order": 457,
+   "sm_training_time": 294000,
+   "source": "strength"
+  },
+  "2217": {
+   "name": "Shogun Epic Dragon",
+   "breeding_order": 458,
+   "sm_training_time": 295800,
+   "source": "strength"
+  },
+  "2216": {
+   "name": "Skull Epic Dragon Rider",
+   "breeding_order": 459,
+   "sm_training_time": 298200,
+   "source": "strength"
+  },
+  "2220": {
+   "name": "Taiji Epic Dragon",
+   "breeding_order": 461,
+   "sm_training_time": 302400,
+   "source": "strength"
+  },
+  "2223": {
+   "name": "Enel Epic Dragon",
+   "breeding_order": 462,
+   "sm_training_time": 304800,
+   "source": "strength"
+  },
+  "2222": {
+   "name": "Taiji Epic Dragon Rider",
+   "breeding_order": 463,
+   "sm_training_time": 307200,
+   "source": "strength"
+  },
+  "2219": {
+   "name": "Shogun Epic Dragon Rider",
+   "breeding_order": 464,
+   "sm_training_time": 309600,
+   "source": "strength"
+  },
+  "2226": {
+   "name": "Red Djinn Dragon",
+   "breeding_order": 465,
+   "sm_training_time": 311400,
+   "source": "strength"
+  },
+  "2228": {
+   "name": "Red Djinn Dragon Rider",
+   "breeding_order": 466,
+   "sm_training_time": 313800,
+   "source": "strength"
+  },
+  "2229": {
+   "name": "Nebula Epic Dragon",
+   "breeding_order": 467,
+   "sm_training_time": 316200,
+   "source": "strength"
+  },
+  "2225": {
+   "name": "Enel Epic Dragon Rider",
+   "breeding_order": 468,
+   "sm_training_time": 318600,
+   "source": "strength"
+  },
+  "2231": {
+   "name": "Nebula Epic Dragon Rider",
+   "breeding_order": 469,
+   "sm_training_time": 321000,
+   "source": "strength"
+  },
+  "2232": {
+   "name": "Blue Fire Djinn Dragon",
+   "breeding_order": 470,
+   "sm_training_time": 323400,
+   "source": "strength"
+  },
+  "2238": {
+   "name": "Thunder Epic Dragon",
+   "breeding_order": 471,
+   "sm_training_time": 325800,
+   "source": "strength"
+  },
+  "2240": {
+   "name": "Thunder Epic Dragon Rider",
+   "breeding_order": 472,
+   "sm_training_time": 328200,
+   "source": "strength"
+  },
+  "2234": {
+   "name": "Blue Fire Djinn Dragon Rider",
+   "breeding_order": 473,
+   "sm_training_time": 330600,
+   "source": "strength"
+  },
+  "2253": {
+   "name": "Laser Epic Dragon",
+   "breeding_order": 474,
+   "sm_training_time": 333000,
+   "source": "strength"
+  },
+  "2278": {
+   "name": "Dark Shogun Epic Dragon",
+   "breeding_order": 475,
+   "sm_training_time": 335400,
+   "source": "strength"
+  },
+  "2255": {
+   "name": "Laser Epic Dragon Rider",
+   "breeding_order": 476,
+   "sm_training_time": 337800,
+   "source": "strength"
+  },
+  "2281": {
+   "name": "Ancient Dragon",
+   "breeding_order": 477,
+   "sm_training_time": 340800,
+   "source": "strength"
+  },
+  "2284": {
+   "name": "Shaman Ancient Dragon",
+   "breeding_order": 478,
+   "sm_training_time": 343200,
+   "source": "strength"
+  },
+  "2289": {
+   "name": "Rune Ancient Dragon",
+   "breeding_order": 479,
+   "sm_training_time": 345600,
+   "source": "strength"
+  },
+  "2280": {
+   "name": "Dark Shogun Epic Dragon Rider",
+   "breeding_order": 480,
+   "sm_training_time": 348000,
+   "source": "strength"
+  },
+  "2292": {
+   "name": "Black Demon Epic Dragon",
+   "breeding_order": 481,
+   "sm_training_time": 351000,
+   "source": "strength"
+  },
+  "2283": {
+   "name": "Ancient Dragon Rider",
+   "breeding_order": 482,
+   "sm_training_time": 353400,
+   "source": "strength"
+  },
+  "2295": {
+   "name": "Corpse Ancient Dragon",
+   "breeding_order": 483,
+   "sm_training_time": 355800,
+   "source": "strength"
+  },
+  "2286": {
+   "name": "Shaman Ancient Dragon Rider",
+   "breeding_order": 484,
+   "sm_training_time": 358800,
+   "source": "strength"
+  },
+  "2299": {
+   "name": "Core Ancient Dragon",
+   "breeding_order": 485,
+   "sm_training_time": 361200,
+   "source": "strength"
+  },
+  "2291": {
+   "name": "Rune Ancient Dragon Rider",
+   "breeding_order": 486,
+   "sm_training_time": 364200,
+   "source": "strength"
+  },
+  "2302": {
+   "name": "Hellborn Ancient Dragon",
+   "breeding_order": 487,
+   "sm_training_time": 366600,
+   "source": "strength"
+  },
+  "2294": {
+   "name": "Black Demon Epic Dragon Rider",
+   "breeding_order": 488,
+   "sm_training_time": 369600,
+   "source": "strength"
+  },
+  "2305": {
+   "name": "Ent Ancient Dragon",
+   "breeding_order": 489,
+   "sm_training_time": 372000,
+   "source": "strength"
+  },
+  "2308": {
+   "name": "Horror Ancient Dragon",
+   "breeding_order": 490,
+   "sm_training_time": 375000,
+   "source": "strength"
+  },
+  "2301": {
+   "name": "Core Ancient Dragon Rider",
+   "breeding_order": 491,
+   "sm_training_time": 378000,
+   "source": "strength"
+  },
+  "2297": {
+   "name": "Corpse Ancient Dragon Rider",
+   "breeding_order": 492,
+   "sm_training_time": 380400,
+   "source": "strength"
+  },
+  "2304": {
+   "name": "Hellborn Ancient Dragon Rider",
+   "breeding_order": 493,
+   "sm_training_time": 383400,
+   "source": "strength"
+  },
+  "2350": {
+   "name": "Elemental Light Goddess",
+   "breeding_order": 494,
+   "sm_training_time": 386400,
+   "source": "strength"
+  },
+  "2327": {
+   "name": "Ghost Epic Dragon",
+   "breeding_order": 495,
+   "sm_training_time": 388800,
+   "source": "strength"
+  },
+  "2307": {
+   "name": "Ent Ancient Dragon Rider",
+   "breeding_order": 496,
+   "sm_training_time": 391800,
+   "source": "strength"
+  },
+  "2313": {
+   "name": "Horror Ancient Dragon Rider",
+   "breeding_order": 497,
+   "sm_training_time": 394800,
+   "source": "strength"
+  },
+  "2329": {
+   "name": "Ghost Epic Dragon Rider",
+   "breeding_order": 498,
+   "sm_training_time": 397800,
+   "source": "strength"
+  },
+  "2336": {
+   "name": "Cerberus Ancient Dragon",
+   "breeding_order": 499,
+   "sm_training_time": 400800,
+   "source": "strength"
+  },
+  "2369": {
+   "name": "Elemental Fire Goddess",
+   "breeding_order": 501,
+   "sm_training_time": 406800,
+   "source": "strength"
+  },
+  "2344": {
+   "name": "Wolf Ancient Dragon",
+   "breeding_order": 502,
+   "sm_training_time": 409800,
+   "source": "strength"
+  },
+  "2347": {
+   "name": "Red Armor Dragon",
+   "breeding_order": 503,
+   "sm_training_time": 412800,
+   "source": "strength"
+  },
+  "2351": {
+   "name": "Golden Armor Dragon",
+   "breeding_order": 504,
+   "sm_training_time": 415800,
+   "source": "strength"
+  },
+  "2338": {
+   "name": "Cerberus Ancient Dragon Rider",
+   "breeding_order": 505,
+   "sm_training_time": 418800,
+   "source": "strength"
+  },
+  "2354": {
+   "name": "Abyss Ancient Dragon",
+   "breeding_order": 506,
+   "sm_training_time": 421800,
+   "source": "strength"
+  },
+  "2357": {
+   "name": "Platinum Armor Dragon",
+   "breeding_order": 507,
+   "sm_training_time": 425400,
+   "source": "strength"
+  },
+  "2346": {
+   "name": "Wolf Ancient Dragon Rider",
+   "breeding_order": 508,
+   "sm_training_time": 428400,
+   "source": "strength"
+  },
+  "2360": {
+   "name": "Bull Armor Dragon",
+   "breeding_order": 509,
+   "sm_training_time": 431400,
+   "source": "strength"
+  },
+  "2349": {
+   "name": "Red Armor Dragon Rider",
+   "breeding_order": 510,
+   "sm_training_time": 434400,
+   "source": "strength"
+  },
+  "2363": {
+   "name": "Night Forge Dragon",
+   "breeding_order": 511,
+   "sm_training_time": 438000,
+   "source": "strength"
+  },
+  "2366": {
+   "name": "Devil Ancient Dragon",
+   "breeding_order": 512,
+   "sm_training_time": 441000,
+   "source": "strength"
+  },
+  "2353": {
+   "name": "Golden Armor Dragon Rider",
+   "breeding_order": 513,
+   "sm_training_time": 444600,
+   "source": "strength"
+  },
+  "2356": {
+   "name": "Abyss Ancient Dragon Rider",
+   "breeding_order": 514,
+   "sm_training_time": 447600,
+   "source": "strength"
+  },
+  "2359": {
+   "name": "Platinum Armor Dragon Rider",
+   "breeding_order": 515,
+   "sm_training_time": 451200,
+   "source": "strength"
+  },
+  "2362": {
+   "name": "Bull Armor Dragon Rider",
+   "breeding_order": 516,
+   "sm_training_time": 454200,
+   "source": "strength"
+  },
+  "2370": {
+   "name": "Dark Horror Ancient Dragon",
+   "breeding_order": 517,
+   "sm_training_time": 457800,
+   "source": "strength"
+  },
+  "2365": {
+   "name": "Night Forge Dragon Rider",
+   "breeding_order": 518,
+   "sm_training_time": 461400,
+   "source": "strength"
+  },
+  "2368": {
+   "name": "Devil Ancient Dragon Rider",
+   "breeding_order": 519,
+   "sm_training_time": 464400,
+   "source": "strength"
+  },
+  "2375": {
+   "name": "Dark Horror Ancient Dragon Rider",
+   "breeding_order": 520,
+   "sm_training_time": 468000,
+   "source": "strength"
+  }
+ }
+}
