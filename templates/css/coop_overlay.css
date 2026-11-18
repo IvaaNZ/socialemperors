@@ -30,3 +30,4 @@
 .coop-notice-title { margin: 0 0 4px; font-size: 16px; font-weight: 700; }
 .coop-notice-detail { margin: 0 0 8px; }
 .coop-notice .clanx-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.coop-sailing { margin: 0 0 10px; padding: 8px 10px; border: 2px solid #c9974f; border-radius: 8px; background: #fbf1d4; font-weight: 700; }

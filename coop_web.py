@@ -15,6 +15,7 @@ from flask import abort, g, jsonify, request, session, url_for
 
 from auth import validate_csrf
 from coop import MAX_PLAYERS, TEAM_UNITS, CoopError, CoopStore
+from duels_web import is_unit_death
 from portal_i18n import translate as _
 
 
@@ -36,6 +37,9 @@ def overlay_texts():
         'sail': _('Zarpar'), 'sail_soon': _('Zarpar juntos chega na próxima etapa.'),
         'waiting': _('Esperando que todos escolham suas unidades.'),
         'waiting_host': _('Esperando que o anfitrião zarpe.'),
+        'sailing_host': _('A incursão está em curso: suas tropas e as do clã estão na ilha.'),
+        'sailing_guest': _('{name} está jogando a ilha com as tropas de todos. Em breve você poderá assistir ao vivo.'),
+        'end_raid': _('Terminar a incursão'), 'no_island': _('Abra o mapa de aventuras e escolha a ilha de novo.'),
         'close_room': _('Fechar a sala'), 'leave': _('Sair da sala'),
         'invite_title': _('{name} convida você para uma incursão do clã'),
         'invite_detail': _('Leve até 10 unidades da sua aldeia.'),
@@ -47,6 +51,7 @@ def overlay_texts():
             'full': _('A incursão já tem 3 jogadores.'), 'clan': _('Só membros do seu clã podem entrar.'),
             'already': _('Esse jogador já está na sala.'), 'gone': _('A sala não existe mais.'),
             'forbidden': _('Não foi possível fazer isso.'), 'quest': _('Ilha desconhecida.'),
+            'not_ready': _('Todos precisam escolher suas unidades.'),
         },
     }
 
@@ -92,6 +97,8 @@ def install_coop(app, accounts, data_dir):
                 continue
             if player['account_id'] == invited:
                 live.send_to(invited, {'type': 'coop_invite', 'room': room['id']})
+            elif room['status'] == 'sailing' and player['state'] == 'accepted':
+                live.send_to(player['account_id'], {'type': 'coop_sail', 'room': room['id']})
             elif player['state'] in ('host', 'accepted', 'invited'):
                 live.send_to(player['account_id'], {'type': 'coop_update', 'room': room['id']})
 
@@ -167,11 +174,31 @@ def install_coop(app, accounts, data_dir):
             elif action == 'leave':
                 room = store.leave(me, number('room'))
                 notify(room, skip=me)
+            elif action == 'sail':
+                room = store.sail(me, number('room'))
+                notify(room, skip=me)
+                return jsonify({'ok': True, 'state': state(account), 'quest': room['quest_id'], 'army': store.army(room)})
             else:
                 raise CoopError('forbidden')
         except CoopError as error:
             return jsonify({'ok': False, 'error': error.code, 'state': state(account)}), 400
         return jsonify({'ok': True, 'state': state(account)})
+
+    def filter_commands(userid, commands):
+        """During a raid at sea, the host's game reports the deaths of every player's units: none of them may
+        leave the host's village. Phase 5 gives each loss to its owner; until then nobody loses units."""
+        account_id = next((row['id'] for row in accounts().list_accounts() if row.get('village_id') == userid), None)
+        if account_id is None or store.sailing_room_of(account_id) is None:
+            return commands
+        kept = []
+        for item in commands:
+            if is_unit_death(item):
+                print(f" [coop] raid command dropped for {userid}: {item.get('cmd')}({item.get('args')})")
+            else:
+                kept.append(item)
+        return kept
+
+    app.extensions['coop_command_filter'] = filter_commands
 
     @app.context_processor
     def coop_context():

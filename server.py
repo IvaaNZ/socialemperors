@@ -1075,6 +1075,9 @@ def command_response():
     duel_filter = app.extensions.get('duel_command_filter')  # SE_DUELS=on: arena commands never reach the village
     if duel_filter is not None:
         data['commands'] = duel_filter(USERID, data['commands'])
+    coop_filter = app.extensions.get('coop_command_filter')  # SE_COOP=on: a clan raid's deaths never leave the host's village
+    if coop_filter is not None:
+        data['commands'] = coop_filter(USERID, data['commands'])
     with village_lock:
         recover_raids()
         validate_game_key(USERID)

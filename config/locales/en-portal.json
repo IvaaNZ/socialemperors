@@ -892,5 +892,10 @@
   "A sala não existe mais.": "The room no longer exists.",
   "Não foi possível fazer isso.": "That could not be done.",
   "Ilha desconhecida.": "Unknown island.",
-  "Esperando que o anfitrião zarpe.": "Waiting for the host to set sail."
+  "Esperando que o anfitrião zarpe.": "Waiting for the host to set sail.",
+  "A incursão está em curso: suas tropas e as do clã estão na ilha.": "The raid is under way: your troops and the clan's are on the island.",
+  "{name} está jogando a ilha com as tropas de todos. Em breve você poderá assistir ao vivo.": "{name} is playing the island with everyone's troops. Soon you will be able to watch it live.",
+  "Terminar a incursão": "End the raid",
+  "Abra o mapa de aventuras e escolha a ilha de novo.": "Open the adventure map and choose the island again.",
+  "Todos precisam escolher suas unidades.": "Everyone has to choose their units."
 }

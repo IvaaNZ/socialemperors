@@ -44,10 +44,10 @@
             const result = await response.json();
             if (result.state) state = result.state;
             if (!result.ok) showMessage(T.errors[result.error] || T.errors.forbidden);
-            return result.ok;
+            return result.ok ? result : null;
         } catch (error) {
             showMessage(T.errors.forbidden);
-            return false;
+            return null;
         }
     }
 
@@ -113,6 +113,14 @@
             return;
         }
         const label = { host: T.host, invited: T.invited, accepted: T.accepted };
+        if (room.status === "sailing") {
+            const host = room.players.find((p) => p.id === room.host);
+            body.innerHTML = '<p class="coop-sailing">' + esc(room.is_host ? T.sailing_host : fill(T.sailing_guest, { name: host ? host.name : "" })) +
+                '</p><ul class="coop-players">' + room.players.map((p) => '<li><strong>' + esc(p.name) + '</strong> <span class="coop-state">' +
+                esc(label[p.state] || "") + '</span> <span class="coop-units">' + esc(fill(T.units, { count: p.units })) + "</span></li>").join("") +
+                '</ul><div class="clanx-actions">' + button(room.is_host ? T.end_raid : T.leave, "leave", "red") + "</div>";
+            return;
+        }
         let html = '<div class="clanx-card"><h3>' + esc(fill(T.players, { count: room.players.filter((p) => p.state !== "invited").length, max: room.max })) + "</h3><ul class=\"coop-players\">";
         for (const p of room.players) {
             const units = p.state === "invited" ? "" : p.units ? fill(T.units, { count: p.units }) : T.choosing;
@@ -134,7 +142,7 @@
             html += "</ul></div>";
             html += '<div class="clanx-actions">' + button(T.change_team, "my-team", "brown") +
                 button(T.sail, "sail", "green", room.can_sail ? "" : " disabled") + button(T.close_room, "leave", "red") + "</div>" +
-                '<p class="coop-note">' + esc(room.can_sail ? T.sail_soon : T.waiting) + "</p>";
+                (room.can_sail ? "" : '<p class="coop-note">' + esc(T.waiting) + "</p>");
         } else {
             html += '<div class="clanx-actions">' + button(T.change_team, "my-team", "brown") + button(T.leave, "leave", "red") + "</div>" +
                 '<p class="coop-note">' + esc(room.can_sail ? T.waiting_host : T.waiting) + "</p>";
@@ -242,9 +250,24 @@
             if (room && await act({ action: "leave", room: room.id })) hidePanel();
             render();
             break;
-        case "sail":
-            showMessage(T.sail_soon, true);
+        case "sail": {
+            if (!room) break;
+            const result = await act({ action: "sail", room: room.id });
+            if (!result) break;
+            let landed = false;
+            try {
+                const game = player();
+                const answer = game && typeof game.seCoopSail === "function" ? game.seCoopSail(result.quest, result.army) : false;
+                landed = answer === true;
+                if (!landed) console.warn("coop: the game did not set sail:", answer);  // false: no island kept; text: the game's error
+            } catch (error) {
+                landed = false;
+            }
+            if (landed) hidePanel();
+            else showMessage(T.no_island);
+            render();
             break;
+        }
         default:
             break;
         }
@@ -289,6 +312,9 @@
         } else if (message.type === "coop_update") {
             await load();
             render();
+        } else if (message.type === "coop_sail") {  // the host set sail: the guests see the raid at sea
+            await load();
+            openPanel();
         }
     });
 

@@ -21,7 +21,10 @@ Two edits:
     PopupQuestsManager.__seClosed(): a clan choice closed without a team tells the page (null).
   - Base.__seCoopPick(): a guest's team: the same window in its adventure mode over the village, at most
     COOP_UNITS units; its answer goes to the page the same way ('seCoopPicked' with no island).
-  - Base.__registerCoop(), called first in Base.init: ExternalInterface callbacks 'seCoopGo' and 'seCoopPick'.
+  - Base.__seCoopSail(quest, army): the clan raid sets sail (phase 2): the kept manager loads the island with
+    every player's units (PopupQuestsManager.loadQuestMapWithSelectedArmy, as after the team window).
+  - Base.__registerCoop(), called first in Base.init: ExternalInterface callbacks 'seCoopGo', 'seCoopPick' and
+    'seCoopSail'.
 
 Every new method runs inside a try/catch: an error falls back to the game's own way (Solitario).
 """
@@ -36,7 +39,7 @@ from swf_range_overlay import OPCODE_BY_NAME, _qname
 
 COOP_UNITS = 10
 CHOOSE_CALL, PICKED_CALL = 'seCoopChoose', 'seCoopPicked'
-GO_CALLBACK, PICK_CALLBACK = 'seCoopGo', 'seCoopPick'
+GO_CALLBACK, PICK_CALLBACK, SAIL_CALLBACK = 'seCoopGo', 'seCoopPick', 'seCoopSail'
 GAME_MODE_NORMAL = 1
 
 
@@ -113,11 +116,12 @@ def add_coop_to_abc(abc):
         ('callpropvoid', 'closeTeamWindow'), ('callpropvoid', 'goToIsland'), ('getproperty', '_totalThumbsSelected'),
         ('getlex', 'btnClose'), ('getproperty', 'Main'), ('callproperty', 'getStage'),
         ('getproperty', 'stageWidth'), ('getproperty', 'stageHeight'), ('getproperty', 'PopUp'),
-        ('getproperty', 'popupLayer'), ('getproperty', 'mapaInicializado'), ('getproperty', 'gameMode')})
+        ('getproperty', 'popupLayer'), ('getproperty', 'mapaInicializado'), ('getproperty', 'gameMode'),
+        ('callpropvoid', 'loadQuestMapWithSelectedArmy')})
     n = {name: _qname(abc, name, package) for name, package in {
         'ExternalInterface': 'flash.external', 'available': '', 'call': '', 'addCallback': '', 'x': '', 'y': '',
         'parent': '', 'removeChild': '', 'addChild': '', 'visible': ''}.items()}
-    s = {text: abc.add_string(text) for text in (CHOOSE_CALL, PICKED_CALL, GO_CALLBACK, PICK_CALLBACK)}
+    s = {text: abc.add_string(text) for text in (CHOOSE_CALL, PICKED_CALL, GO_CALLBACK, PICK_CALLBACK, SAIL_CALLBACK)}
     g = lambda name: ('getproperty', m[('getproperty', name)])  # noqa: E731
     lex_base = ('getlex', m[('getlex', 'Base')])
 
@@ -133,12 +137,16 @@ def add_coop_to_abc(abc):
     go_slot, island_slot = slot(manager['traits'], '__seGo'), slot(manager['traits'], '__seIsland')
     team_window = abc.instances[abc.class_index('SelectionTeamWindow')]
 
-    def method(owner_class, name, params, program, max_stack, local_count, value):
+    def method(owner_class, name, params, program, max_stack, local_count, value, error_text=False):
         reference = abc.body_of(abc.method_of(owner_class, 'DebugUnitTiles' if owner_class == 'Base' else
                                               {'PopupQuestsManager': 'closeTeamWindow',
                                                'SelectionTeamWindow': 'clickOK'}[owner_class]))
-        tail = ([('label:', 'try_end'), ('label:', 'catch'), ('getlocal0',), ('pushscope',), ('pop',)]
-                + ([('pushfalse',), ('returnvalue',)] if value else [('returnvoid',)]))
+        if error_text:  # the error itself goes back to the page, as text
+            tail = [('label:', 'try_end'), ('label:', 'catch'), ('getlocal0',), ('pushscope',), ('convert_s',),
+                    ('returnvalue',)]
+        else:
+            tail = ([('label:', 'try_end'), ('label:', 'catch'), ('getlocal0',), ('pushscope',), ('pop',)]
+                    + ([('pushfalse',), ('returnvalue',)] if value else [('returnvoid',)]))
         code, labels = assemble([('getlocal0',), ('pushscope',), ('label:', 'try')] + program + tail)
         index = len(abc.methods)
         abc.methods.append({'return_type': 0, 'param_types': [0] * params, 'name': abc.add_string(name), 'flags': 0,
@@ -244,7 +252,20 @@ def add_coop_to_abc(abc):
         ('pushtrue',), ('returnvalue',),
         ('label:', 'no'), ('pushfalse',), ('returnvalue',)], 6, 2, True)
 
+    # Base.__seCoopSail(quest, army): true, false (no island kept) or the game's error as text -- the clan raid
+    # sets sail: the kept manager loads the island with every player's units, as after its team window
+    # (questIDtoLoad, then loadQuestMapWithSelectedArmy: it counts the list of unit ids and loads the island).
+    sail = method('Base', '__seCoopSail', 2, [
+        lex_base, ('getproperty', quests_slot), ('coerce_a',), ('setlocal3',),
+        ('getlocal3',), ('iffalse', 'no'),
+        ('getlocal3',), ('getlocal1',), ('setproperty', m[('getproperty', 'questIDtoLoad')]),
+        ('getlocal3',), ('getlocal2',), ('callpropvoid', m[('callpropvoid', 'loadQuestMapWithSelectedArmy')], 1),
+        ('pushtrue',), ('returnvalue',),
+        ('label:', 'no'), ('pushfalse',), ('returnvalue',)], 4, 4, True, error_text=True)
+
     register = method('Base', '__registerCoop', 0, page + [('iffalse', 'done')] + [
+        ('getlex', n['ExternalInterface']), ('pushstring', s[SAIL_CALLBACK]), ('getlocal0',), ('getproperty', sail),
+        ('callpropvoid', n['addCallback'], 2),
         ('getlex', n['ExternalInterface']), ('pushstring', s[GO_CALLBACK]), ('getlocal0',), ('getproperty', go),
         ('callpropvoid', n['addCallback'], 2),
         ('getlex', n['ExternalInterface']), ('pushstring', s[PICK_CALLBACK]), ('getlocal0',), ('getproperty', pick),

@@ -89,6 +89,27 @@ class Rooms(unittest.TestCase):
         self.assertEqual(busy.exception.code, 'busy')
         self.assertEqual(self.store.room_of(2)['id'], other['id'])
 
+    def test_only_the_host_sails_when_everyone_is_ready_and_the_army_is_everyones(self):
+        self.store.invite(1, self.room['id'], 2, 10)
+        self.store.invite(1, self.room['id'], 3, 10)
+        self.store.respond(2, self.room['id'], True)
+        with self.assertRaises(CoopError) as not_ready:
+            self.store.sail(1, self.room['id'])
+        self.assertEqual(not_ready.exception.code, 'not_ready')
+        self.store.set_team(2, self.room['id'], [9, 0, 8])
+        with self.assertRaises(CoopError):
+            self.store.sail(2, self.room['id'])
+        room = self.store.sail(1, self.room['id'])
+        self.assertEqual(room['status'], 'sailing')
+        self.assertEqual(self.states(room)[3], 'declined')  # nobody answered: the invitation lapsed
+        self.assertEqual(CoopStore.army(room), [5, 6, 9, 8])  # the host's units first
+        self.assertEqual(self.store.sailing_room_of(2)['id'], self.room['id'])
+        with self.assertRaises(CoopError):
+            self.store.create(2, 10, '100000002', [1])  # at sea: no other raid
+        room = self.store.leave(1, self.room['id'])
+        self.assertEqual(room['status'], 'done')
+        self.assertIsNone(self.store.sailing_room_of(2))
+
     def test_a_room_left_alone_closes(self):
         self.clock.now += ROOM_IDLE_SECONDS + 1
         self.assertIsNone(self.store.room_of(1))

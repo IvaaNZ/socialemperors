@@ -15,6 +15,7 @@ from contextlib import closing
 MAX_PLAYERS = 3
 TEAM_UNITS = 10
 ROOM_IDLE_SECONDS = 30 * 60
+RAID_SECONDS = 2 * 60 * 60  # a raid at sea that never reported its end closes after this
 ACTIVE_STATES = ('host', 'invited', 'accepted')
 
 
@@ -75,9 +76,11 @@ class CoopStore:
 
     # -- reading --
     def _expire(self, connection):
-        cutoff = self.clock() - ROOM_IDLE_SECONDS
+        now = self.clock()
         connection.execute("UPDATE rooms SET status = 'cancelled', updated_at = ? WHERE status = 'open' AND updated_at < ?",
-                           (self.clock(), cutoff))
+                           (now, now - ROOM_IDLE_SECONDS))
+        connection.execute("UPDATE rooms SET status = 'done', updated_at = ? WHERE status = 'sailing' AND updated_at < ?",
+                           (now, now - RAID_SECONDS))
 
     def _room(self, connection, room_id):
         row = connection.execute('SELECT * FROM rooms WHERE id = ?', (room_id,)).fetchone()
@@ -94,7 +97,7 @@ class CoopStore:
     def _open_room_of(self, connection, account_id):
         row = connection.execute(
             f"""SELECT r.id FROM rooms r JOIN room_players p ON p.room_id = r.id
-                WHERE p.account_id = ? AND r.status = 'open' AND p.state IN ('host', 'accepted')
+                WHERE p.account_id = ? AND r.status IN ('open', 'sailing') AND p.state IN ('host', 'accepted')
                 ORDER BY r.id DESC LIMIT 1""", (account_id,)).fetchone()
         return row['id'] if row else None
 
@@ -196,17 +199,47 @@ class CoopStore:
             self._touch(connection, room_id)
             return self._room(connection, room_id)
 
-    def leave(self, account_id, room_id):
-        """A guest leaves; the host leaving closes the room."""
+    def sail(self, host_id, room_id):
+        """The host sets sail: the room is at sea until its end. Returns the room."""
         with self.lock, self._connection() as connection, connection:
+            self._expire(connection)
             room = self._room(connection, room_id)
             if not room or room['status'] != 'open':
+                raise CoopError('gone')
+            if room['host_id'] != host_id:
+                raise CoopError('forbidden')
+            if not self.ready_to_sail(room):
+                raise CoopError('not_ready')
+            connection.execute("UPDATE rooms SET status = 'sailing', updated_at = ? WHERE id = ?", (self.clock(), room_id))
+            # invitations nobody answered lapse
+            connection.execute("UPDATE room_players SET state = 'declined', updated_at = ? WHERE room_id = ? AND state = 'invited'",
+                               (self.clock(), room_id))
+            return self._room(connection, room_id)
+
+    @staticmethod
+    def army(room):
+        """The units that land: the host's team first, then each guest's, as the game's unit ids."""
+        players = [p for p in room['players'] if p['state'] in ('host', 'accepted') and p['team']]
+        players.sort(key=lambda p: p['state'] != 'host')
+        return [unit for p in players for unit in p['team']]
+
+    def sailing_room_of(self, account_id):
+        """The raid at sea the player takes part in, or None."""
+        room = self.room_of(account_id)
+        return room if room and room['status'] == 'sailing' else None
+
+    def leave(self, account_id, room_id):
+        """A guest leaves; the host leaving closes the room (a raid at sea ends)."""
+        with self.lock, self._connection() as connection, connection:
+            room = self._room(connection, room_id)
+            if not room or room['status'] not in ('open', 'sailing'):
                 raise CoopError('gone')
             me = next((p for p in room['players'] if p['account_id'] == account_id), None)
             if not me or me['state'] not in ACTIVE_STATES:
                 raise CoopError('forbidden')
             if me['state'] == 'host':
-                connection.execute("UPDATE rooms SET status = 'cancelled', updated_at = ? WHERE id = ?", (self.clock(), room_id))
+                connection.execute("UPDATE rooms SET status = ?, updated_at = ? WHERE id = ?",
+                                   ('done' if room['status'] == 'sailing' else 'cancelled', self.clock(), room_id))
             else:
                 connection.execute("UPDATE room_players SET state = 'left', team = NULL, updated_at = ? WHERE room_id = ? AND account_id = ?",
                                    (self.clock(), room_id, account_id))
