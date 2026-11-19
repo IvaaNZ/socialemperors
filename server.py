@@ -953,24 +953,20 @@ def localized_game_movie(language=None):
     if CLANS_ENABLED:  # the "Clan" button in the game's icon panel, once inside the empire
         from portal_i18n import normalize_locale
         from swf_clan_button import add_clan_button
-        locale = normalize_locale(language)
-
-        def art(prefix):
-            name = f'{prefix}_{locale}.png'
-            return '/img/' + (name if (Path(TEMPLATES_DIR) / 'img' / name).exists() else f'{prefix}_es.png')
-        translated = add_clan_button(translated, image_url=art('clan_button'))
+        from hud_badges import button_art  # SE_HUD_BADGES: the new "cristal" badges (hud_badges.py)
+        translated = add_clan_button(translated, image_url=button_art(
+            'clan', normalize_locale(language), Path(TEMPLATES_DIR) / 'img'))
     if PVP_ENABLED:  # the "PvP" button (below "Clan") and the game's team selection for raids and duels
         from portal_i18n import normalize_locale as pvp_locale
         from swf_pvp import add_pvp
-        name = f'pvp_button_{pvp_locale(language)}.png'
-        translated = add_pvp(translated, image_url='/img/' + (name if (Path(TEMPLATES_DIR) / 'img' / name).exists()
-                                                              else 'pvp_button_es.png'))
+        from hud_badges import button_art
+        translated = add_pvp(translated, image_url=button_art('pvp', pvp_locale(language), Path(TEMPLATES_DIR) / 'img'))
     if SEASON_PASS_ENABLED:  # the "Pase" button in the game's icon panel (below "PvP")
         from portal_i18n import normalize_locale as pass_locale
         from swf_season_pass import add_season_pass_button
-        name = f'season_pass_button_{pass_locale(language)}.png'
-        translated = add_season_pass_button(translated, image_url='/img/' + (
-            name if (Path(TEMPLATES_DIR) / 'img' / name).exists() else 'season_pass_button_es.png'))
+        from hud_badges import button_art
+        translated = add_season_pass_button(translated, image_url=button_art(
+            'pass', pass_locale(language), Path(TEMPLATES_DIR) / 'img'))
     from swf_hd_icons import apply_hd_icons, hd_icons_enabled
     if hd_icons_enabled():  # the game's icons at twice their pixels (pictures and shape fills only, never code)
         translated = apply_hd_icons(translated, language)

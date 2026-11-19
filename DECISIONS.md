@@ -710,3 +710,11 @@ Plan completo en COOP_PLAN.md (el dueño eligió el cooperativo en vivo con anfi
 - Interruptor `SE_CHAT` (apagado en el código, encendido en `server.env`). Para ser en vivo necesita `SE_DUELS=on`.
 - Probado en la copia con dos navegadores: Tuki2 escribió y a Tuki se le encendió el punto rojo al instante; Tuki abrió el chat (punto gris) y respondió, y Tuki2 lo vio sin recargar; el filtro cambió la mala palabra; el admin borró un mensaje (desapareció en la pantalla de Tuki2) y la silenció 1 hora (aviso con su hora local y caja bloqueada); el historial sigue después de recargar; en un celular acostado entra bien.
 - La conexión en vivo ya sabe quién está conectado: el estado en línea (bloque H) y los mensajes privados (bloque I) se van a apoyar en esto.
+
+## Escudos nuevos de los botones Clan, PvP y Pase (19/11/2026)
+
+- **Pedido del dueño:** cambiar el dibujo de los botones Clan, PvP y Pase por los que eligió en el lienzo del rediseño del HUD (familia C, estilo cristal). El PvP lo armó él: el escudo rojo con espadas de la familia B dentro del cuadrado oscuro, con un aro rojo oscuro. Después pidió el mismo molde para Clan y Pase.
+- **Cómo quedó:** cada botón es un cuadrado oscuro con un aro de su color y un escudo adentro. Clan es azul con una torre y borde dorado. PvP es rojo con espadas y borde de acero. Pase es morado con una corona y borde dorado. Debajo va la palabra con las letras blancas con borde del juego: Clan/Clã, PvP, Pase/Pass/Passe.
+- **Archivos:** `templates/img/hud_badge_<clan|pvp|pass>_<idioma>.png`, de 60 × 72 como los de antes. No cambia nada del juego, solo la imagen que carga cada botón. Se dibujan con `tools/make_hud_badges.py`. `hud_badges.py` elige la imagen: si falta la del idioma usa la de español, y si falta la nueva usa la de antes.
+- Interruptor `SE_HUD_BADGES` (apagado en el código, encendido en `server.env`). Apagado, quedan los escudos de antes.
+- **Probado en la copia (5051):** los tres botones nuevos se ven en el panel de la derecha y el de Pase abre el pase. Pruebas en `tests/test_hud_badges.py`.

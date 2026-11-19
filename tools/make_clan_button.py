@@ -29,9 +29,9 @@ def shield_svg():
     return out.replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" ', 1)
 
 
-def page(svg, labels):
+def page(svg, labels, art_w=48, art_h=55):
     return """<!DOCTYPE html><meta charset="utf-8"><pre id="out">pending</pre><script>
-const svg = %s, labels = %s, W = %d, H = %d, out = {};
+const svg = %s, labels = %s, W = %d, H = %d, AW = %d, AH = %d, out = {};
 function fit(c, text) {
   let size = 15;
   do { c.font = "bold " + size + "px 'Trebuchet MS', sans-serif"; size -= 1; } while (c.measureText(text).width > W - 6 && size > 9);
@@ -43,7 +43,7 @@ image.onload = () => {
     canvas.width = W; canvas.height = H;
     const c = canvas.getContext("2d");
     c.shadowColor = "rgba(0,0,0,.55)"; c.shadowBlur = 3; c.shadowOffsetY = 2;
-    c.drawImage(image, (W - 48) / 2, 0, 48, 55);
+    c.drawImage(image, (W - AW) / 2, 0, AW, AH);
     c.shadowColor = "transparent";
     fit(c, text); c.textAlign = "center"; c.textBaseline = "alphabetic";
     c.lineJoin = "round"; c.lineWidth = 4; c.strokeStyle = "#2b1a0b";
@@ -53,13 +53,13 @@ image.onload = () => {
   document.getElementById("out").textContent = JSON.stringify(out);
 };
 image.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
-</script>""" % (json.dumps(svg), json.dumps(labels, ensure_ascii=False), WIDTH, HEIGHT)
+</script>""" % (json.dumps(svg), json.dumps(labels, ensure_ascii=False), WIDTH, HEIGHT, art_w, art_h)
 
 
-def draw(svg, labels, prefix):
+def draw(svg, labels, prefix, art_w=48, art_h=55):
     with tempfile.TemporaryDirectory() as directory:
         html = Path(directory) / 'button.html'
-        html.write_text(page(svg, labels), encoding='utf-8')
+        html.write_text(page(svg, labels, art_w, art_h), encoding='utf-8')
         result = subprocess.run([BROWSER, '--headless=new', '--disable-gpu', f'--user-data-dir={directory}/profile',
                                  '--virtual-time-budget=5000', '--dump-dom', html.as_uri()],
                                 capture_output=True, text=True, encoding='utf-8', timeout=120)
