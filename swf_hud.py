@@ -42,9 +42,10 @@ CALLBACKS = {'seHudState': STATE_METHOD, 'seHudHide': HIDE_METHOD, 'seHudCash': 
              'seHudButtons': BUTTONS_METHOD, 'seHudShow': SHOW_METHOD, 'seHudPlace': PLACE_METHOD,
              'seHudScale': SCALE_METHOD}
 # Pieces the page moves (seHudPlace): the World globe (its ExperienceMeterMC moves with it, child 9 of it is the
-# globe), the Clan, PvP and Pass column (GuiManager.__seButtonPanel, swf_clan_button.py: absent with clans off) and
-# the spell book (GuiManager.magicBox).
-PLACED = ('globe', 'clanPanel', 'magicBox')
+# globe), the Clan, PvP and Pass column (GuiManager.__seButtonPanel, swf_clan_button.py: absent with clans off), the
+# spell book (GuiManager.magicBox) and the missions' box (GuiManager.missionBox: the king with "Goals" and the goals'
+# icons above it; null without a mission, then nothing moves).
+PLACED = ('globe', 'clanPanel', 'magicBox', 'missionBox')
 GLOBE_CHILD = 9
 CLAN_PANEL_SLOT = '__seButtonPanel'
 # The bottom bar's buttons (children of GuiMC.bgBar) the page names, and the bar itself.
@@ -116,7 +117,7 @@ def add_hud_to_abc(abc):
     wanted |= {('getproperty', name) for name in HIDDEN + ('experienceBar',)}
     wanted |= {('getproperty', field) for _, field in TEXT_FIELDS}
     wanted |= {('getproperty', 'PopUp'), ('getproperty', 'popupLayer'), ('getproperty', 'bgBar')}
-    wanted |= {('getproperty', name) for name in BAR_BUTTONS + SIDE_BUTTONS + ('magicBox',)}
+    wanted |= {('getproperty', name) for name in BAR_BUTTONS + SIDE_BUTTONS + ('magicBox', 'missionBox')}
     m = _used_names(abc, wanted)
     n = {name: _qname(abc, name, package) for name, package in NAMES.items()}
     s = {text: abc.add_string(text) for text in

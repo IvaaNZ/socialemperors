@@ -740,7 +740,7 @@ def play():
         return render_template("play.html", hud_group_buttons=group_row, script_texts=game_script_texts(), daily_next=daily_next, save_info=save_info(USERID), serverTime=server_time, last_logged_in=last_login, friendsInfo=fb_friends_str(USERID), version=version_name, GAMEVERSION=GAME_VERSION, raid_revision=village_revision(USERID), game_user_key=game_session_key(USERID),
                                webgl_renderer=RUFFLE_SETTINGS['renderer'] == 'webgl', ruffle_settings=RUFFLE_SETTINGS,
                                push_time=QUICK_SAVE_SECONDS if QUICK_SAVE_ENABLED else None, sound_hint=SOUND_FIX_ENABLED,
-                               day_night=DAY_NIGHT_ENABLED, hud_clock=HUD_ENABLED and DAY_NIGHT_ENABLED, hud_bar=HUD_ENABLED, hud_group=HUD_GROUP_ENABLED, short_menu=SHORT_MENU_ENABLED, menu_hidden=SHORT_MENU_ENABLED and not (g.account and g.account['is_admin']), stay_in_game=STAY_IN_GAME_ENABLED, full_view=VIEW_ENABLED, perf_mode=PERF_MODE_ENABLED,
+                               day_night=DAY_NIGHT_ENABLED, hud_clock=HUD_ENABLED and DAY_NIGHT_ENABLED, hud_bar=HUD_ENABLED, hud_group=HUD_GROUP_ENABLED, short_menu=SHORT_MENU_ENABLED, menu_hidden=SHORT_MENU_ENABLED and not (g.account and g.account['is_admin']), stay_in_game=STAY_IN_GAME_ENABLED, smooth_page=SMOOTH_PAGE_ENABLED, full_view=VIEW_ENABLED, perf_mode=PERF_MODE_ENABLED,
                                update_notice=UPDATE_NOTICE_ENABLED, server_build=SERVER_BUILD)
 
 
@@ -1177,6 +1177,9 @@ HUD_GROUP_ENABLED = HUD_ENABLED and CLANS_ENABLED and hud_group_enabled()
 SHORT_MENU_ENABLED = os.environ.get('SE_SHORT_MENU', 'off').strip().lower() in ('on', '1', 'true', 'yes')
 # Nothing in the Clan and PvP windows leaves the game (no full-page links; "Go to duels" opens the PvP window).
 STAY_IN_GAME_ENABLED = os.environ.get('SE_STAY_IN_GAME', 'on').strip().lower() in ('on', '1', 'true', 'yes')
+# The page leaves the game more of the browser's thread: lighter rain and snow, the daily chest's glow without a
+# filter animation (templates/js/game.js drawWeatherSmooth, game.css).
+SMOOTH_PAGE_ENABLED = os.environ.get('SE_SMOOTH_PAGE', 'off').strip().lower() in ('on', '1', 'true', 'yes')
 # Moving the mouse over the village: the game's check of whether the pointer is on a building's picture keeps its
 # last drawing instead of drawing the building again on every move (swf_fast_hover.py).
 FAST_HOVER_ENABLED = os.environ.get('SE_FAST_HOVER', 'on').strip().lower() in ('on', '1', 'true', 'yes')

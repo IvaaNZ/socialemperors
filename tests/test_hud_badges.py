@@ -115,5 +115,32 @@ class StayInGameTests(unittest.TestCase):
         self.assertIn('window.seOpenPvp(inGame.dataset.inGame);', clan)  # "Go to duels" opens the Duels tab
 
 
+class SmoothPageTests(unittest.TestCase):
+    """SE_SMOOTH_PAGE: lighter rain and snow, the daily chest's glow without a filter animation; missions placed."""
+
+    def test_the_weather_is_capped_and_drawn_in_one_go(self):
+        script = (ROOT / 'templates' / 'js' / 'game.js').read_text(encoding='utf-8')
+        self.assertIn('const WEATHER_FPS = 30;', script)
+        self.assertIn('const WEATHER_SCALE = 0.5;', script)
+        start = script.index('function drawWeatherSmooth(now)')
+        body = script[start:script.index('function drawWeather()', start)]
+        self.assertEqual(body.count('.stroke()'), 1)  # one stroke for every streak
+        self.assertNotIn('getBoundingClientRect', body)  # the layer's place is read in placeWeather, not each frame
+
+    def test_the_chest_glows_four_times_without_a_filter(self):
+        css = (ROOT / 'templates' / 'css' / 'game.css').read_text(encoding='utf-8')
+        rule = next(line for line in css.splitlines()
+                    if line.startswith('body.smooth-page .hud-daily.is-ready .hud-daily-chest {'))
+        self.assertIn('hud-daily-pulse 1.4s ease-in-out 4', rule)
+        pulse = next(line for line in css.splitlines() if line.startswith('@keyframes hud-daily-pulse'))
+        self.assertNotIn('filter', pulse)
+
+    def test_the_missions_box_can_be_moved_by_the_page(self):
+        from swf_hud import PLACED
+        self.assertIn('missionBox', PLACED)
+        script = (ROOT / 'templates' / 'js' / 'game.js').read_text(encoding='utf-8')
+        self.assertIn('placePiece("missionBox", missions.x + origin - missions.ox, NaN);', script)
+
+
 if __name__ == '__main__':
     unittest.main()

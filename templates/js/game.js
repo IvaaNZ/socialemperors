@@ -22,6 +22,11 @@
     const status = document.getElementById("game-status");
     const retry = document.getElementById("retry-button");
     const fullscreen = document.getElementById("fullscreen-button");
+    // A text written only when it is a different one (a write of the same text still makes the browser restyle).
+    function setText(element, value) {
+        const text = String(value);
+        if (element && element.textContent !== text) element.textContent = text;
+    }
     const expand = document.getElementById("expand-button");
     const shell = document.getElementById("vila");
     const volume = document.getElementById("game-volume");
@@ -259,7 +264,93 @@
     let particles = [];
     let weatherFrame = 0;
 
+    // SE_SMOOTH_PAGE: the rain and snow leave the game more of the browser's one thread. They are drawn at most
+    // WEATHER_FPS times a second (the game itself draws 30), at half the screen's pixels (the browser enlarges the
+    // canvas: thin streaks and flakes look the same), in one stroke or fill for all of them instead of one each,
+    // and the layer's place is read only when the window changes size (WEATHER_PLACE_MS at most), not on every
+    // frame. They fall at the same speed: each step goes by the time since the last one. Measured at 60 Hz in the
+    // copy: about 45 ms of the thread a second before (5-7 %), more on 120 or 144 Hz screens.
+    const smoothPage = Boolean(config.smoothPage);
+    const WEATHER_FPS = 30;
+    const WEATHER_SCALE = 0.5;
+    const WEATHER_PLACE_MS = 1000;
+    let weatherLast = 0;
+    let weatherPlaced = 0;
+    let weatherSize = null;
+
+    function placeWeather(now) {
+        if (weatherSize && now - weatherPlaced < WEATHER_PLACE_MS) return weatherSize;
+        weatherPlaced = now;
+        const stage = weatherLayer.parentElement.getBoundingClientRect();
+        const box = container.getBoundingClientRect();
+        const place = `${box.left - stage.left},${box.top - stage.top},${box.width},${box.height}`;
+        if (!weatherSize || weatherSize.place !== place) {
+            weatherLayer.style.left = `${box.left - stage.left}px`;
+            weatherLayer.style.top = `${box.top - stage.top}px`;
+            weatherLayer.style.width = `${box.width}px`;
+            weatherLayer.style.height = `${box.height}px`;
+            const width = Math.max(1, Math.round(box.width * WEATHER_SCALE));
+            const height = Math.max(1, Math.round(box.height * WEATHER_SCALE));
+            if (weatherLayer.width !== width || weatherLayer.height !== height) {
+                weatherLayer.width = width;
+                weatherLayer.height = height;
+            }
+            weatherSize = { place, width, height };
+        }
+        return weatherSize;
+    }
+
+    function drawWeatherSmooth(now) {
+        weatherFrame = 0;
+        if (!weatherKind || !weatherLayer) return;
+        weatherFrame = requestAnimationFrame(drawWeatherSmooth);
+        if (weatherLast && now - weatherLast < 1000 / WEATHER_FPS - 2) return;
+        const steps = weatherLast ? Math.min(4, (now - weatherLast) / (1000 / 60)) : 1;  // the old per-frame steps
+        weatherLast = now;
+        const { width, height } = placeWeather(now);
+        const context = weatherLayer.getContext("2d");
+        context.clearRect(0, 0, width, height);
+        const snow = weatherKind === "snow";
+        const count = snow ? 110 : 160;
+        while (particles.length < count) {
+            particles.push({ x: Math.random(), y: Math.random(), speed: 0.5 + Math.random(), size: 0.5 + Math.random() });
+        }
+        context.beginPath();
+        for (const drop of particles) {
+            if (snow) {
+                drop.y += 0.0012 * drop.speed * steps;
+                drop.x += 0.0004 * Math.sin(drop.y * 20 + drop.size * 6) * steps;
+                const radius = (1.2 + drop.size * 1.6) * WEATHER_SCALE;
+                context.moveTo(drop.x * width + radius, drop.y * height);
+                context.arc(drop.x * width, drop.y * height, radius, 0, Math.PI * 2);
+            } else {
+                drop.y += 0.018 * drop.speed * steps;
+                drop.x += 0.003 * drop.speed * steps;
+                context.moveTo(drop.x * width, drop.y * height);
+                context.lineTo((drop.x - 0.004) * width, drop.y * height - (10 + drop.size * 8) * WEATHER_SCALE);
+            }
+            if (drop.y > 1.05 || drop.x > 1.05 || drop.x < -0.05) {
+                drop.y = -0.05;
+                drop.x = Math.random();
+            }
+        }
+        if (snow) {
+            context.fillStyle = "rgba(255, 255, 255, 0.85)";
+            context.fill();
+        } else {
+            context.strokeStyle = "rgba(200, 220, 255, 0.6)";
+            context.lineWidth = 1.5 * WEATHER_SCALE;
+            context.stroke();
+        }
+    }
+
     function drawWeather() {
+        if (smoothPage) {
+            weatherLast = 0;
+            weatherSize = null;
+            drawWeatherSmooth(performance.now());
+            return;
+        }
         weatherFrame = 0;
         if (!weatherKind || !weatherLayer) return;
         // Only over the game itself: the stage is wider than the movie in the expanded and fullscreen views.
@@ -679,16 +770,21 @@
         }
         const span = Math.max(1, state.xpMax - state.xpMin);
         const progress = Math.min(1, Math.max(0, (state.xp - state.xpMin) / span));
-        hudBar.querySelector(".hud-level-number").textContent = state.lvl;
-        hudBar.querySelector(".hud-xp-fill").style.width = `${(progress * 100).toFixed(1)}%`;
-        hudBar.querySelector(".hud-xp-text").textContent = `${Math.floor(progress * 100)}%`;
-        hudBar.querySelector('[data-hud="profile"]').title =
-            `${t("Nível")} ${state.lvl} · ${numberFormat.format(state.xp)} / ${numberFormat.format(state.xpMax)} XP`;
+        // Written only when they change: each write, even of the same text, made the browser restyle the page
+        // (twice a second, for every one of them).
+        setText(hudBar.querySelector(".hud-level-number"), state.lvl);
+        const fill = hudBar.querySelector(".hud-xp-fill");
+        const width = `${(progress * 100).toFixed(1)}%`;
+        if (fill.style.width !== width) fill.style.width = width;
+        setText(hudBar.querySelector(".hud-xp-text"), `${Math.floor(progress * 100)}%`);
+        const profile = hudBar.querySelector('[data-hud="profile"]');
+        const title = `${t("Nível")} ${state.lvl} · ${numberFormat.format(state.xp)} / ${numberFormat.format(state.xpMax)} XP`;
+        if (profile.title !== title) profile.title = title;
         // A window of the game is open (the news, a shop, ...): the page's overlays step back so it shows whole.
         document.body.classList.toggle("hud-dimmed", state.windows > 0);
         if (hudEmpire) {
-            hudEmpire.querySelector(".hud-name").textContent = state.name || "";
-            hudEmpire.querySelector(".hud-pop b").textContent = state.popText || "";
+            setText(hudEmpire.querySelector(".hud-name"), state.name || "");
+            setText(hudEmpire.querySelector(".hud-pop b"), state.popText || "");
         }
         hudLast = state;
         if (!hudShown) {
@@ -766,7 +862,7 @@
         hudSide.style.right = `${right}px`;
         hudSide.style.top = `${columnTop}px`;
         const moved = hudSide.dataset.place !== `${right},${columnTop}`;
-        hudSide.dataset.place = `${right},${columnTop}`;
+        if (moved) hudSide.dataset.place = `${right},${columnTop}`;
         hudSide.hidden = false;
         if (moved && moreOpen) showSidePieces();  // the open pieces follow the column
     }
@@ -926,6 +1022,25 @@
             else if (tall) placePiece("magicBox", 4, homeBottom("magicBox") - book.h);
             else placePiece("magicBox", centred + pieceHome.magicBox.x, stageHeight + pieceHome.magicBox.y);
         }
+        // The missions' box (the king with "Goals", the goals' icons above it and the "New mission!" arrow): the game
+        // keeps it beside its centred bottom bar, out in the middle of the map on a wide stage. There it goes against
+        // the left edge, right of the page's "Msj" button (the goals' icons are beside it; the clock is above them);
+        // elsewhere (upright, or a stage the game's width) where the game puts it. Its height stays the game's. Its
+        // bounds hold an invisible part far wider than what shows, so it goes by its origin: what shows starts
+        // MISSION_ART_LEFT game pixels left of it (the king; the icons are right above it). Measured in the game.
+        const MISSION_ART_LEFT = 14;
+        const missions = hudButtons.missionBox;
+        if (missions && missions.w > 0 && Number.isFinite(missions.ox)) {
+            if (!pieceHome.missionBox) pieceHome.missionBox = { ox: missions.ox - centred };
+            let origin = centred + pieceHome.missionBox.ox;
+            if (wide && !tall) {
+                const chat = document.querySelector(".gchat-button");
+                const rect = chat && !chat.hidden ? chat.getBoundingClientRect() : null;
+                const left = rect && rect.width ? (rect.right - box.left) / scale + 6 : 6;
+                origin = Math.min(origin, left + MISSION_ART_LEFT);
+            }
+            placePiece("missionBox", missions.x + origin - missions.ox, NaN);
+        }
     }
 
     function readButtons() {
@@ -960,8 +1075,8 @@
         hudDaily.classList.toggle("is-ready", ready);
         const hours = Math.floor(left / 3600);
         const minutes = Math.floor((left % 3600) / 60);
-        hudDaily.querySelector(".hud-daily-time").textContent = ready ? t("Coletar!")
-            : hours > 0 ? `${hours}h ${String(minutes).padStart(2, "0")}m` : `${minutes}m ${String(left % 60).padStart(2, "0")}s`;
+        setText(hudDaily.querySelector(".hud-daily-time"), ready ? t("Coletar!")
+            : hours > 0 ? `${hours}h ${String(minutes).padStart(2, "0")}m` : `${minutes}m ${String(left % 60).padStart(2, "0")}s`);
     }
 
     function startSide() {

@@ -192,6 +192,13 @@ body.hud-dimmed .hud-bar > * { pointer-events: none; }
 .hud-daily-chest svg { width: 100%; height: 100%; display: block; }
 .hud-daily.is-ready .hud-daily-chest { animation: hud-daily-glow 1.4s ease-in-out infinite; }
 @keyframes hud-daily-glow { 50% { filter: drop-shadow(0 0 8px #ffe066) drop-shadow(0 2px 3px #0009); transform: scale(1.06); } }
+/* SE_SMOOTH_PAGE: the glow without animating a filter (that made the browser restyle and repaint the chest on every
+   frame while the bonus waited, ~40 times a second, for hours): the chest grows a little and a halo behind it fades
+   in and out four times when the bonus is ready, then the halo stays lit and nothing moves. */
+body.smooth-page .hud-daily.is-ready .hud-daily-chest { position: relative; isolation: isolate; animation: hud-daily-pulse 1.4s ease-in-out 4; }
+body.smooth-page .hud-daily.is-ready .hud-daily-chest::after { content: ""; position: absolute; inset: -30%; z-index: -1; border-radius: 50%; background: radial-gradient(circle, #ffe066cc 0%, #ffe06655 45%, transparent 70%); opacity: .7; pointer-events: none; animation: hud-daily-halo 1.4s ease-in-out 4; }
+@keyframes hud-daily-pulse { 50% { transform: scale(1.06); } }
+@keyframes hud-daily-halo { 0%, 100% { opacity: .2; } 50% { opacity: 1; } }
 .hud-daily-time { margin-top: 2px; padding: 2px 6px; border-radius: 999px; background: #182a52d9; border: 1px solid #d9b25a; font-size: calc(10px * var(--hud-scale, 1)); font-variant-numeric: tabular-nums; }
 .hud-daily.is-ready .hud-daily-time { background: #2f9a20; }
 .hud-more { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 0; border: 0; background: none; color: inherit; font: inherit; font-size: calc(11px * var(--hud-scale, 1)); text-shadow: inherit; cursor: pointer; }

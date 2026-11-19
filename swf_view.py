@@ -20,7 +20,13 @@ without changing any original instruction:
   * Base.__seShift(dx, dy): the game's open windows moved by (dx, dy): the page keeps them centred when the stage's
     size changes (a phone turned with a window open left it out of sight);
   * Base.__registerView(), called first in Base.init: ExternalInterface callbacks seView, seFit, seZoom, seMove and
-    seShift.
+    seShift;
+  * GuiManager.onFullscreenChange returns at once (SE_FULLSCREEN_FIX, on unless turned off). The game's own
+    fullscreen button puts the whole page in fullscreen (templates/js/game.js), but Ruffle still tells the game of
+    a FULL_SCREEN and then a NORMAL display state, and for each one the game laid its interface out again for its
+    760 x 600 picture (GuiManager.fullscreen / normalscreen, the stage's scale mode back to EXACT_FIT): the bottom
+    bar slid to the left and the missions' king ended over the friends' bar, and the page, which only lays the
+    interface out again when the stage's size changes, left it so. The page already lays it out for every size.
 
 Every name is taken from an instruction the game already uses; each method runs inside a try/catch.
 """
@@ -162,7 +168,14 @@ def add_view_to_abc(abc):
     body = abc.body_of(abc.method_of('Base', 'init'))
     prepend(body, bytes([OPCODE_BY_NAME['getlocal0'], OPCODE_BY_NAME['callpropvoid']]) + u30(register) + u30(0))
     body['max_stack'] = max(body['max_stack'], 1)
+    if fullscreen_fix_enabled():  # the page lays the interface out for every size: the game's own relayout goes
+        prepend(abc.body_of(abc.method_of('GuiManager', 'onFullscreenChange')), bytes([OPCODE_BY_NAME['returnvoid']]))
     return abc
+
+
+def fullscreen_fix_enabled():
+    import os
+    return os.environ.get('SE_FULLSCREEN_FIX', 'on').strip().lower() in ('on', '1', 'true', 'yes')
 
 
 def add_view(data):

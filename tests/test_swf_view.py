@@ -32,6 +32,17 @@ class View(unittest.TestCase):
         for name in ('currentZoom', 'MIN_ZOOM', 'MAX_ZOOM', 'stageWidth', 'stageHeight', 'numIteraciones'):
             self.assertIn(name, names)
 
+    def test_the_games_own_relayout_on_a_fullscreen_change_is_skipped(self):
+        """SE_FULLSCREEN_FIX: the page lays the interface out; the game's FULL_SCREEN / NORMAL relayout broke it."""
+        body = self.abc.body_of(self.abc.method_of('GuiManager', 'onFullscreenChange'))
+        self.assertEqual(disassemble(self.abc, body['code'])[0][1], 'returnvoid')
+        from unittest.mock import patch
+        import os
+        with patch.dict(os.environ, {'SE_FULLSCREEN_FIX': 'off'}):
+            plain = abc_of(add_view(MOVIE.read_bytes()))
+        first = disassemble(plain, plain.body_of(plain.method_of('GuiManager', 'onFullscreenChange'))['code'])[0][1]
+        self.assertNotEqual(first, 'returnvoid')
+
     def test_the_fit_uses_the_games_own_full_screen_layout_and_hides_the_slider(self):
         names = self.names(FIT_METHOD)
         self.assertIn('normalscreen 0', names)

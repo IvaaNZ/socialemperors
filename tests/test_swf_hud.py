@@ -63,13 +63,13 @@ class Hud(unittest.TestCase):
     def test_the_globe_the_clan_column_and_the_spell_book_can_be_moved(self):
         ops = disassemble(self.abc, self.abc.body_of(self.abc.method_of('Base', PLACE_METHOD))['code'])
         self.assertEqual([str(op[2]).strip("'") for op in ops if op[1] == 'pushstring'],
-                         ['globe', 'clanPanel', '__seButtonPanel', 'magicBox'])
+                         ['globe', 'clanPanel', '__seButtonPanel', 'magicBox', 'missionBox'])
         self.assertIn('in', [op[1] for op in ops])  # no clan patch: the column is left alone
 
     def test_the_same_pieces_can_be_drawn_bigger(self):
         ops = disassemble(self.abc, self.abc.body_of(self.abc.method_of('Base', SCALE_METHOD))['code'])
         self.assertEqual([str(op[2]).strip("'") for op in ops if op[1] == 'pushstring'],
-                         ['globe', 'clanPanel', '__seButtonPanel', 'magicBox'])
+                         ['globe', 'clanPanel', '__seButtonPanel', 'magicBox', 'missionBox'])
         names = [str(op[2]) for op in ops if len(op) > 2]
         self.assertEqual(names.count('scaleX'), len(PLACED))
         self.assertEqual(names.count('scaleY'), len(PLACED))

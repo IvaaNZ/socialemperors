@@ -24,6 +24,7 @@
         'hudBar': hud_bar | default(false),
         'hudGroup': hud_group | default(false),
         'menuHidden': menu_hidden | default(false),
+        'smoothPage': smooth_page | default(false),
         'fullView': full_view | default(false),
         'perfMode': perf_mode | default(false),
         'dailyNext': daily_next,
@@ -37,7 +38,7 @@
     } | tojson }}</script>
     <script src="{{ url_for('javascript', path='game.js') }}" defer></script>
 </head>
-<body class="tab-expanded"{% if stay_in_game %} data-stay-in-game{% endif %}>
+<body class="tab-expanded{% if smooth_page %} smooth-page{% endif %}"{% if stay_in_game %} data-stay-in-game{% endif %}>
     <a class="skip-link" href="#vila">{{ _('Ir para a vila') }}</a>
     <header class="game-header">
         <a class="brand" href="{{ url_for('play') }}" aria-label="{{ _('Social Empires, minha vila') }}">
