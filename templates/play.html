@@ -72,6 +72,15 @@
                         <p>{{ _('Sua vila foi atualizada. Recarregue para continuar jogando.') }}</p>
                         <a href="/play.html">{{ _('Atualizar vila') }}</a>
                     </div>
+                    {% if short_menu %}
+                    {# SE_SHORT_MENU: only the rivals page and, for an admin, the villages' administration. The other controls
+                       stay in the page, never shown, because game.js drives them (volume, screen, picture). #}
+                    <div class="view-controls">
+                        <a class="secondary-button" href="/rivals">{{ _('Rivais e saques') }}</a>
+                        {% if current_account and current_account.is_admin %}<a class="secondary-button" href="{{ url_for('admin_villages') }}">{{ _('Gerenciar vilas') }}</a>{% endif %}
+                    </div>
+                    <div class="menu-retired" hidden>
+                    {% endif %}
                     <div class="audio-controls">
                         <div class="volume-label">
                             <label for="game-volume">{{ _('Volume') }}</label>
@@ -90,6 +99,7 @@
                         <a class="secondary-button" href="{{ url_for('treasury') }}">{{ _('Tesouro gratuito') }}</a>
                         {% if current_account and current_account.is_admin %}<a class="secondary-button" href="{{ url_for('admin_villages') }}">{{ _('Gerenciar vilas') }}</a>{% endif %}
                     </div>
+                    {% if short_menu %}</div>{% endif %}
                 </div>
                 <span id="audio-status" class="visually-hidden" role="status" aria-live="polite"></span>
             </aside>

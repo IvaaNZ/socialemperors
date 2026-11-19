@@ -200,6 +200,8 @@ body.hud-dimmed .hud-bar > * { pointer-events: none; }
 .hud-more[aria-expanded="true"] .hud-more-count { background: linear-gradient(#e9c46a, #c99a2e); }
 /* SE_HUD_GROUP: one "Modos" button in the right column, below "More"; it opens Clan, PvP and Pase in a row to its
    left (the same badges as the game's buttons, which stay hidden). Sizes follow the column's --hud-scale. */
+/* SE_SHORT_MENU: the menu's retired controls never show (game.js unhides them as the game gets ready). */
+.menu-retired, .menu-retired * { display: none !important; }
 .hud-group { position: relative; display: flex; flex-direction: column; align-items: center; }
 .hud-group[hidden] { display: none; }
 .hud-group-toggle { display: flex; flex-direction: column; align-items: center; padding: 0; border: 0; background: none; color: inherit; font: inherit; font-size: calc(11px * var(--hud-scale, 1)); text-shadow: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }

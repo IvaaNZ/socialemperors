@@ -730,3 +730,12 @@ Plan completo en COOP_PLAN.md (el dueño eligió el cooperativo en vivo con anfi
 - **Cambio del dueño (19/11/2026):** "Modos" va debajo de "Más" y se despliega hacia la izquierda. Ahora es parte de la columna de la derecha (Bono diario, Más, Modos). Al tocarlo, Clan, PvP y Pase aparecen en una fila a su izquierda, sobre una franja oscura. Tocar uno abre su ventana y cierra la fila; tocar en otro lado también la cierra. La flechita apunta a la izquierda y se da vuelta al abrirse.
 - **Cómo funciona ahora:** la fila son botones de la página con los mismos escudos (`hud_badges.group_buttons`). Llaman a lo mismo que llamaban los botones del juego (`seOpenClan`, `seOpenPvp`, `seOpenSeasonPass`), y solo aparecen los que están encendidos. La columna del juego queda escondida siempre. "Modos" aparece solo cuando esa columna está en pantalla, es decir, dentro del imperio. Las piezas de "Más" se abren debajo de "Modos".
 - **Probado en la copia (5051):** "Modos" quedó debajo de "Más" y la fila se abrió a la izquierda. Pase y Clan abrieron sus ventanas desde la fila. "Más" abrió sus botones debajo de "Modos". En un celular parado, la fila también se abrió a la izquierda.
+
+## Menú corto (19/11/2026)
+
+- **Pedido del dueño:** el "Menú" de arriba a la derecha le parece innecesario. Que quede solo "Administrar aldeas" y "Rivales y saqueos".
+- **Cómo quedó:** al abrir el Menú se ven solo "Rivales y saqueos" y, para el administrador, "Administrar aldeas". Se sacaron el volumen, Silenciar, Restaurar ventana, Pantalla completa, Imagen fluida/nítida, Modo desempeño, Nombre de la aldea y Tesoro gratuito. El aviso de "Tu aldea se actualizó" sigue apareciendo en el Menú cuando hace falta.
+- **Dónde quedan esas cosas:** la música, el sonido y la pantalla completa están en los botones del juego dentro de "Más". El tesoro gratuito, en el cofre "Bono diario". El volumen, la imagen y el modo desempeño se quedan con lo último que eligió cada jugador, o con lo de fábrica.
+- **Por qué siguen en la página aunque no se vean:** `game.js` maneja esos controles (el volumen, la pantalla, la imagen) y los muestra cuando el juego está listo. Si se borraran, la página fallaría. Por eso van dentro de `.menu-retired`, que nunca se muestra.
+- Interruptor `SE_SHORT_MENU` (apagado en el código, encendido en `server.env`). Apagado, vuelve el Menú completo.
+- **Probado en la copia (5051):** el Menú abrió solo con "Rivales y saqueos" (`/rivals`) y "Administrar aldeas" (`/admin/villages`), sin errores nuevos en la consola. Pruebas en `tests/test_hud_badges.py`.

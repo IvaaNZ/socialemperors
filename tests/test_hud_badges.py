@@ -73,5 +73,23 @@ class HudGroupTests(unittest.TestCase):
         self.assertIn("for number, name in enumerate(SIDE_BUTTONS + ('clanPanel',)):", source)
 
 
+class ShortMenuTests(unittest.TestCase):
+    """SE_SHORT_MENU: the page's menu shows only "Rivales y saqueos" and, for an admin, "Administrar aldeas"."""
+
+    def test_the_menu_keeps_two_links_and_hides_the_rest(self):
+        page = (ROOT / 'templates' / 'play.html').read_text(encoding='utf-8')
+        start = page.index('{% if short_menu %}')
+        retired = page.index('<div class="menu-retired" hidden>', start)
+        kept = page[start:retired]
+        self.assertIn("href=\"/rivals\"", kept)
+        self.assertIn("url_for('admin_villages')", kept)
+        self.assertNotIn('treasury', kept)
+        # game.js still finds every control it drives
+        for control in ('game-volume', 'mute-button', 'expand-button', 'fullscreen-button', 'sharp-button', 'perf-button'):
+            self.assertGreater(page.index(f'id="{control}"'), retired)
+        css = (ROOT / 'templates' / 'css' / 'game.css').read_text(encoding='utf-8')
+        self.assertIn('.menu-retired, .menu-retired * { display: none !important; }', css)
+
+
 if __name__ == '__main__':
     unittest.main()

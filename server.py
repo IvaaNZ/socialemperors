@@ -740,7 +740,7 @@ def play():
         return render_template("play.html", hud_group_buttons=group_row, script_texts=game_script_texts(), daily_next=daily_next, save_info=save_info(USERID), serverTime=server_time, last_logged_in=last_login, friendsInfo=fb_friends_str(USERID), version=version_name, GAMEVERSION=GAME_VERSION, raid_revision=village_revision(USERID), game_user_key=game_session_key(USERID),
                                webgl_renderer=RUFFLE_SETTINGS['renderer'] == 'webgl', ruffle_settings=RUFFLE_SETTINGS,
                                push_time=QUICK_SAVE_SECONDS if QUICK_SAVE_ENABLED else None, sound_hint=SOUND_FIX_ENABLED,
-                               day_night=DAY_NIGHT_ENABLED, hud_clock=HUD_ENABLED and DAY_NIGHT_ENABLED, hud_bar=HUD_ENABLED, hud_group=HUD_GROUP_ENABLED, full_view=VIEW_ENABLED, perf_mode=PERF_MODE_ENABLED,
+                               day_night=DAY_NIGHT_ENABLED, hud_clock=HUD_ENABLED and DAY_NIGHT_ENABLED, hud_bar=HUD_ENABLED, hud_group=HUD_GROUP_ENABLED, short_menu=SHORT_MENU_ENABLED, full_view=VIEW_ENABLED, perf_mode=PERF_MODE_ENABLED,
                                update_notice=UPDATE_NOTICE_ENABLED, server_build=SERVER_BUILD)
 
 
@@ -1173,6 +1173,8 @@ VIEW_ENABLED = os.environ.get('SE_VIEW', 'on').strip().lower() in ('on', '1', 't
 # One "Modos" button on the page shows and hides the game's Clan, PvP and Pase column (hud_badges.py, game.js).
 from hud_badges import hud_group_enabled  # noqa: E402
 HUD_GROUP_ENABLED = HUD_ENABLED and CLANS_ENABLED and hud_group_enabled()
+# The page's "Menú" keeps only "Rivales y saqueos" and, for an admin, "Administrar aldeas" (templates/play.html).
+SHORT_MENU_ENABLED = os.environ.get('SE_SHORT_MENU', 'off').strip().lower() in ('on', '1', 'true', 'yes')
 # Moving the mouse over the village: the game's check of whether the pointer is on a building's picture keeps its
 # last drawing instead of drawing the building again on every move (swf_fast_hover.py).
 FAST_HOVER_ENABLED = os.environ.get('SE_FAST_HOVER', 'on').strip().lower() in ('on', '1', 'true', 'yes')
