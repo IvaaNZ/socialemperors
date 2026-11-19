@@ -706,6 +706,14 @@
     const hudMore = document.getElementById("hud-more");
     const SIDE_PIECES = ["options_panel", "_viralButtonPanel"];  // swf_hud.SIDE_BUTTONS
     let moreOpen = false;
+    // SE_HUD_GROUP: one "Modos" button stands where the Clan, PvP and Pase column was; open, the column shows below
+    // it (above it upright, where the column sits on the bottom). GROUP_W x GROUP_H: the button, in game pixels,
+    // the size of one of the column's badges.
+    const hudGroup = config.hudGroup ? document.getElementById("hud-group") : null;
+    const GROUP_W = 60;
+    const GROUP_H = 72;
+    let groupOpen = false;
+    let groupHome = null;  // the column's place in a fixed 760 x 600 game (no SE_VIEW layout)
     let morePieces = 0;
     let hudButtons = null;
     const clockOffset = (Number(config.serverTime) || Date.now() / 1000) * 1000 - Date.now();
@@ -832,6 +840,46 @@
         }
     }
 
+    // The "Modos" button at (x, y) of the game's stage with the column's width `columnW` (game pixels); `up`: the
+    // column opens above it. Returns where the column goes when open.
+    function placeGroup(x, y, columnW, columnH, size, up) {
+        const box = container.getBoundingClientRect();
+        const stage = hudGroup.parentElement.getBoundingClientRect();
+        const scale = positionScale(box);
+        const w = GROUP_W * size;
+        const h = GROUP_H * size;
+        const left = x + (columnW - w) / 2;
+        hudGroup.style.setProperty("--hud-group", (scale * size).toFixed(3));
+        hudGroup.style.left = `${box.left - stage.left + left * scale}px`;
+        hudGroup.style.top = `${box.top - stage.top + y * scale}px`;
+        hudGroup.classList.toggle("opens-up", up);
+        hudGroup.hidden = false;
+        return up ? { x, y: y - 4 - columnH } : { x, y: y + h + 4 };
+    }
+
+    // Shown or hidden as the button says (asked again after the game builds its interface anew).
+    function showGroupColumn(clan) {
+        if (Boolean(clan.v) === groupOpen) return;
+        try {
+            player.seHudShow("clanPanel", groupOpen, NaN, NaN);
+        } catch (error) {
+            // the game is busy: the next round
+        }
+    }
+
+    // Without SE_VIEW's layout the column stays where the game put it: the button takes its place.
+    function layoutGroupFixed() {
+        const clan = hudButtons.clanPanel;
+        if (!clan || !(clan.w > 0) || !clan.on) {
+            hudGroup.hidden = true;
+            return;
+        }
+        if (!groupHome) groupHome = { x: clan.x, y: clan.y };
+        const spot = placeGroup(groupHome.x, groupHome.y, clan.w, clan.h, 1, false);
+        placePiece("clanPanel", spot.x, spot.y);
+        showGroupColumn(clan);
+    }
+
     function layoutPieces() {
         if (!fullView || !fittedSize) return;
         const centred = stageWidth / 2 - 380;  // where the game's full-window layout puts its interface
@@ -881,8 +929,19 @@
         if (clan && clan.w > 0 && pieceHome.clanPanel) {
             const home = centred + pieceHome.clanPanel.x;
             // Upright, the page's right column is far above it: against the edge.
-            if (tall) placePiece("clanPanel", stageWidth - 8 - clan.w, homeBottom("clanPanel") - clan.h);
-            else placePiece("clanPanel", wide ? Math.max(home, clanEdge - 4 - clan.w) : home, stageHeight + pieceHome.clanPanel.y);
+            const x = tall ? stageWidth - 8 - clan.w : wide ? Math.max(home, clanEdge - 4 - clan.w) : home;
+            const y = tall ? homeBottom("clanPanel") - clan.h : stageHeight + pieceHome.clanPanel.y;
+            if (hudGroup && clan.on) {
+                // The button where the column's top was (upright: where its bottom was, the column above it).
+                const size = tall ? TALL_PIECES.clanPanel : 1;
+                const buttonY = tall ? homeBottom("clanPanel") - GROUP_H * size : y;
+                const spot = placeGroup(x, buttonY, clan.w, clan.h, size, tall);
+                placePiece("clanPanel", spot.x, spot.y);
+                showGroupColumn(clan);
+            } else {
+                if (hudGroup) hudGroup.hidden = true;
+                placePiece("clanPanel", x, y);
+            }
         }
         const book = hudButtons.magicBox;
         const bar = hudButtons.bgBar;
@@ -909,6 +968,7 @@
             hudMore.hidden = present === 0;
         }
         layoutPieces();
+        if (hudGroup && !fullView) layoutGroupFixed();  // SE_VIEW's layout places it once fitted (layoutPieces)
         placeHud();  // the empire's name follows the globe
         placeButtons();
     }
@@ -931,6 +991,13 @@
 
     function startSide() {
         if (!hudSide) return;
+        if (hudGroup) {
+            hudGroup.addEventListener("click", () => {
+                groupOpen = !groupOpen;
+                hudGroup.setAttribute("aria-expanded", String(groupOpen));
+                readButtons();
+            });
+        }
         hudMore.addEventListener("click", () => {
             moreOpen = !moreOpen;
             hudMore.setAttribute("aria-expanded", String(moreOpen));

@@ -718,3 +718,12 @@ Plan completo en COOP_PLAN.md (el dueño eligió el cooperativo en vivo con anfi
 - **Archivos:** `templates/img/hud_badge_<clan|pvp|pass>_<idioma>.png`, de 60 × 72 como los de antes. No cambia nada del juego, solo la imagen que carga cada botón. Se dibujan con `tools/make_hud_badges.py`. `hud_badges.py` elige la imagen: si falta la del idioma usa la de español, y si falta la nueva usa la de antes.
 - Interruptor `SE_HUD_BADGES` (apagado en el código, encendido en `server.env`). Apagado, quedan los escudos de antes.
 - **Probado en la copia (5051):** los tres botones nuevos se ven en el panel de la derecha y el de Pase abre el pase. Pruebas en `tests/test_hud_badges.py`.
+
+## Un solo botón para Clan, PvP y Pase (19/11/2026)
+
+- **Pedido del dueño:** que Clan, PvP y Pase queden en un solo botón que se despliegue y los muestre.
+- **Cómo quedó:** donde empezaba la columna de los tres hay un botón "Modos" (Modes en inglés): el mismo cuadrado oscuro de los escudos nuevos, con aro dorado y un escudo partido en azul, rojo y morado, y una flechita. Cerrado, la columna del juego no se ve. Al tocarlo, aparecen Clan, PvP y Pase debajo (en un celular parado, donde la columna va abajo a la derecha, aparecen encima). Se vuelve a tocar y se esconden. Empieza cerrado.
+- **Por qué en la página y no en el juego:** los tres botones siguen siendo los del juego (`swf_clan_button.py`), con sus clics de siempre. El juego solo aprendió a esconder y mostrar su columna cuando la página se lo pide (`seHudShow("clanPanel", …)` en `swf_hud.py`, igual que "Más" con sus piezas). El botón "Modos" lo dibuja la página (`templates/play.html`, `game.css`, `game.js`), así que no hace falta otro dibujo dentro del juego.
+- Interruptor `SE_HUD_GROUP` (apagado en el código, encendido en `server.env`). Necesita `SE_CLANS` y `SE_HUD`. Apagado, la columna se ve como antes.
+- **Probado en la copia (5051):** en la computadora, "Modos" quedó donde empezaba la columna; al tocarlo aparecieron los tres y PvP abrió su ventana; al tocarlo otra vez se escondieron. En un celular parado (390 × 844) el botón quedó abajo a la derecha y la columna se abrió hacia arriba. Pruebas en `tests/test_hud_badges.py`.
+- **Arreglo durante la prueba:** al principio el botón quedó más abajo de lo debido. La página lo acomodaba antes de terminar de ajustar el juego a la ventana, y eso corría la columna antes de que se anotara su lugar. Ahora, con la pantalla completa (`SE_VIEW`), espera a ese ajuste.

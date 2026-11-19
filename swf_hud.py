@@ -49,7 +49,8 @@ GLOBE_CHILD = 9
 CLAN_PANEL_SLOT = '__seButtonPanel'
 # The bottom bar's buttons (children of GuiMC.bgBar) the page names, and the bar itself.
 BAR_BUTTONS = ('normalMouse', 'storeButton', 'gamesButton', 'herramientaCuadrado', 'achievementsButton', 'giftButton')
-# GuiManager's side buttons the page's "More" button may hide and show again (seHudShow takes only these).
+# GuiManager's side buttons the page's "More" button may hide and show again (seHudShow takes these and the Clan
+# column, which the page's one "Modos" button shows and hides with SE_HUD_GROUP).
 # options_panel: the gear, music, sound, full-screen and pause buttons; _viralButtonPanel: the "Prize" box.
 SIDE_BUTTONS = ('options_panel', '_viralButtonPanel')
 STATE_FIELDS = (('g', 'iGold'), ('w', 'iWood'), ('f', 'iFood'), ('s', 'iStone'), ('c', 'iCash'), ('lvl', 'iLevel'),
@@ -233,8 +234,9 @@ def add_hud_to_abc(abc):
             ('getproperty', n[axis]), ('subtract',), ('add',), ('setproperty', n[axis])]
 
     program = []
-    for number, name in enumerate(SIDE_BUTTONS):
-        program += [('getlocal1',), ('pushstring', s[name]), ('ifne', f'skip{number}')] + path(name) + [
+    for number, name in enumerate(SIDE_BUTTONS + ('clanPanel',)):
+        program += [('getlocal1',), ('pushstring', s[name]), ('ifne', f'skip{number}')] + present(name, f'skip{number}')
+        program += path(name) + [
             ('setlocal', 5), ('getlocal', 5), ('getlocal2',), ('convert_b',), ('setproperty', n['visible']),
             # x is NaN (not equal to itself): only shown or hidden. Off the stage: no place to compare with.
             ('getlocal3',), ('getlocal3',), ('ifne', f'skip{number}'),

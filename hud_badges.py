@@ -17,6 +17,11 @@ def hud_badges_enabled():
     return os.environ.get('SE_HUD_BADGES', 'off').strip().lower() in ('on', '1', 'true', 'yes')
 
 
+def hud_group_enabled():
+    """SE_HUD_GROUP: the Clan, PvP and Pase buttons fold into one "Modos" button on the page (templates/js/game.js)."""
+    return os.environ.get('SE_HUD_GROUP', 'off').strip().lower() in ('on', '1', 'true', 'yes')
+
+
 def button_art(kind, locale, img_dir, enabled=None):
     """The URL of a button's art for a language; falls back to Spanish, and to the old art if a new file is missing."""
     if enabled is None:

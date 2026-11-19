@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from hud_badges import button_art, hud_badges_enabled
+from hud_badges import button_art, hud_badges_enabled, hud_group_enabled
 
 ROOT = Path(__file__).resolve().parent.parent
 IMG = ROOT / 'templates' / 'img'
@@ -39,6 +39,29 @@ class HudBadgeTests(unittest.TestCase):
             self.assertEqual(button_art('clan', 'en', folder, enabled=True), '/img/clan_button_es.png')
             (folder / 'hud_badge_clan_es.png').write_bytes(b'x')
             self.assertEqual(button_art('clan', 'en', folder, enabled=True), '/img/hud_badge_clan_es.png')
+
+
+class HudGroupTests(unittest.TestCase):
+    """SE_HUD_GROUP: one "Modos" button on the page shows and hides the game's Clan, PvP and Pase column."""
+
+    def test_off_by_default(self):
+        with patch.dict(os.environ, {}, clear=True):
+            self.assertFalse(hud_group_enabled())
+        with patch.dict(os.environ, {'SE_HUD_GROUP': 'on'}):
+            self.assertTrue(hud_group_enabled())
+
+    def test_the_page_has_the_button_only_with_the_switch(self):
+        page = (ROOT / 'templates' / 'play.html').read_text(encoding='utf-8')
+        start = page.index('{% if hud_group %}')
+        self.assertLess(start, page.index('id="hud-group"'), 'the button is inside the switch')
+        self.assertLess(page.index('id="hud-group"'), page.index('{% endif %}', start))
+        script = (ROOT / 'templates' / 'js' / 'game.js').read_text(encoding='utf-8')
+        self.assertIn('player.seHudShow("clanPanel", groupOpen, NaN, NaN)', script)
+
+    def test_the_game_can_hide_and_show_the_clan_column(self):
+        import swf_hud
+        source = Path(swf_hud.__file__).read_text(encoding='utf-8')
+        self.assertIn("for number, name in enumerate(SIDE_BUTTONS + ('clanPanel',)):", source)
 
 
 if __name__ == '__main__':
