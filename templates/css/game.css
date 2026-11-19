@@ -198,21 +198,25 @@ body.hud-dimmed .hud-bar > * { pointer-events: none; }
 .hud-more[hidden] { display: none; }
 .hud-more-count { display: grid; place-items: center; min-width: calc(44px * var(--hud-scale, 1)); height: calc(34px * var(--hud-scale, 1)); padding: 0 calc(6px * var(--hud-scale, 1)); border-radius: calc(9px * var(--hud-scale, 1)); background: linear-gradient(#fff3c4, #e9c46a); border: 2px solid #8a5a14; color: #6b3d00; font-size: calc(15px * var(--hud-scale, 1)); text-shadow: none; box-shadow: 0 2px 5px #0008; }
 .hud-more[aria-expanded="true"] .hud-more-count { background: linear-gradient(#e9c46a, #c99a2e); }
-/* SE_HUD_GROUP: one "Modos" button where the Clan, PvP and Pase column was; it shows and hides that column below
-   it. Its size follows the game's (--hud-group: game pixels to the page's, like the column's own badges). */
-.hud-group { position: absolute; z-index: 6; display: flex; flex-direction: column; align-items: center; gap: 0; width: calc(60px * var(--hud-group, 1)); padding: 0; border: 0; background: none; color: #fff; font: 700 calc(14px * var(--hud-group, 1))/1 'Trebuchet MS', sans-serif; text-shadow: -1px -1px 0 #2b1a0b, 1px -1px 0 #2b1a0b, -1px 1px 0 #2b1a0b, 1px 1px 0 #2b1a0b, 0 2px 2px #000a; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+/* SE_HUD_GROUP: one "Modos" button in the right column, below "More"; it opens Clan, PvP and Pase in a row to its
+   left (the same badges as the game's buttons, which stay hidden). Sizes follow the column's --hud-scale. */
+.hud-group { position: relative; display: flex; flex-direction: column; align-items: center; }
 .hud-group[hidden] { display: none; }
-.hud-group-badge { display: block; width: calc(54px * var(--hud-group, 1)); height: calc(54px * var(--hud-group, 1)); filter: drop-shadow(0 2px 3px #0009); transition: transform .15s ease; }
+.hud-group-toggle { display: flex; flex-direction: column; align-items: center; padding: 0; border: 0; background: none; color: inherit; font: inherit; font-size: calc(11px * var(--hud-scale, 1)); text-shadow: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.hud-group-badge { display: block; width: calc(46px * var(--hud-scale, 1)); height: calc(46px * var(--hud-scale, 1)); filter: drop-shadow(0 2px 3px #0009); transition: transform .15s ease; }
 .hud-group-badge svg { display: block; width: 100%; height: 100%; }
-.hud-group:hover .hud-group-badge, .hud-group:focus-visible .hud-group-badge { transform: scale(1.08); }
-.hud-group:focus-visible { outline: 2px solid #ffc44d; outline-offset: 2px; border-radius: 10px; }
-.hud-group-title { display: flex; align-items: center; gap: calc(3px * var(--hud-group, 1)); margin-top: calc(2px * var(--hud-group, 1)); white-space: nowrap; }
-.hud-group-arrow { width: 0; height: 0; border-left: calc(4px * var(--hud-group, 1)) solid transparent; border-right: calc(4px * var(--hud-group, 1)) solid transparent; border-top: calc(5px * var(--hud-group, 1)) solid #fff; filter: drop-shadow(0 1px 0 #2b1a0b); transition: transform .15s ease; }
-.hud-group[aria-expanded="true"] .hud-group-arrow { transform: rotate(180deg); }
-.hud-group.opens-up[aria-expanded="false"] .hud-group-arrow { transform: rotate(180deg); }
-.hud-group.opens-up[aria-expanded="true"] .hud-group-arrow { transform: none; }
-body.hud-dimmed .hud-group { opacity: .12; pointer-events: none; }
-.game-shell.controls-open .hud-group { opacity: 0; pointer-events: none; }
+.hud-group-toggle:hover .hud-group-badge, .hud-group-toggle:focus-visible .hud-group-badge { transform: scale(1.08); }
+.hud-group-toggle:focus-visible, .hud-group-item:focus-visible { outline: 2px solid #ffc44d; outline-offset: 2px; border-radius: 10px; }
+.hud-group-title { display: flex; align-items: center; gap: calc(3px * var(--hud-scale, 1)); margin-top: calc(2px * var(--hud-scale, 1)); white-space: nowrap; }
+/* The arrow points left, where the row opens; open, it points back. */
+.hud-group-arrow { width: 0; height: 0; border-top: calc(4px * var(--hud-scale, 1)) solid transparent; border-bottom: calc(4px * var(--hud-scale, 1)) solid transparent; border-right: calc(5px * var(--hud-scale, 1)) solid #fff; filter: drop-shadow(0 1px 0 #000); transition: transform .15s ease; }
+.hud-group-toggle[aria-expanded="true"] .hud-group-arrow { transform: rotate(180deg); }
+.hud-group-row { position: absolute; top: 50%; right: calc(100% + 6px * var(--hud-scale, 1)); display: flex; gap: calc(4px * var(--hud-scale, 1)); padding: calc(4px * var(--hud-scale, 1)) calc(6px * var(--hud-scale, 1)); border-radius: calc(14px * var(--hud-scale, 1)); background: rgba(16, 20, 28, .55); box-shadow: 0 2px 8px #0007; transform: translateY(-50%); transform-origin: right center; animation: hud-group-in .18s cubic-bezier(.2, .8, .2, 1); }
+.hud-group-row[hidden] { display: none; }
+.hud-group-item { display: block; padding: 0; border: 0; background: none; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform .15s ease; }
+.hud-group-item:hover { transform: scale(1.08); }
+.hud-group-item img { display: block; width: calc(52px * var(--hud-scale, 1)); height: auto; }
+@keyframes hud-group-in { from { opacity: 0; transform: translateY(-50%) scaleX(.6); } to { opacity: 1; transform: translateY(-50%); } }
 body.hud-dimmed .hud-labels, body.hud-dimmed .hud-side { opacity: .12; pointer-events: none; }
 body.hud-dimmed .hud-side * { pointer-events: none; }
 .hud-labels, .hud-side { transition: opacity .25s ease; }

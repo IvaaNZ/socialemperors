@@ -706,14 +706,13 @@
     const hudMore = document.getElementById("hud-more");
     const SIDE_PIECES = ["options_panel", "_viralButtonPanel"];  // swf_hud.SIDE_BUTTONS
     let moreOpen = false;
-    // SE_HUD_GROUP: one "Modos" button stands where the Clan, PvP and Pase column was; open, the column shows below
-    // it (above it upright, where the column sits on the bottom). GROUP_W x GROUP_H: the button, in game pixels,
-    // the size of one of the column's badges.
+    // SE_HUD_GROUP: one "Modos" button in the right column, below "More": it opens Clan, PvP and Pase in a row to its
+    // left (the page's own buttons with the game's badges, calling what the game's buttons call). The game's column
+    // stays hidden; "Modos" shows only when that column is on the stage (the player in the empire).
     const hudGroup = config.hudGroup ? document.getElementById("hud-group") : null;
-    const GROUP_W = 60;
-    const GROUP_H = 72;
+    const hudGroupToggle = hudGroup ? document.getElementById("hud-group-toggle") : null;
+    const hudGroupRow = hudGroup ? document.getElementById("hud-group-row") : null;
     let groupOpen = false;
-    let groupHome = null;  // the column's place in a fixed 760 x 600 game (no SE_VIEW layout)
     let morePieces = 0;
     let hudButtons = null;
     const clockOffset = (Number(config.serverTime) || Date.now() / 1000) * 1000 - Date.now();
@@ -788,7 +787,8 @@
         const scale = positionScale(box);
         const more = hudMore.getBoundingClientRect();
         const centre = (more.left + more.width / 2 - box.left) / scale;
-        let top = (more.bottom + 6 - box.top) / scale;
+        const below = hudGroup && !hudGroup.hidden ? hudGroup.getBoundingClientRect().bottom : more.bottom;  // "Modos"
+        let top = (below + 6 - box.top) / scale;
         for (const name of ["_viralButtonPanel", "options_panel"]) {
             const piece = hudButtons && hudButtons[name];
             let x = NaN;
@@ -840,44 +840,29 @@
         }
     }
 
-    // The "Modos" button at (x, y) of the game's stage with the column's width `columnW` (game pixels); `up`: the
-    // column opens above it. Returns where the column goes when open.
-    function placeGroup(x, y, columnW, columnH, size, up) {
-        const box = container.getBoundingClientRect();
-        const stage = hudGroup.parentElement.getBoundingClientRect();
-        const scale = positionScale(box);
-        const w = GROUP_W * size;
-        const h = GROUP_H * size;
-        const left = x + (columnW - w) / 2;
-        hudGroup.style.setProperty("--hud-group", (scale * size).toFixed(3));
-        hudGroup.style.left = `${box.left - stage.left + left * scale}px`;
-        hudGroup.style.top = `${box.top - stage.top + y * scale}px`;
-        hudGroup.classList.toggle("opens-up", up);
-        hudGroup.hidden = false;
-        return up ? { x, y: y - 4 - columnH } : { x, y: y + h + 4 };
+    function setGroupOpen(open) {
+        groupOpen = open;
+        hudGroupToggle.setAttribute("aria-expanded", String(open));
+        hudGroupRow.hidden = !open;
+        if (moreOpen) showSidePieces();  // "More"'s pieces go below the row's column
     }
 
-    // Shown or hidden as the button says (asked again after the game builds its interface anew).
-    function showGroupColumn(clan) {
-        if (Boolean(clan.v) === groupOpen) return;
-        try {
-            player.seHudShow("clanPanel", groupOpen, NaN, NaN);
-        } catch (error) {
-            // the game is busy: the next round
-        }
-    }
-
-    // Without SE_VIEW's layout the column stays where the game put it: the button takes its place.
-    function layoutGroupFixed() {
+    // The game's column hidden for good (asked again after the game builds its interface anew); "Modos" with it.
+    function layoutGroup() {
         const clan = hudButtons.clanPanel;
-        if (!clan || !(clan.w > 0) || !clan.on) {
-            hudGroup.hidden = true;
-            return;
+        const present = Boolean(clan && clan.w > 0 && clan.on);
+        if (present && clan.v) {
+            try {
+                player.seHudShow("clanPanel", false, NaN, NaN);
+            } catch (error) {
+                // the game is busy: the next round
+            }
         }
-        if (!groupHome) groupHome = { x: clan.x, y: clan.y };
-        const spot = placeGroup(groupHome.x, groupHome.y, clan.w, clan.h, 1, false);
-        placePiece("clanPanel", spot.x, spot.y);
-        showGroupColumn(clan);
+        if (hudGroup.hidden === present) {
+            hudGroup.hidden = !present;
+            if (!present && groupOpen) setGroupOpen(false);
+            placeButtons();
+        }
     }
 
     function layoutPieces() {
@@ -929,19 +914,8 @@
         if (clan && clan.w > 0 && pieceHome.clanPanel) {
             const home = centred + pieceHome.clanPanel.x;
             // Upright, the page's right column is far above it: against the edge.
-            const x = tall ? stageWidth - 8 - clan.w : wide ? Math.max(home, clanEdge - 4 - clan.w) : home;
-            const y = tall ? homeBottom("clanPanel") - clan.h : stageHeight + pieceHome.clanPanel.y;
-            if (hudGroup && clan.on) {
-                // The button where the column's top was (upright: where its bottom was, the column above it).
-                const size = tall ? TALL_PIECES.clanPanel : 1;
-                const buttonY = tall ? homeBottom("clanPanel") - GROUP_H * size : y;
-                const spot = placeGroup(x, buttonY, clan.w, clan.h, size, tall);
-                placePiece("clanPanel", spot.x, spot.y);
-                showGroupColumn(clan);
-            } else {
-                if (hudGroup) hudGroup.hidden = true;
-                placePiece("clanPanel", x, y);
-            }
+            if (tall) placePiece("clanPanel", stageWidth - 8 - clan.w, homeBottom("clanPanel") - clan.h);
+            else placePiece("clanPanel", wide ? Math.max(home, clanEdge - 4 - clan.w) : home, stageHeight + pieceHome.clanPanel.y);
         }
         const book = hudButtons.magicBox;
         const bar = hudButtons.bgBar;
@@ -968,7 +942,7 @@
             hudMore.hidden = present === 0;
         }
         layoutPieces();
-        if (hudGroup && !fullView) layoutGroupFixed();  // SE_VIEW's layout places it once fitted (layoutPieces)
+        if (hudGroup) layoutGroup();
         placeHud();  // the empire's name follows the globe
         placeButtons();
     }
@@ -992,10 +966,17 @@
     function startSide() {
         if (!hudSide) return;
         if (hudGroup) {
-            hudGroup.addEventListener("click", () => {
-                groupOpen = !groupOpen;
-                hudGroup.setAttribute("aria-expanded", String(groupOpen));
-                readButtons();
+            hudGroupToggle.addEventListener("click", () => setGroupOpen(!groupOpen));
+            for (const item of hudGroupRow.querySelectorAll("[data-open]")) {
+                item.addEventListener("click", () => {
+                    setGroupOpen(false);
+                    const open = window[item.dataset.open];  // the clan, PvP or Pass window
+                    if (typeof open === "function") open();
+                });
+            }
+            // A tap anywhere else folds the row.
+            document.addEventListener("pointerdown", event => {
+                if (groupOpen && !hudGroup.contains(event.target)) setGroupOpen(false);
             });
         }
         hudMore.addEventListener("click", () => {

@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from hud_badges import button_art, hud_badges_enabled, hud_group_enabled
+from hud_badges import button_art, group_buttons, hud_badges_enabled, hud_group_enabled
 
 ROOT = Path(__file__).resolve().parent.parent
 IMG = ROOT / 'templates' / 'img'
@@ -55,8 +55,17 @@ class HudGroupTests(unittest.TestCase):
         start = page.index('{% if hud_group %}')
         self.assertLess(start, page.index('id="hud-group"'), 'the button is inside the switch')
         self.assertLess(page.index('id="hud-group"'), page.index('{% endif %}', start))
+        self.assertLess(page.index('id="hud-more"'), page.index('id="hud-group"'), '"Modos" goes below "More"')
         script = (ROOT / 'templates' / 'js' / 'game.js').read_text(encoding='utf-8')
-        self.assertIn('player.seHudShow("clanPanel", groupOpen, NaN, NaN)', script)
+        self.assertIn('player.seHudShow("clanPanel", false, NaN, NaN)', script)  # the game's column stays hidden
+
+    def test_the_row_has_the_features_that_are_on_with_their_badges(self):
+        row = group_buttons('en', IMG, {'clan', 'pass'})
+        self.assertEqual([b['kind'] for b in row], ['clan', 'pass'])
+        self.assertEqual([b['callback'] for b in row], ['seOpenClan', 'seOpenSeasonPass'])
+        self.assertEqual(row[1]['label'], 'Pass')
+        with patch.dict(os.environ, {'SE_HUD_BADGES': 'on'}):
+            self.assertEqual(group_buttons('es', IMG, {'pvp'})[0]['url'], '/img/hud_badge_pvp_es.png')
 
     def test_the_game_can_hide_and_show_the_clan_column(self):
         import swf_hud

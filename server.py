@@ -730,7 +730,14 @@ def play():
                 daily_next = economy().overview(USERID)['next_claim_at']
             except Exception:
                 app.logger.exception('The daily bonus chest could not read the treasury.')
-        return render_template("play.html", script_texts=game_script_texts(), daily_next=daily_next, save_info=save_info(USERID), serverTime=server_time, last_logged_in=last_login, friendsInfo=fb_friends_str(USERID), version=version_name, GAMEVERSION=GAME_VERSION, raid_revision=village_revision(USERID), game_user_key=game_session_key(USERID),
+        group_row = []
+        if HUD_GROUP_ENABLED:  # the "Modos" row: Clan, PvP and Pase, the features that are on
+            from hud_badges import group_buttons
+            from portal_i18n import normalize_locale as group_locale
+            group_row = group_buttons(group_locale(game_language()), Path(TEMPLATES_DIR) / 'img',
+                                      {'clan'} | ({'pvp'} if PVP_ENABLED else set())
+                                      | ({'pass'} if SEASON_PASS_ENABLED else set()))
+        return render_template("play.html", hud_group_buttons=group_row, script_texts=game_script_texts(), daily_next=daily_next, save_info=save_info(USERID), serverTime=server_time, last_logged_in=last_login, friendsInfo=fb_friends_str(USERID), version=version_name, GAMEVERSION=GAME_VERSION, raid_revision=village_revision(USERID), game_user_key=game_session_key(USERID),
                                webgl_renderer=RUFFLE_SETTINGS['renderer'] == 'webgl', ruffle_settings=RUFFLE_SETTINGS,
                                push_time=QUICK_SAVE_SECONDS if QUICK_SAVE_ENABLED else None, sound_hint=SOUND_FIX_ENABLED,
                                day_night=DAY_NIGHT_ENABLED, hud_clock=HUD_ENABLED and DAY_NIGHT_ENABLED, hud_bar=HUD_ENABLED, hud_group=HUD_GROUP_ENABLED, full_view=VIEW_ENABLED, perf_mode=PERF_MODE_ENABLED,

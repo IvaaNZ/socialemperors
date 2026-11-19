@@ -33,3 +33,16 @@ def button_art(kind, locale, img_dir, enabled=None):
             if (img_dir / name).exists():
                 return '/img/' + name
     return f'/img/{OLD_PREFIX[kind]}_es.png'
+
+
+# The "Modos" row (SE_HUD_GROUP): each button's page callback (the same the game's button calls) and its name.
+GROUP_CALLBACKS = {'clan': 'seOpenClan', 'pvp': 'seOpenPvp', 'pass': 'seOpenSeasonPass'}
+GROUP_LABELS = {'clan': {'es': 'Clan', 'en': 'Clan', 'pt-BR': 'Clã'}, 'pvp': {'es': 'PvP', 'en': 'PvP', 'pt-BR': 'PvP'},
+                'pass': {'es': 'Pase', 'en': 'Pass', 'pt-BR': 'Passe'}}
+
+
+def group_buttons(locale, img_dir, kinds):
+    """The row's buttons, in order (Clan, PvP, Pase), for the features that are on (`kinds`)."""
+    return [{'kind': kind, 'url': button_art(kind, locale, img_dir), 'callback': GROUP_CALLBACKS[kind],
+             'label': GROUP_LABELS[kind].get(locale, GROUP_LABELS[kind]['es'])}
+            for kind in ('clan', 'pvp', 'pass') if kind in kinds]
