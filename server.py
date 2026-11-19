@@ -740,7 +740,7 @@ def play():
         return render_template("play.html", hud_group_buttons=group_row, script_texts=game_script_texts(), daily_next=daily_next, save_info=save_info(USERID), serverTime=server_time, last_logged_in=last_login, friendsInfo=fb_friends_str(USERID), version=version_name, GAMEVERSION=GAME_VERSION, raid_revision=village_revision(USERID), game_user_key=game_session_key(USERID),
                                webgl_renderer=RUFFLE_SETTINGS['renderer'] == 'webgl', ruffle_settings=RUFFLE_SETTINGS,
                                push_time=QUICK_SAVE_SECONDS if QUICK_SAVE_ENABLED else None, sound_hint=SOUND_FIX_ENABLED,
-                               day_night=DAY_NIGHT_ENABLED, hud_clock=HUD_ENABLED and DAY_NIGHT_ENABLED, hud_bar=HUD_ENABLED, hud_group=HUD_GROUP_ENABLED, short_menu=SHORT_MENU_ENABLED, menu_hidden=SHORT_MENU_ENABLED and not (g.account and g.account['is_admin']), stay_in_game=STAY_IN_GAME_ENABLED, smooth_page=SMOOTH_PAGE_ENABLED, full_view=VIEW_ENABLED, perf_mode=PERF_MODE_ENABLED,
+                               day_night=DAY_NIGHT_ENABLED, hud_clock=HUD_ENABLED and DAY_NIGHT_ENABLED, hud_bar=HUD_ENABLED, hud_group=HUD_GROUP_ENABLED, short_menu=SHORT_MENU_ENABLED, menu_hidden=SHORT_MENU_ENABLED and not (g.account and g.account['is_admin']), stay_in_game=STAY_IN_GAME_ENABLED, smooth_page=SMOOTH_PAGE_ENABLED, full_view=VIEW_ENABLED, tutorial_frame=TUTORIAL_FRAME_ENABLED, perf_mode=PERF_MODE_ENABLED,
                                update_notice=UPDATE_NOTICE_ENABLED, server_build=SERVER_BUILD)
 
 
@@ -1170,6 +1170,8 @@ HUD_ENABLED = os.environ.get('SE_HUD', 'on').strip().lower() in ('on', '1', 'tru
 # The game fills the whole browser window (no green bands), without the zoom slider, and the map zooms smoothly
 # with the mouse wheel or two fingers (swf_view.py, game.js).
 VIEW_ENABLED = os.environ.get('SE_VIEW', 'on').strip().lower() in ('on', '1', 'true', 'yes')
+# The tutorial keeps the game's 760 x 600 picture: its arrow and boxes sit at fixed places of it (a fix, on).
+TUTORIAL_FRAME_ENABLED = os.environ.get('SE_TUTORIAL_FRAME', 'on').strip().lower() in ('on', '1', 'true', 'yes')
 # One "Modos" button on the page shows and hides the game's Clan, PvP and Pase column (hud_badges.py, game.js).
 from hud_badges import hud_group_enabled  # noqa: E402
 HUD_GROUP_ENABLED = HUD_ENABLED and CLANS_ENABLED and hud_group_enabled()

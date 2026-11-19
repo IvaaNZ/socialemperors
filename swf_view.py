@@ -5,8 +5,9 @@ with green bands at its sides, and zooms the map continuously with the mouse whe
 without changing any original instruction:
 
   * Base.__seView(): an Object with the map's zoom (Base.currentZoom), its limits (MIN_ZOOM, MAX_ZOOM), the
-    stage's size (stageWidth, stageHeight) and the game's frame counter (Base.numIteraciones, one a frame: the
-    page measures the frame rate with it); null while the game is loading;
+    stage's size (stageWidth, stageHeight), the game's frame counter (Base.numIteraciones, one a frame: the
+    page measures the frame rate with it) and whether the tutorial runs (tut, Base.Main.tutorialMode: the page
+    keeps the 760 x 600 picture then); null while the game is loading;
   * Base.__seFit(center): lays the interface out for the stage's present size with the game's own full-screen
     layout (GuiManager.fullscreen, the one the Facebook game used: the bottom bar centred, the side buttons on the
     edges), after undoing a previous one (GuiManager.normalscreen); hides the zoom slider on the right
@@ -61,7 +62,7 @@ def add_view_to_abc(abc):
               ('getproperty', 'numIteraciones')}
     m = _used_names(abc, wanted)
     n = {name: _qname(abc, name, package) for name, package in NAMES.items()}
-    s = {text: abc.add_string(text) for text in ['zoom', 'zMin', 'zMax', 'sw', 'sh', 'frames'] + [c for c, _ in CALLBACKS]}
+    s = {text: abc.add_string(text) for text in ['zoom', 'zMin', 'zMax', 'sw', 'sh', 'frames', 'tut'] + [c for c, _ in CALLBACKS]}
     reference = abc.body_of(abc.method_of('Base', 'DebugUnitTiles'))
 
     def method(name, params, program, max_stack, local_count, value=False):
@@ -99,8 +100,12 @@ def add_view_to_abc(abc):
                ('pushstring', s['sh'])] + stage + [('getproperty', n['stageHeight']),
                # The game's own frame counter (Base.UpdateGame adds one a frame): the page measures the frame rate.
                ('pushstring', s['frames']), ('getlocal0',), ('getproperty', m[('getproperty', 'numIteraciones')]),
-               ('newobject', 6), ('returnvalue',)]
-    view = method(VIEW_METHOD, 0, program, 16, 1, value=True)
+               # In the tutorial (Base.Main.tutorialMode) the page keeps the 760 x 600 picture: its arrow, dark
+               # background and boxes sit at fixed places of that picture.
+               ('pushstring', s['tut']), ('getlex', m[('getlex', 'Base')]), ('getproperty', m[('getproperty', 'Main')]),
+               ('getproperty', m[('getproperty', 'tutorialMode')]),
+               ('newobject', 7), ('returnvalue',)]
+    view = method(VIEW_METHOD, 0, program, 18, 1, value=True)
 
     # Base.__seFit(center)
     program = (gui + [('getproperty', n['x']), ('pushbyte', 0), ('ifne', 'normal')]

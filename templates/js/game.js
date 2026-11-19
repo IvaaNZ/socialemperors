@@ -469,20 +469,27 @@
     // While the game loads, its loading screen is a 760 x 600 picture drawn at the stage's top left corner: the
     // stage stays 760 x 600, centred, until the village is ready (viewReady), and then fills the place.
     let viewReady = false;
+    // The tutorial (SE_TUTORIAL_FRAME, on unless turned off) places its arrow, dark background and boxes at fixed
+    // places of the 760 x 600 picture, over a map it centres for that picture: while it runs the stage stays 760 x
+    // 600, enlarged to fit, and the game keeps its own layout (no seFit). When it ends, the stage fills the place.
+    const tutorialFrame = Boolean(config.tutorialFrame);
+    let inTutorial = false;
 
     function sizeView() {
         if (!fullView || !player) return;
         const width = Math.max(1, container.clientWidth);
         const height = Math.max(1, container.clientHeight);
         viewScale = Math.min(width / 760, height / 600);
-        const stageWidthPx = viewReady ? width / viewScale : 760;
-        const stageHeightPx = viewReady ? height / viewScale : 600;
+        const wide = viewReady && !inTutorial;
+        const stageWidthPx = wide ? width / viewScale : 760;
+        const stageHeightPx = wide ? height / viewScale : 600;
         player.style.width = `${stageWidthPx}px`;
         player.style.height = `${stageHeightPx}px`;
         player.style.left = `${(width - stageWidthPx * viewScale) / 2}px`;
         player.style.top = `${(height - stageHeightPx * viewScale) / 2}px`;
         player.style.transform = `scale(${viewScale})`;
         container.classList.toggle("is-loading", !viewReady);
+        container.classList.toggle("is-tutorial", viewReady && inTutorial);
         placeHud();
         placeClock();
     }
@@ -498,19 +505,29 @@
     function fitView() {
         const state = viewState();
         if (!state || !state.sw) return;
+        const tutorial = tutorialFrame && Boolean(state.tut);
         if (!viewReady) {
             // Ready: the village is up (the player's numbers arrive, or with SE_HUD off, the view's bridge answers).
             if (config.hudBar && !hudShown) return;
             viewReady = true;
+            inTutorial = tutorial;
             sizeView();
             return;  // the next round lays the interface out for the new size
         }
+        if (tutorial !== inTutorial) {
+            inTutorial = tutorial;
+            sizeView();
+            placeButtons();
+            return;
+        }
+        if (inTutorial) return;  // the game's own layout fits its 760 x 600 picture
         const size = `${state.sw}x${state.sh}`;
         if (size === fittedSize) return;
         try {
             player.seFit(!fittedSize);  // the first time, the map also centres on the buildings
-            if (fittedSize) {
-                // The game's open windows were centred on the old size: they move by half the change.
+            if (state.sw !== stageWidth || state.sh !== stageHeight) {
+                // The game's open windows were centred on the old size (760 x 600 while loading or in the
+                // tutorial): they move by half the change.
                 try {
                     player.seShift((state.sw - stageWidth) / 2, (state.sh - stageHeight) / 2);
                 } catch (error) {
@@ -835,7 +852,8 @@
         hudLabels.style.setProperty("--hud-scale", overlayScale(box).toFixed(3));
         for (const label of hudLabels.querySelectorAll("[data-button]")) {
             const button = hudButtons[label.dataset.button];
-            const shown = barShown && button && button.v && button.on && button.w > 0;
+            // not in the tutorial's 760 x 600 picture, where the game's own layout leaves them over the friends
+            const shown = !inTutorial && barShown && button && button.v && button.on && button.w > 0;
             label.hidden = !shown;
             if (!shown) continue;
             label.style.left = `${left + (button.x + button.w / 2) * scale}px`;

@@ -32,6 +32,20 @@ class View(unittest.TestCase):
         for name in ('currentZoom', 'MIN_ZOOM', 'MAX_ZOOM', 'stageWidth', 'stageHeight', 'numIteraciones'):
             self.assertIn(name, names)
 
+    def test_the_state_says_whether_the_tutorial_runs(self):
+        """SE_TUTORIAL_FRAME: the page keeps the 760 x 600 picture while Base.Main.tutorialMode is on."""
+        ops = self.ops(VIEW_METHOD)
+        names = [str(op[2]) for op in ops if len(op) > 2]
+        self.assertIn('tutorialMode', names)
+        self.assertIn("'tut'", names)
+        self.assertIn(('newobject', '7'), [(op[1], str(op[2])) for op in ops if len(op) > 2])
+        root = Path(__file__).resolve().parent.parent
+        script = (root / 'templates' / 'js' / 'game.js').read_text(encoding='utf-8')
+        self.assertIn('const wide = viewReady && !inTutorial;', script)
+        self.assertIn("if (inTutorial) return;  // the game's own layout fits its 760 x 600 picture", script)
+        server = (root / 'server.py').read_text(encoding='utf-8')
+        self.assertIn("os.environ.get('SE_TUTORIAL_FRAME', 'on')", server)
+
     def test_the_games_own_relayout_on_a_fullscreen_change_is_skipped(self):
         """SE_FULLSCREEN_FIX: the page lays the interface out; the game's FULL_SCREEN / NORMAL relayout broke it."""
         body = self.abc.body_of(self.abc.method_of('GuiManager', 'onFullscreenChange'))
