@@ -22,6 +22,124 @@
         "M12 2l3 6 6 1-4 5 1 7-6-3-6 3 1-7-4-5 6-1z",                                     // seal
     ];
 
+    // SE_CLAN_CREST: the clan's shield built from pieces (the owner's designs of the HUD redesign canvas). Viewbox
+    // 0 0 200 240; the division is drawn in the second colour over the first and clipped to the shape; the emblem
+    // (viewBox 20 28 60 60) in the middle; a dark and a gold border always, so any mix reads as a clan's shield.
+    const CREST_SHAPES = [
+        "M16 14H184V108C184 168 144 208 100 228C56 208 16 168 16 108Z", "M18 14H182V172Q182 190 164 190H124L100 228L76 190H36Q18 190 18 172Z",
+        "M28 16H172V226L100 190L28 226Z", "M100 22A90 90 0 1 1 99.99 22Z",
+        "M100 14C152 14 180 64 180 120C180 176 152 226 100 226C48 226 20 176 20 120C20 64 48 14 100 14Z",
+        "M100 10C150 10 180 40 180 80C180 140 130 200 100 232C70 200 20 140 20 80C20 40 50 10 100 10Z", "M18 14H182V130A82 82 0 0 1 18 130Z",
+        "M16 30Q60 14 100 30Q140 14 184 30V110C184 168 144 208 100 228C56 208 16 168 16 110Z", "M100 10L184 58V170L100 230L16 170V58Z",
+        "M100 10L190 120L100 230L10 120Z", "M30 12H170Q184 12 184 26V214Q184 228 170 228H30Q16 228 16 214V26Q16 12 30 12Z",
+        "M16 16H46V36H76V16H124V36H154V16H184V110C184 168 144 208 100 228C56 208 16 168 16 110Z", "M16 14H184V140L100 228L16 140Z",
+        "M100 10C150 60 186 110 186 150A86 78 0 0 1 14 150C14 110 50 60 100 10Z",
+        "M100 228C40 180 14 140 14 92C14 52 44 24 76 24C88 24 96 30 100 38C104 30 112 24 124 24C156 24 186 52 186 92C186 140 160 180 100 228Z",
+        "M66 14H134L186 66V174L134 226H66L14 174V66Z", "M16 70Q100 -10 184 70V120C184 170 144 210 100 228C56 210 16 170 16 120Z",
+        "M24 14H176V228L138 196L100 228L62 196L24 228Z", "M16 100A84 84 0 0 1 184 100V200H120L100 228L80 200H16Z",
+        "M70 12H130V80H186V140H130V228H70V140H14V80H70Z", "M16 14H70L100 30L130 14H184V110C184 168 144 208 100 228C56 208 16 168 16 110Z",
+    ];
+    // "" plain; null: a border (bordura) in the second colour.
+    const CREST_DIVISIONS = [
+        "", "M100 0H200V240H100Z", "M0 110H200V240H0Z", "M100 0H200V110H100ZM0 110H100V240H0Z", "M-10 40L20 10L210 200L180 230Z",
+        "M210 40L180 10L-10 200L20 230Z", "M76 0H124V240H76Z", "M0 88H200V136H0Z", "M80 0H120V240H80ZM0 92H200V132H0Z",
+        "M-10 30L30 -10L210 170L170 210ZM210 30L170 -10L-10 170L30 210Z", "M0 0H200V70H0Z", "M0 170H200V240H0Z", "M0 0H200L0 240Z",
+        "M0 0H200V240Z", "M0 170L100 90L200 170V214L100 134L0 214Z",
+        "M50 0h50v48h-50zM150 0h50v48h-50zM0 48h50v48h-50zM100 48h50v48h-50zM50 96h50v48h-50zM150 96h50v48h-50zM0 144h50v48h-50zM100 144h50v48h-50zM50 192h50v48h-50zM150 192h50v48h-50z",
+        "M40 0H80V240H40ZM120 0H160V240H120Z", "M0 40H200V76H0ZM0 112H200V148H0ZM0 184H200V220H0Z", null,
+        "M60 70H140V120C140 150 120 170 100 180C80 170 60 150 60 120Z", "M30 0H170L100 200Z",
+    ];
+    // [path, even-odd] in viewBox 20 28 60 60.
+    const CREST_EMBLEMS = [
+        ["M50 34L56.5 50.5L74 51L60.5 62L65 79L50 69.5L35 79L39.5 62L26 51L43.5 50.5Z", 0], ["M28 72L24 44L38 56L50 38L62 56L76 44L72 72Z M28 76H72V82H28Z", 0],
+        ["M32 84V50H36V44H42V50H46V44H54V50H58V44H64V50H68V84Z M45 84V72A5 5 0 0 1 55 72V84Z", 1], ["M58 34A24 24 0 1 0 58 82A18 18 0 1 1 58 34Z", 0],
+        ["M50 30C60 44 70 52 66 66C63 78 56 84 50 84C42 84 34 78 34 68C34 58 42 54 44 44C48 52 50 54 52 56C54 48 52 40 50 30Z", 0], ["M56 30L36 62H48L42 86L66 52H54Z", 0],
+        ["M48 34H52V70H48Z M38 70H62V75H38Z M47 75H53V84H47Z M50 28L53 34H47Z", 0], ["M48 32H52V86H48Z M52 38C66 38 74 46 74 54C74 62 66 70 52 70Z", 0],
+        ["M30 34H66V52H30Z M45 52H51V86H45Z", 0], ["M50 82C34 70 26 60 26 50C26 42 32 36 39 36C44 36 48 39 50 43C52 39 56 36 61 36C68 36 74 42 74 50C74 60 66 70 50 82Z", 0],
+        ["M50 30C56 40 58 48 54 58H62C66 52 72 52 74 58C76 66 68 70 62 66H56V72H62V76H54V86H46V76H38V72H44V66H38C32 70 24 66 26 58C28 52 34 52 38 58H46C42 48 44 40 50 30Z", 0],
+        ["M50.0 30.0L54.9 39.6L64.0 33.8L63.4 44.6L74.2 44.0L68.4 53.1L78.0 58.0L68.4 62.9L74.2 72.0L63.4 71.4L64.0 82.2L54.9 76.4L50.0 86.0L45.1 76.4L36.0 82.2L36.6 71.4L25.8 72.0L31.6 62.9L22.0 58.0L31.6 53.1L25.8 44.0L36.6 44.6L36.0 33.8L45.1 39.6Z", 0],
+        ["M44 32H56V50H74V62H56V86H44V62H26V50H44Z", 0],
+        ["M50 28A5 5 0 1 1 49.99 28Z M47 37H53V80H47Z M38 42H62V47H38Z M26 62L34 60Q36 76 50 78Q64 76 66 60L74 62Q72 84 50 86Q28 84 26 62Z", 0],
+        ["M50 28L72 56H60L74 74H26L40 56H28Z M46 74H54V86H46Z", 0], ["M20 84L40 50L50 62L62 40L80 84Z", 0],
+        ["M22 60Q30 48 38 60Q46 48 54 60Q62 48 70 60Q74 54 78 54V68Q74 68 70 74Q62 62 54 74Q46 62 38 74Q30 62 22 74Z", 0],
+        ["M22 58Q50 30 78 58Q50 86 22 58Z M50 46A12 12 0 1 1 49.99 46Z M50 52A6 6 0 1 1 49.99 52Z", 1],
+        ["M36 46A12 12 0 1 1 35.99 46Z M36 52A6 6 0 1 1 35.99 52Z M46 55H80V61H74V70H68V61H62V67H56V61H46Z", 1],
+        ["M50 32C64 32 74 42 74 54C74 62 70 66 66 68V80H34V68C30 66 26 62 26 54C26 42 36 32 50 32Z M40 47A6 6 0 1 1 39.99 47Z M60 47A6 6 0 1 1 59.99 47Z M46 66L50 59L54 66Z", 1],
+        ["M28 84Q30 54 42 34Q38 58 40 84Z M45 84Q46 50 56 30Q52 56 53 84Z M58 84Q62 56 74 40Q66 62 66 84Z", 0], ["M36 40H64L76 54L50 84L24 54Z", 0],
+        ["M72 30C50 34 36 50 32 78L36 80C40 68 46 60 54 54C52 52 51 50 51 47C60 45 68 39 72 30Z", 0],
+        ["M22 72C28 46 50 32 78 32C72 38 68 42 62 45C70 45 74 47 76 50C68 54 62 56 54 57C60 59 64 61 66 65C56 70 40 72 22 72Z", 0],
+        ["M46.4 38.3L46.8 31.2L53.2 31.2L53.6 38.3L61.3 41.5L66.7 36.8L71.2 41.3L66.4 46.6L69.7 54.3L76.8 54.8L76.8 61.2L69.7 61.6L66.5 69.3L71.2 74.7L66.7 79.2L61.4 74.4L53.7 77.7L53.2 84.8L46.8 84.8L46.4 77.7L38.7 74.5L33.3 79.2L28.8 74.7L33.6 69.4L30.3 61.7L23.2 61.2L23.2 54.8L30.3 54.4L33.5 46.7L28.8 41.3L33.3 36.8L38.6 41.6Z M50 50A8 8 0 1 1 49.99 50Z", 1],
+    ];
+    const CREST_COLORS = ["#b3261e", "#7f1d1d", "#d6457a", "#d9661f", "#f2a516", "#e8b23a", "#f5d547", "#8bc34a", "#2e7d32", "#10835e", "#1b4d2b",
+        "#1a9e9e", "#4fa3e0", "#1e4fa3", "#1a2a5e", "#3f3a9e", "#6a2c91", "#9b59b6", "#7a4a22", "#d9c48a", "#e9edf1", "#8a929c", "#4a5560", "#1c1c1c"];
+    const CREST_COUNTS = [CREST_SHAPES.length, CREST_DIVISIONS.length, CREST_COLORS.length, CREST_COLORS.length, CREST_EMBLEMS.length, CREST_COLORS.length];
+    // A clan without a crest: a plain classic shield in its old emblem's colour with the nearest symbol, in silver.
+    const OLD_COLOR_TO_CREST = [1, 14, 9, 17, 5, 12, 19, 16, 3, 8, 23, 1];
+    const OLD_SYMBOL_TO_CREST = [7, 2, 1, 3, 5, 4, 15, 6, 10, 13, 23, 12];
+    let crestIds = 0;
+    let crestShown = false;  // SE_CLAN_CREST: set once the server says so (state.limits.crest)
+
+    function crestParts(clan) {
+        const parts = String((clan && clan.crest) || "").split(".").map((part) => parseInt(part, 10));
+        if (parts.length === CREST_COUNTS.length && parts.every((n, i) => n >= 1 && n <= CREST_COUNTS[i])) return parts;
+        const old = Math.min(Math.max(parseInt(clan && clan.emblem, 10) || 1, 1), OLD_COLOR_TO_CREST.length);
+        return [1, 1, OLD_COLOR_TO_CREST[old - 1], 21, OLD_SYMBOL_TO_CREST[old - 1], 21];
+    }
+    function crestSvg(parts, size) {
+        const [shape, division, first, second, emblem, emblemColor] = parts;
+        const d = CREST_SHAPES[shape - 1];
+        const cut = CREST_DIVISIONS[division - 1];
+        const id = "clanx-crest-" + (crestIds += 1);
+        const px = size || 56;
+        const [symbol, evenOdd] = CREST_EMBLEMS[emblem - 1];
+        const field = cut === null
+            ? '<path d="' + d + '" fill="none" stroke="' + CREST_COLORS[second - 1] + '" stroke-width="44"/>'
+            : cut ? '<path d="' + cut + '" fill="' + CREST_COLORS[second - 1] + '"/>' : "";
+        return '<svg class="clanx-emblem clanx-crest" viewBox="0 0 200 240" width="' + px + '" height="' + Math.round(px * 1.2) + '" aria-hidden="true">' +
+            '<defs><clipPath id="' + id + '"><path d="' + d + '"/></clipPath></defs><g clip-path="url(#' + id + ')"><rect width="200" height="240" fill="' +
+            CREST_COLORS[first - 1] + '"/>' + field + "</g>" +
+            '<g transform="translate(45 55) scale(1.833) translate(-20 -28)"><path d="' + symbol + '" fill="' + CREST_COLORS[emblemColor - 1] +
+            '" stroke="#1c1c1c" stroke-width="1.6" stroke-linejoin="round"' + (evenOdd ? ' fill-rule="evenodd"' : "") + "/></g>" +
+            '<path d="' + d + '" fill="none" stroke="#3a1d08" stroke-width="14" stroke-linejoin="round"/>' +
+            '<path d="' + d + '" fill="none" stroke="#e8b23a" stroke-width="7" stroke-linejoin="round"/></svg>';
+    }
+    // The clan's mark in lists and banners: its crest with SE_CLAN_CREST, else its emblem.
+    function clanBadge(clan, size) {
+        return crestShown ? crestSvg(crestParts(clan), size) : emblemSvg(clan && clan.emblem, size);
+    }
+    // The editor: a preview, one tab per piece and that piece's choices (every piece's radios stay in the form).
+    function crestEditor(T, clan) {
+        const parts = crestParts(clan);
+        const labels = [T.crest_shape, T.crest_division, T.crest_color1, T.crest_color2, T.emblem, T.crest_emblem_color];
+        let html = '<fieldset class="clanx-crest-editor" data-crest-part="1"><legend>' + esc(T.crest) + '</legend><p class="clanx-muted">' +
+            esc(T.crest_hint) + '</p><div class="clanx-crest-layout"><div class="clanx-crest-preview">' + crestSvg(parts, 110) + "</div>" +
+            '<div class="clanx-crest-pick"><div class="clanx-crest-tabs" role="tablist">' + labels.map((label, i) =>
+                '<button type="button" role="tab" class="clanx-crest-tab" data-crest-tab="' + (i + 1) + '" aria-selected="' + (i === 0) + '">' +
+                esc(label) + "</button>").join("") + "</div>";
+        for (let part = 1; part <= CREST_COUNTS.length; part += 1) {
+            html += '<div class="clanx-crest-options" data-crest-options="' + part + '" role="radiogroup" aria-label="' + esc(labels[part - 1]) + '">';
+            for (let n = 1; n <= CREST_COUNTS[part - 1]; n += 1) {
+                const color = part === 3 || part === 4 || part === 6;
+                const sample = parts.slice();
+                sample[part - 1] = n;
+                if (part === 1) sample[1] = 1;  // shapes plain, so the outline reads
+                html += '<label class="clanx-crest-choice' + (color ? " is-color" : "") + '" title="' + esc(labels[part - 1] + " " + n) + '">' +
+                    '<input type="radio" name="crest_' + part + '" value="' + n + '"' + (n === parts[part - 1] ? " checked" : "") + ">" +
+                    (color ? '<span class="clanx-swatch" style="background:' + CREST_COLORS[n - 1] + '"></span>' : crestSvg(sample, 34)) + "</label>";
+            }
+            html += "</div>";
+        }
+        return html + "</div></div></fieldset>";
+    }
+    function crestFromForm(form) {
+        const parts = [];
+        for (let part = 1; part <= CREST_COUNTS.length; part += 1) {
+            const checked = form.querySelector('input[name="crest_' + part + '"]:checked');
+            parts.push(checked ? checked.value : "1");
+        }
+        return parts.join(".");
+    }
+
     function esc(value) {
         return String(value == null ? "" : value).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
     }
@@ -51,7 +169,7 @@
 
     // ---- views: each returns an HTML string ----
     const View = {
-        esc, fill, emblemSvg,
+        esc, fill, emblemSvg, crestSvg, crestParts, crestEditor,
 
         tabs(T, state, active) {
             const tabs = state.clan
@@ -70,7 +188,7 @@
         },
 
         banner(T, clan, lang) {
-            return '<div class="clanx-banner">' + emblemSvg(clan.emblem, 64) +
+            return '<div class="clanx-banner">' + clanBadge(clan, 64) +
                 '<div class="clanx-banner-text"><div class="clanx-ribbon">[' + esc(clan.tag) + "] " + esc(clan.name) + "</div>" +
                 (clan.description ? '<p class="clanx-motto">« ' + esc(clan.description) + " »</p>" : "") +
                 '<p class="clanx-facts"><span>' + esc(fill(T.power, { power: number(clan.power, lang) })) + "</span>" +
@@ -171,9 +289,11 @@
                     (i === clan.emblem ? " checked" : "") + ">" + emblemSvg(i, 34) + "</label>";
             }
             emblems += "</div>";
+            if (limits.crest) emblems = crestEditor(T, clan) + '<input type="hidden" name="emblem" value="' + esc(clan.emblem || 1) + '">';
             const languages = limits.languages.map((code) => '<option value="' + esc(code) + '"' + (code === clan.language ? " selected" : "") +
                 ">" + esc(languageLabel(T, code)) + "</option>").join("");
-            return '<form class="clanx-form" data-form="settings"><fieldset><legend>' + esc(T.emblem) + "</legend>" + emblems + "</fieldset>" +
+            return '<form class="clanx-form" data-form="settings">' + (limits.crest ? emblems : "<fieldset><legend>" + esc(T.emblem) + "</legend>" +
+                emblems + "</fieldset>") +
                 "<label>" + esc(T.motto) + ' <input name="description" maxlength="' + limits.description + '" value="' + esc(clan.description) + '"></label>' +
                 "<label>" + esc(T.announcement) + ' <textarea name="announcement" rows="4" maxlength="' + limits.announcement + '">' +
                 esc(clan.announcement) + "</textarea></label>" +
@@ -281,7 +401,7 @@
                         esc(fill(T.duels_count, { count: n })) + "</option>").join("") + '</select><button type="submit" class="clanx-btn clanx-btn-green">' +
                         esc(T.challenge_send) + "</button></form>";
                 }
-                return '<li><span class="clanx-inline">' + emblemSvg(item.emblem, 26) + '<button type="button" class="clanx-linklike" data-action="open_clan" data-id="' +
+                return '<li><span class="clanx-inline">' + clanBadge(item, 26) + '<button type="button" class="clanx-linklike" data-action="open_clan" data-id="' +
                     esc(item.id) + '"><strong>[' + esc(item.tag) + "] " + esc(item.name) + "</strong></button> <small>" +
                     esc(fill(T.members_count, { count: item.members, max: state.limits.members })) + "</small></span><span>" + side + "</span></li>";
             }).join("") + "</ul>";
@@ -305,7 +425,7 @@
             }
             if (!results) return html + '<p class="clanx-muted">' + esc(T.loading) + "</p>";
             if (!results.length) return html + '<p class="clanx-muted">' + esc(T.no_clans) + "</p>";
-            return html + '<ul class="clanx-list">' + results.map((clan) => '<li><span class="clanx-inline">' + emblemSvg(clan.emblem, 26) +
+            return html + '<ul class="clanx-list">' + results.map((clan) => '<li><span class="clanx-inline">' + clanBadge(clan, 26) +
                 "<strong>[" + esc(clan.tag) + "] " + esc(clan.name) + "</strong> <small>" + esc(fill(T.members_count, { count: clan.members, max: state.limits.members })) +
                 "</small></span><span>" + View.recruitmentChips(T, clan) + button(T.view, "open_clan", { id: clan.id }, "brown") + "</span></li>").join("") + "</ul>";
         },
@@ -319,7 +439,9 @@
                 emblems += '<label class="clanx-emblem-pick"><input type="radio" name="emblem" value="' + i + '"' + (i === 1 ? " checked" : "") + ">" +
                     emblemSvg(i, 34) + "</label>";
             }
-            return '<form class="clanx-form" data-form="create"><fieldset><legend>' + esc(T.emblem) + "</legend>" + emblems + "</div></fieldset>" +
+            const pieces = limits.crest ? crestEditor(T, { emblem: 1 }) + '<input type="hidden" name="emblem" value="1">'
+                : "<fieldset><legend>" + esc(T.emblem) + "</legend>" + emblems + "</div></fieldset>";
+            return '<form class="clanx-form" data-form="create">' + pieces +
                 '<div class="clanx-row"><label>' + esc(T.name) + ' <input name="name" required minlength="' + limits.name[0] + '" maxlength="' + limits.name[1] +
                 '"></label><label>' + esc(T.tag) + ' <input name="tag" required minlength="' + limits.tag[0] + '" maxlength="' + limits.tag[1] +
                 '" pattern="[A-Za-z0-9]+" class="clanx-upper"></label></div><label>' + esc(T.motto) + ' <input name="description" maxlength="' +
@@ -490,6 +612,7 @@
         try {
             state = await getJson(config.state);
             if (state.clan) state.clan.max = state.limits.members;
+            crestShown = Boolean(state.limits && state.limits.crest);
             if (!tab || (!state.clan && CLAN_TABS.includes(tab)) || (state.clan && tab === "create")) {
                 tab = state.clan ? "clan" : "find";
             }
@@ -572,6 +695,7 @@
             if (result.state) {
                 state = result.state;
                 if (state.clan) state.clan.max = state.limits.members;
+                crestShown = Boolean(state.limits && state.limits.crest);
             }
             if (result.ok) {
                 keepForms = false;
@@ -650,6 +774,13 @@
             load();  // fresh data on every tab change (an alliance or a challenge may have changed meanwhile)
             return;
         }
+        const crestTab = event.target.closest("[data-crest-tab]");
+        if (crestTab) {
+            const editor = crestTab.closest(".clanx-crest-editor");
+            editor.dataset.crestPart = crestTab.dataset.crestTab;
+            editor.querySelectorAll("[data-crest-tab]").forEach((other) => other.setAttribute("aria-selected", String(other === crestTab)));
+            return;
+        }
         const channelButton = event.target.closest("[data-channel]");
         if (channelButton) {
             channel = channelButton.dataset.channel;
@@ -687,11 +818,33 @@
         else if (action === "dissolve") askConfirm(T.dissolve_confirm, () => act("dissolve", { confirm: "yes" }));
         else if (simple[action]) act(action, { [simple[action]]: id });
     });
+    // SE_CLAN_CREST: the preview and the choices follow each pick (the choices show the shield with it).
+    panel.addEventListener("change", (event) => {
+        if (!event.target.name || !event.target.name.startsWith("crest_")) return;
+        const editor = event.target.closest(".clanx-crest-editor");
+        const form = event.target.closest("form");
+        if (!editor || !form) return;
+        const parts = crestFromForm(form).split(".").map(Number);
+        editor.querySelector(".clanx-crest-preview").innerHTML = crestSvg(parts, 110);
+        editor.querySelectorAll(".clanx-crest-choice").forEach((choice) => {
+            const input = choice.querySelector("input");
+            const part = Number(input.name.slice(6));
+            if (part === 3 || part === 4 || part === 6) return;
+            const sample = parts.slice();
+            sample[part - 1] = Number(input.value);
+            if (part === 1) sample[1] = 1;
+            choice.querySelector("svg").outerHTML = crestSvg(sample, 34);
+        });
+    });
     panel.addEventListener("submit", (event) => {
         const form = event.target.closest("[data-form]");
         if (!form) return;
         event.preventDefault();
         const fields = Object.fromEntries(new FormData(form).entries());
+        if (form.querySelector(".clanx-crest-editor")) {  // SE_CLAN_CREST: the six pieces as one "1.2.14.6.1.21"
+            fields.crest = crestFromForm(form);
+            for (let part = 1; part <= CREST_COUNTS.length; part += 1) delete fields["crest_" + part];
+        }
         if (form.dataset.form === "search" || form.dataset.form === "rivals-search") search(fields.q);
         else if (form.dataset.form === "create") act("create", fields);
         else if (form.dataset.form === "settings") act("settings", fields);

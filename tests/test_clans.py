@@ -181,6 +181,39 @@ class RoleTests(ClanTestCase):
         self.assertEqual(self.code(self.store.admin_dissolve, clan['id'], 99, 'Admin', 'x'), 'no_clan')
 
 
+class CrestTests(ClanTestCase):
+    """SE_CLAN_CREST: the clan's shield from pieces (shape, division, two colours, emblem, emblem colour)."""
+
+    def test_the_crest_is_checked_and_stored_in_order(self):
+        from clans import CREST_PARTS, clean_crest
+        self.assertEqual(CREST_PARTS, (21, 21, 24, 24, 25, 24))
+        self.assertEqual(clean_crest(''), '')
+        self.assertEqual(clean_crest(' 03.2.14.6.1.21 '), '3.2.14.6.1.21')
+        self.assertEqual(clean_crest('21.21.24.24.25.24'), '21.21.24.24.25.24')
+        for bad in ('0.1.1.1.1.1', '22.1.1.1.1.1', '1.22.1.1.1.1', '1.1.25.1.1.1', '1.1.1.1.26.1', '1.1.1.1.1.25',
+                    '1.1.1.1.1', '1.1.1.1.1.1.1', 'a.1.1.1.1.1', '1.-1.1.1.1.1', '<b>'):
+            with self.subTest(bad=bad):
+                with self.assertRaises(ClanError):
+                    clean_crest(bad)
+
+    def test_the_founder_picks_it_and_only_the_guild_master_changes_it(self):
+        clan = self.store.create(1, 'Escudados', 'ESC', crest='4.5.9.21.3.6')
+        self.assertEqual(self.store.clan(clan['id'])['crest'], '4.5.9.21.3.6')
+        self.request = self.store.request_join(2, clan['id'])
+        request = next(r for r in self.store.requests_for(clan['id']) if r['account_id'] == 2)
+        self.store.answer_request(1, request['id'], True)
+        self.assertEqual(self.code(self.store.settings, 2, 1, '', '', 0, 1, 'all', None, '1.1.1.1.1.1'), 'forbidden')
+        self.store.settings(1, 1, '', '', 0, 1, 'all', crest='12.16.14.6.2.6')
+        self.assertEqual(self.store.clan(clan['id'])['crest'], '12.16.14.6.2.6')
+        self.store.settings(1, 1, 'Lema', '', 0, 1, 'all')  # without a crest (switch off): it stays
+        self.assertEqual(self.store.clan(clan['id'])['crest'], '12.16.14.6.2.6')
+        self.assertEqual(self.code(self.store.settings, 1, 1, '', '', 0, 1, 'all', None, '99.1.1.1.1.1'), 'bad_settings')
+
+    def test_a_clan_from_before_has_no_crest(self):
+        clan = self.store.create(1, 'Antiguos', 'ANT', emblem=4)
+        self.assertEqual(self.store.clan(clan['id'])['crest'], '')
+
+
 class SettingsAndRecruitmentTests(ClanTestCase):
     def test_guild_master_edits_emblem_motto_announcement_and_recruitment(self):
         clan = self.clan_with(1, 2)

@@ -48,6 +48,7 @@ ally. Either Guild Master may end it; a dissolved clan ends it.
 """
 
 from contextlib import contextmanager
+import os
 from pathlib import Path
 import re
 import sqlite3
@@ -64,6 +65,10 @@ TAG_LENGTH = (2, 5)
 DESCRIPTION_LENGTH = 200
 ROLES = ('master', 'assist', 'member')
 EMBLEMS = 12                       # emblem 1..12 (own art, templates/js/clan_overlay.js)
+# SE_CLAN_CREST: the Guild Master builds the clan's shield from pieces (templates/js/clan_overlay.js, CREST_*):
+# shape, division, first colour, second colour, emblem and the emblem's colour, each 1..its count. Stored as
+# "1.2.14.6.1.21"; '' is a clan that has not built one yet (it shows a shield made from its old emblem).
+CREST_PARTS = (21, 21, 24, 24, 25, 24)
 ANNOUNCEMENT_LENGTH = 500
 RECRUIT_LANGUAGES = ('all', 'es', 'pt-BR', 'en')
 CHAT_LENGTH = 300
@@ -113,6 +118,24 @@ def clean_announcement(value):
     if len(text) > ANNOUNCEMENT_LENGTH:
         raise ClanError('bad_announcement')
     return text
+
+
+def crest_enabled():
+    return os.environ.get('SE_CLAN_CREST', 'off').strip().lower() in ('on', '1', 'true', 'yes')
+
+
+def clean_crest(value):
+    """The canonical crest ("1.2.14.6.1.21") or ClanError('bad_settings'); '' stays '' (no crest built)."""
+    text = str(value if value is not None else '').strip()
+    if not text:
+        return ''
+    parts = text.split('.')
+    if len(parts) != len(CREST_PARTS) or not all(part.isdigit() for part in parts):
+        raise ClanError('bad_settings')
+    numbers = [int(part) for part in parts]
+    if not all(1 <= number <= limit for number, limit in zip(numbers, CREST_PARTS)):
+        raise ClanError('bad_settings')
+    return '.'.join(str(number) for number in numbers)
 
 
 def clean_settings(emblem, recruit_open, min_level, language):
@@ -254,6 +277,7 @@ class ClanStore:
         ('recruit_min_level', 'INTEGER NOT NULL DEFAULT 1'),
         ('recruit_language', "TEXT NOT NULL DEFAULT 'all'"),
         ('prestige', 'INTEGER NOT NULL DEFAULT 0'),  # point 29: adventures won by its members
+        ('crest', "TEXT NOT NULL DEFAULT ''"),  # SE_CLAN_CREST: the shield built from pieces (clean_crest)
     )
 
     def add_prestige(self, clan_id, points):
@@ -339,9 +363,10 @@ class ClanStore:
                               ON CONFLICT(account_id) DO UPDATE SET left_at = excluded.left_at""", (account_id, now))
 
     # -- actions --
-    def create(self, actor_id, name, tag, description='', actor_name=None, emblem=1):
+    def create(self, actor_id, name, tag, description='', actor_name=None, emblem=1, crest=''):
         name, tag, description = clean_name(name), clean_tag(tag), clean_description(description)
         emblem = clean_settings(emblem, 0, 1, 'all')[0]
+        crest = clean_crest(crest)
         with self._write() as (connection, now):
             if self._member(connection, actor_id):
                 raise ClanError('already_in_clan')
@@ -351,8 +376,8 @@ class ClanStore:
             if connection.execute('SELECT 1 FROM clans WHERE tag = ?', (tag,)).fetchone():
                 raise ClanError('tag_taken')
             cursor = connection.execute(
-                'INSERT INTO clans (name, name_key, tag, description, emblem, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                (name, name_key(name), tag, description, emblem, actor_id, now))
+                'INSERT INTO clans (name, name_key, tag, description, emblem, crest, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                (name, name_key(name), tag, description, emblem, crest, actor_id, now))
             connection.execute("INSERT INTO clan_members (account_id, clan_id, role, joined_at) VALUES (?, ?, 'master', ?)",
                                (actor_id, cursor.lastrowid, now))
             connection.execute('DELETE FROM clan_requests WHERE account_id = ?', (actor_id,))
@@ -400,10 +425,12 @@ class ClanStore:
             self._log(connection, clan, actor_id, actor_name, 'join', now)
             return clan
 
-    def settings(self, actor_id, emblem, description, announcement, recruit_open, min_level, language, actor_name=None):
-        """The Guild Master edits the emblem, motto, announcement and recruitment."""
+    def settings(self, actor_id, emblem, description, announcement, recruit_open, min_level, language, actor_name=None,
+                 crest=None):
+        """The Guild Master edits the emblem (or the crest: None keeps it), motto, announcement and recruitment."""
         description, announcement = clean_description(description), clean_announcement(announcement)
         emblem, recruit_open, min_level, language = clean_settings(emblem, recruit_open, min_level, language)
+        crest = None if crest is None else clean_crest(crest)
         with self._write() as (connection, now):
             actor = self._member(connection, actor_id)
             if not actor or actor['role'] != 'master':
@@ -412,6 +439,8 @@ class ClanStore:
                 """UPDATE clans SET emblem = ?, description = ?, announcement = ?, recruit_open = ?, recruit_min_level = ?,
                        recruit_language = ? WHERE id = ?""",
                 (emblem, description, announcement, recruit_open, min_level, language, actor['clan_id']))
+            if crest is not None:
+                connection.execute('UPDATE clans SET crest = ? WHERE id = ?', (crest, actor['clan_id']))
             clan = self._clan(connection, actor['clan_id'])
             self._log(connection, clan, actor_id, actor_name, 'edit', now)
             return clan

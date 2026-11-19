@@ -751,3 +751,14 @@ Plan completo en COOP_PLAN.md (el dueño eligió el cooperativo en vivo con anfi
 - **Lo que se queda:** en el Pase, después de cobrar premios, aparece el botón "Recargar". No lleva a otra página: recarga el juego para que aparezcan los premios nuevos en Regalos, porque el juego no ve los cambios de la aldea sin cargarla de nuevo. Es lo mismo que pasa con el aviso "Tu aldea se actualizó".
 - Interruptor `SE_STAY_IN_GAME` (encendido en el código, porque es un arreglo pedido por el dueño; también anotado en `server.env`).
 - **Probado en la copia (5051):** la ventana de PvP no tiene ningún enlace hacia afuera. En la del clan, "Ir a duelos" cerró la ventana y abrió el PvP en Duelos, sin salir de `/play.html`. Ese botón solo aparece durante un reto entre clanes, así que se probó agregándolo a mano en la ventana.
+
+## Escudo del clan armado por piezas (19/11/2026)
+
+- **Pedido del dueño:** al crear el clan, que se elija y edite el escudo con las piezas que armamos en el lienzo del rediseño. Los botones de "Modos" (Clan, PvP, Pase) no cambian.
+- **Cómo funciona:** en la ventana del clan, la pestaña "Crear clan" y el "Editar" del jefe (Guild Master) traen el editor del escudo en lugar de los 12 emblemas de antes. A la izquierda se ve cómo queda. A la derecha hay una pestaña por pieza: Forma (21), División (21), Color principal (24), Segundo color (24), Emblema (25) y Color del emblema (24). Las muestras de cada pestaña ya tienen las otras piezas elegidas, así se ve cómo queda cada opción. El borde oscuro y el dorado van siempre, para que cualquier combinación se reconozca como escudo de clan.
+- **Dónde se ve:** en el cartel del clan y en las listas (Buscar clan, Retar clan, alianzas).
+- **Cómo se guarda:** en la columna nueva `crest` de `clans.sqlite3`, como "forma.división.color.color.emblema.color" (por ejemplo `12.4.9.21.1.6`). El servidor revisa cada número (`clans.clean_crest`). Solo el jefe lo cambia, y el editor de "Editar" lo guarda junto con lo demás.
+- **Clanes que ya existían:** el escudo queda vacío hasta que el jefe arme uno. Mientras tanto se ve uno parecido al de antes: forma clásica, el color de su emblema viejo y el símbolo más cercano en plata.
+- **No va en el chat:** el chat global sigue mostrando la etiqueta `[PRO]` como texto. Poner el escudo ahí necesita mandar el escudo con cada mensaje, y quedó para después.
+- Interruptor `SE_CLAN_CREST` (apagado en el código, encendido en `server.env`). Apagado, vuelven los 12 emblemas y se ignora el escudo guardado.
+- **Probado en la copia (5051):** Tuki editó el escudo de [PRO] (almenado, cuartelado verde y plata, estrella dorada) y se guardó `12.4.9.21.1.6`. MiReino creó [LOB] "Lobos del Norte" con su escudo (cometa azul con banda dorada y torre en plata), guardado como `6.5.14.6.3.21`. "Buscar clan" muestra los dos escudos. La vista de celular no se probó jugando. Pruebas en `tests/test_clans.py` (CrestTests).

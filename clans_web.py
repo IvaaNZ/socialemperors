@@ -12,7 +12,7 @@ from flask import abort, flash, g, jsonify, redirect, render_template, request, 
 from auth import validate_csrf
 from clans import (ANNOUNCEMENT_LENGTH, CHALLENGE_ANSWER_SECONDS, CHALLENGE_SIZES, DESCRIPTION_LENGTH, EMBLEMS,
                    MAX_ASSISTS, MAX_MEMBERS, MAX_OPEN_REQUESTS, NAME_LENGTH, RECRUIT_LANGUAGES, REJOIN_SECONDS,
-                   REQUEST_SECONDS, TAG_LENGTH, ClanError, ClanStore)
+                   REQUEST_SECONDS, TAG_LENGTH, CREST_PARTS, ClanError, ClanStore, crest_enabled)
 from portal_i18n import translate as _
 from duels import utc_label
 
@@ -95,6 +95,9 @@ def overlay_texts():
         'dissolve_confirm': _('Quero dissolver o clã: todos os membros saem e não dá para desfazer.'),
         'leave': _('Sair do clã'), 'leave_confirm': _('Tem certeza de que quer sair do clã?'),
         'emblem': _('Emblema'), 'motto': _('Lema'), 'name': _('Nome'), 'tag': _('Etiqueta'),
+        'crest': _('Escudo'), 'crest_shape': _('Forma'), 'crest_division': _('Divisão'),
+        'crest_color1': _('Cor principal'), 'crest_color2': _('Segunda cor'), 'crest_emblem_color': _('Cor do emblema'),
+        'crest_hint': _('Toque em cada parte e escolha: assim fica o escudo do seu clã.'),
         'min_level': _('Nível mínimo'), 'language': _('Idioma'), 'recruit_mode': _('Entrada'),
         'create': _('Criar clã'), 'create_tutorial': _('Conclua o tutorial para criar um clã.'),
         'rejoin_wait': _('Você saiu de um clã há pouco. Poderá entrar em outro ou criar um em {minutes} min.'),
@@ -467,7 +470,7 @@ def install_clans(app, accounts, village_lock, all_saves_userid, village_session
 
     def clan_summary(clan, count=None):
         return {'id': clan['id'], 'name': clan['name'], 'tag': clan['tag'], 'description': clan['description'],
-                'emblem': clan.get('emblem', 1), 'open': bool(clan.get('recruit_open')),
+                'emblem': clan.get('emblem', 1), 'crest': clan.get('crest') or '', 'open': bool(clan.get('recruit_open')),
                 'min_level': clan.get('recruit_min_level', 1), 'language': clan.get('recruit_language', 'all'),
                 'members': count if count is not None else len(clan.get('members', [])),
                 'prestige': int(clan.get('prestige') or 0)}
@@ -532,7 +535,9 @@ def install_clans(app, accounts, village_lock, all_saves_userid, village_session
             'limits': {'members': MAX_MEMBERS, 'assists': MAX_ASSISTS, 'name': NAME_LENGTH, 'tag': TAG_LENGTH,
                        'description': DESCRIPTION_LENGTH, 'announcement': ANNOUNCEMENT_LENGTH, 'emblems': EMBLEMS,
                        'languages': RECRUIT_LANGUAGES, 'sizes': CHALLENGE_SIZES,
-                       'answer_minutes': CHALLENGE_ANSWER_SECONDS // 60},
+                       'answer_minutes': CHALLENGE_ANSWER_SECONDS // 60,
+                       # SE_CLAN_CREST: the window offers the crest editor (counts of each piece) instead of the emblems
+                       'crest': list(CREST_PARTS) if crest_enabled() else None},
             'can_challenge': bool(membership and membership['role'] == 'master'
                                   and not store.current_challenge(membership['clan_id'])),
         }
@@ -624,7 +629,7 @@ def install_clans(app, accounts, village_lock, all_saves_userid, village_session
             if not tutorial_complete(account):
                 raise ClanError('tutorial')
             store.create(me, form.get('name', ''), form.get('tag', ''), form.get('description', ''), actor_name=name,
-                         emblem=form.get('emblem', 1))
+                         emblem=form.get('emblem', 1), crest=form.get('crest', '') if crest_enabled() else '')
             return 'Clã criado.'
 
         def join():
@@ -687,7 +692,8 @@ def install_clans(app, accounts, village_lock, all_saves_userid, village_session
             'leave': lambda: 'O clã foi dissolvido.' if store.leave(me, actor_name=name) == 'dissolved' else 'Você saiu do clã.',
             'settings': lambda: (store.settings(me, form.get('emblem'), form.get('description', ''), form.get('announcement', ''),
                                                 form.get('recruit_open'), form.get('min_level'), form.get('language'),
-                                                actor_name=name), 'Clã atualizado.')[1],
+                                                actor_name=name, crest=form.get('crest') if crest_enabled() else None),
+                           'Clã atualizado.')[1],
             'dissolve': dissolve,
             'challenge': challenge,
             'accept_challenge': lambda: challenge_answer(True),
