@@ -240,7 +240,7 @@
                     html += '<ul class="clanx-list clanx-small">' + c.duel_lines.map((d) => '<li class="' + (d.ours ? "is-won" : "is-lost") + '">' +
                         esc(fill(T.duel_line, { winner: d.winner, loser: d.loser })) + "</li>").join("") + "</ul>";
                 }
-                html += '<div class="clanx-actions">' + (duelsUrl ? '<a class="clanx-btn clanx-btn-green" href="' + esc(duelsUrl) + '">' + esc(T.go_duels) + "</a>" : "") +
+                html += '<div class="clanx-actions">' + (duelsUrl ? '<a class="clanx-btn clanx-btn-green" data-in-game="duels" href="' + esc(duelsUrl) + '">' + esc(T.go_duels) + "</a>" : "") +
                     (clan.role === "master" ? button(T.surrender, "surrender", { id: c.id }, "red") : "") + "</div>";
             }
             html += "</section>";
@@ -654,6 +654,14 @@
         if (channelButton) {
             channel = channelButton.dataset.channel;
             startChat();
+            return;
+        }
+        // SE_STAY_IN_GAME: "Go to duels" opens the PvP window's Duels tab instead of the duels page (no reload).
+        const inGame = event.target.closest("[data-in-game]");
+        if (inGame && document.body.hasAttribute("data-stay-in-game") && typeof window.seOpenPvp === "function") {
+            event.preventDefault();
+            close();
+            window.seOpenPvp(inGame.dataset.inGame);
             return;
         }
         const target = event.target.closest("[data-action]");

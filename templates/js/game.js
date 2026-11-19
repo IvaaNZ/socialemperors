@@ -94,6 +94,7 @@
             clearInterval(villageEventsTimer);
             pauseUpdatedVillage();
             villageUpdate.hidden = false;
+            controlsToggle.hidden = false;  // also when the menu is hidden (SE_SHORT_MENU): the notice is in it
             controlsToggle.classList.add("has-update");
             controlsToggle.title = t("Sua vila foi atualizada. Abra os controles para carregar as alterações.");
             controlsToggle.setAttribute("aria-label", t("Controles: há uma atualização da vila"));
@@ -751,7 +752,7 @@
         hudSide.style.setProperty("--hud-scale", hudScale(box).toFixed(3));
         const right = stage.right - box.right + 8;
         let columnTop = top + 8;
-        if (menuOverGame()) {
+        if (menuOverGame() && !controlsToggle.hidden) {
             const empire = hudEmpire && !hudEmpire.hidden ? hudEmpire.getBoundingClientRect() : null;
             let dockTop = 8;
             if (empire && empire.right > stage.right - right - 64) dockTop = empire.bottom - stage.top + 6;
@@ -1082,7 +1083,9 @@
         scheduleControlsHide();
     }
 
-    controlsToggle.hidden = false;
+    // SE_SHORT_MENU: a player (not an admin) has nothing in the menu, so no menu button, until the village
+    // changes and the panel's "Reload" notice is needed (checkVillageEvents shows it then).
+    controlsToggle.hidden = Boolean(config.menuHidden);
     controlsToggle.addEventListener("click", () => {
         if (!controlsPanel.hidden && controlsActivated) hideControls();
         else showControls(true);

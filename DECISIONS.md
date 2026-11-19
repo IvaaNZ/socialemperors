@@ -739,3 +739,15 @@ Plan completo en COOP_PLAN.md (el dueño eligió el cooperativo en vivo con anfi
 - **Por qué siguen en la página aunque no se vean:** `game.js` maneja esos controles (el volumen, la pantalla, la imagen) y los muestra cuando el juego está listo. Si se borraran, la página fallaría. Por eso van dentro de `.menu-retired`, que nunca se muestra.
 - Interruptor `SE_SHORT_MENU` (apagado en el código, encendido en `server.env`). Apagado, vuelve el Menú completo.
 - **Probado en la copia (5051):** el Menú abrió solo con "Rivales y saqueos" (`/rivals`) y "Administrar aldeas" (`/admin/villages`), sin errores nuevos en la consola. Pruebas en `tests/test_hud_badges.py`.
+- **Cambio del dueño (19/11/2026):** también se saca "Rivales y saqueos", porque está repetido: el botón PvP de "Modos" abre una ventana con las mismas pestañas, Rivales, Saqueos y Duelos. Al administrador el Menú le muestra solo "Administrar aldeas". A un jugador no le queda nada, así que no ve el botón del Menú. Si la aldea cambia mientras juega, el botón aparece igual para mostrar el aviso "Tu aldea se actualizó" con su botón para recargar. Sin el Menú, la columna de la derecha sube hasta arriba.
+- **Probado en la copia (5051):** Tuki (administrador) ve el Menú con solo "Administrar aldeas". Tuki2 (jugadora) no ve el botón, y la columna de la derecha empieza arriba. El aviso de aldea cambiada no se probó jugando; lo cubren las pruebas automáticas.
+
+## Las ventanas de Modos no te sacan del juego (19/11/2026)
+
+- **Pedido del dueño:** que nada de lo que está dentro de "Modos" lo lleve a otra página, porque lo saca del juego y tiene que volver a cargarlo.
+- **Lo que salía del juego, y cómo queda:**
+  - PvP, enlace "Abrir la página completa" (iba a `/rivals`): se sacó, la ventana ya tiene todas las pestañas.
+  - Clan › Retos, botón "Ir a duelos" durante un reto (iba a la página de duelos): ahora cierra la ventana del clan y abre la pestaña Duelos del PvP, sin recargar.
+- **Lo que se queda:** en el Pase, después de cobrar premios, aparece el botón "Recargar". No lleva a otra página: recarga el juego para que aparezcan los premios nuevos en Regalos, porque el juego no ve los cambios de la aldea sin cargarla de nuevo. Es lo mismo que pasa con el aviso "Tu aldea se actualizó".
+- Interruptor `SE_STAY_IN_GAME` (encendido en el código, porque es un arreglo pedido por el dueño; también anotado en `server.env`).
+- **Probado en la copia (5051):** la ventana de PvP no tiene ningún enlace hacia afuera. En la del clan, "Ir a duelos" cerró la ventana y abrió el PvP en Duelos, sin salir de `/play.html`. Ese botón solo aparece durante un reto entre clanes, así que se probó agregándolo a mano en la ventana.

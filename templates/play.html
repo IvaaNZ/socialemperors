@@ -23,6 +23,7 @@
         'hudClock': hud_clock | default(false),
         'hudBar': hud_bar | default(false),
         'hudGroup': hud_group | default(false),
+        'menuHidden': menu_hidden | default(false),
         'fullView': full_view | default(false),
         'perfMode': perf_mode | default(false),
         'dailyNext': daily_next,
@@ -36,7 +37,7 @@
     } | tojson }}</script>
     <script src="{{ url_for('javascript', path='game.js') }}" defer></script>
 </head>
-<body class="tab-expanded">
+<body class="tab-expanded"{% if stay_in_game %} data-stay-in-game{% endif %}>
     <a class="skip-link" href="#vila">{{ _('Ir para a vila') }}</a>
     <header class="game-header">
         <a class="brand" href="{{ url_for('play') }}" aria-label="{{ _('Social Empires, minha vila') }}">
@@ -73,10 +74,9 @@
                         <a href="/play.html">{{ _('Atualizar vila') }}</a>
                     </div>
                     {% if short_menu %}
-                    {# SE_SHORT_MENU: only the rivals page and, for an admin, the villages' administration. The other controls
-                       stay in the page, never shown, because game.js drives them (volume, screen, picture). #}
+                    {# SE_SHORT_MENU: only, for an admin, the villages' administration (a player has no menu button: see
+                       menuHidden). The other controls stay in the page, never shown, because game.js drives them. #}
                     <div class="view-controls">
-                        <a class="secondary-button" href="/rivals">{{ _('Rivais e saques') }}</a>
                         {% if current_account and current_account.is_admin %}<a class="secondary-button" href="{{ url_for('admin_villages') }}">{{ _('Gerenciar vilas') }}</a>{% endif %}
                     </div>
                     <div class="menu-retired" hidden>

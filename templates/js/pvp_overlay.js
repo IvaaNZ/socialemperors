@@ -98,13 +98,16 @@
     let refreshTimer = null;
     let busy = false;
 
+    // SE_STAY_IN_GAME (on unless turned off): nothing in the window leaves the game; it already has every tab.
+    const stayInGame = document.body.hasAttribute("data-stay-in-game");
     const panel = document.createElement("div");
     panel.className = "clanx-overlay pvpx-overlay";
     panel.hidden = true;
     panel.innerHTML = '<div class="clanx-window" role="dialog" aria-modal="true" aria-labelledby="pvpx-title">' +
         '<div class="clanx-titlebar"><h2 id="pvpx-title">' + esc(T.title) + '</h2><button type="button" class="clanx-close" data-action="close" aria-label="' +
         esc(T.close) + '">×</button></div><div class="clanx-tabsbar"></div><div class="clanx-message" role="status" aria-live="polite" hidden></div>' +
-        '<div class="clanx-body"></div><p class="pvpx-portal"><a class="clanx-btn-link" href="' + esc(config.rivals) + '">' + esc(T.portal) + "</a></p></div>";
+        '<div class="clanx-body"></div>' + (stayInGame ? "" : '<p class="pvpx-portal"><a class="clanx-btn-link" href="' + esc(config.rivals) + '">' +
+        esc(T.portal) + "</a></p>") + "</div>";
     stage.appendChild(panel);
     const tabsBar = panel.querySelector(".clanx-tabsbar");
     const body = panel.querySelector(".clanx-body");

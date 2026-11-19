@@ -81,7 +81,7 @@ class ShortMenuTests(unittest.TestCase):
         start = page.index('{% if short_menu %}')
         retired = page.index('<div class="menu-retired" hidden>', start)
         kept = page[start:retired]
-        self.assertIn("href=\"/rivals\"", kept)
+        self.assertNotIn("/rivals", kept)  # the PvP window has it (Modos > PvP)
         self.assertIn("url_for('admin_villages')", kept)
         self.assertNotIn('treasury', kept)
         # game.js still finds every control it drives
@@ -89,6 +89,30 @@ class ShortMenuTests(unittest.TestCase):
             self.assertGreater(page.index(f'id="{control}"'), retired)
         css = (ROOT / 'templates' / 'css' / 'game.css').read_text(encoding='utf-8')
         self.assertIn('.menu-retired, .menu-retired * { display: none !important; }', css)
+
+
+    def test_a_player_has_no_menu_button_until_the_village_changes(self):
+        script = (ROOT / 'templates' / 'js' / 'game.js').read_text(encoding='utf-8')
+        self.assertIn('controlsToggle.hidden = Boolean(config.menuHidden);', script)
+        self.assertIn('controlsToggle.hidden = false;  // also when the menu is hidden', script)
+        server = (ROOT / 'server.py').read_text(encoding='utf-8')
+        self.assertIn("menu_hidden=SHORT_MENU_ENABLED and not (g.account and g.account['is_admin'])", server)
+
+
+class StayInGameTests(unittest.TestCase):
+    """SE_STAY_IN_GAME (on by default): nothing in the Clan and PvP windows leaves the game."""
+
+    def test_on_by_default(self):
+        server = (ROOT / 'server.py').read_text(encoding='utf-8')
+        self.assertIn("os.environ.get('SE_STAY_IN_GAME', 'on')", server)
+
+    def test_the_windows_keep_the_player_in_the_game(self):
+        js = ROOT / 'templates' / 'js'
+        pvp = (js / 'pvp_overlay.js').read_text(encoding='utf-8')
+        self.assertIn('(stayInGame ? "" : \'<p class="pvpx-portal">', pvp)  # no "Open the full page" link
+        clan = (js / 'clan_overlay.js').read_text(encoding='utf-8')
+        self.assertIn('data-in-game="duels"', clan)
+        self.assertIn('window.seOpenPvp(inGame.dataset.inGame);', clan)  # "Go to duels" opens the Duels tab
 
 
 if __name__ == '__main__':
