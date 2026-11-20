@@ -57,8 +57,9 @@ class WideHelp(unittest.TestCase):
         for name in ('PLAYER_SELF', 'PLAYER_ENEMY', 'arPlayerIsoFightingElements', 'bDead', 'uiAttack',
                      'SUBCATFUNC_UNIT_PEASANT', 'bMoving', 'bMovingToDoAction', 'bAttacking', 'push 1'):
             self.assertIn(name, names)
-        # not in the tutorial; the player's own order first, then one order for each extra unit
-        self.assertLess(names.index('tutorialMode'), names.index('arPlayerIsoFightingElements'))
+        # also in the tutorial; the player's own order first, then one order for each extra unit
+        self.assertNotIn('tutorialMode', names)
+        self.assertIn('IA_Move 2', names)  # an extra unit without a free tile walks to the enemy
         orders = [index for index, op in enumerate(recruit) if op == ('callpropvoid', 'startMovements 3')]
         self.assertEqual(len(orders), 2)
         self.assertEqual(recruit[orders[0] - 3:orders[0]], [('getlocal1', ''), ('getlocal2', ''), ('getlocal3', '')])

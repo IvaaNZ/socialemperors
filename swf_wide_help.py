@@ -17,9 +17,10 @@ goblins are not harder. This edit:
     player's order unchanged (startMovements again, Base.__seRecruiting set so it is not recruited twice) and then
     one order for each extra unit, and startMovements returns. A first version added them to the player's list:
     the game places the units of one order on the free tiles around the target, sorted by its own rule, and in the
-    tutorial's narrow corner the extra units took the places and the chosen knight stood still (2026-11-20). The
-    selection itself (Base.Main.hitArray) does not change. Nothing is added in the tutorial (Base.Main.tutorialMode).
-    Any error gives the game's own order.
+    tutorial's narrow corner the extra units took the places and the chosen knight stood still (2026-11-20). An
+    extra unit left without a free tile (not moving after its order) walks to the enemy's tile (IsoUnit.IA_Move);
+    beside it, the game's own attack needs no tile. The owner asked (2026-11-20) that this works in the tutorial
+    too. The selection itself (Base.Main.hitArray) does not change. Any error gives the game's own order.
 """
 
 import struct
@@ -85,8 +86,7 @@ def add_recruit(abc):
                           ('getproperty', 'SUBCATFUNC_UNIT_PEASANT'), ('getproperty', 'bMoving'),
                           ('getproperty', 'bMovingToDoAction'), ('getproperty', 'bAttacking'),
                           ('getproperty', 'tx'), ('getproperty', 'ty'), ('callproperty', 'indexOf'),
-                          ('callpropvoid', 'push'), ('callpropvoid', 'startMovements'), ('getproperty', 'Main'),
-                          ('getproperty', 'tutorialMode')})
+                          ('callpropvoid', 'push'), ('callpropvoid', 'startMovements'), ('callproperty', 'IA_Move')})
     n = {'indexOf': m[('callproperty', 'indexOf')], 'push': m[('callpropvoid', 'push')],
          'startMovements': m[('callpropvoid', 'startMovements')]}
     busy = abc.add_qname('', BUSY_SLOT)
@@ -104,8 +104,6 @@ def add_recruit(abc):
     program = [
         ('getlocal0',), ('pushscope',), ('label:', 'try'),
         ('getlocal0',), ('getproperty', busy), ('iftrue', 'same'),
-        # not in the tutorial: its battle is one knight against two weak trolls, as the game made it
-        ('getlex', m[('getlex', 'Base')]), g('Main'), g('tutorialMode'), ('iftrue', 'same'),
         ('getlocal3',), constants, g('PLAYER_SELF'), ('ifne', 'same'),
         ('getlocal2',), ('iffalse', 'same'),
         ('getlocal2',), g('length'), ('pushbyte', 1), ('iflt', 'same'),
@@ -145,6 +143,14 @@ def add_recruit(abc):
         ('getlocal', 6), ('getlocal', 9), g('length'), ('ifnlt', 'sent'),
         ('getlocal0',), ('getlocal1',), ('getlocal', 9), ('getlocal', 6), late, ('newarray', 1), ('getlocal3',),
         ('callpropvoid', n['startMovements'], 3),
+        # No free tile around the enemy for it (a narrow corner, as the tutorial's): it walks to the enemy's tile;
+        # beside it, the game's own attack (IsoUnit.IA_Attack) needs no tile.
+        ('getlocal', 9), ('getlocal', 6), late, g('mc'), ('setlocal', 7),
+        ('getlocal', 7), g('bMoving'), ('iftrue', 'moving'),
+        ('getlocal', 7), ('getlocal', 4), g('mc'), g('buildingReference'), g('tx'),
+        ('getlocal', 4), g('mc'), g('buildingReference'), g('ty'),
+        ('callproperty', m[('callproperty', 'IA_Move')], 2), ('pop',),
+        ('label:', 'moving'),
         ('getlocal', 6), ('increment_i',), ('setlocal', 6), ('jump', 'each'),
         ('label:', 'sent'),
         ('getlocal0',), ('pushfalse',), ('setproperty', busy),
