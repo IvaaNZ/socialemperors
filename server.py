@@ -934,6 +934,9 @@ def localized_game_movie(language=None):
     if SMART_AI_ENABLED:  # smarter targets, help in groups, the wounded fall back (swf_smart_ai.py)
         from swf_smart_ai import add_smart_ai
         translated = add_smart_ai(translated)
+    if WIDE_HELP_ENABLED:  # the player's units come to help from 10 tiles away, not 4 (swf_wide_help.py)
+        from swf_wide_help import add_wide_help
+        translated = add_wide_help(translated)
     if QUEST_TEAMS_ENABLED or COOP_ENABLED:  # every adventure island opens "Elige tu equipo" (swf_coop.py)
         from swf_coop import add_quest_teams
         translated = add_quest_teams(translated)
@@ -1188,6 +1191,9 @@ FAST_HOVER_ENABLED = os.environ.get('SE_FAST_HOVER', 'on').strip().lower() in ('
 # Point 27: a smarter combat AI for both sides: targets by priority, help in groups, the wounded fall back
 # (swf_smart_ai.py).
 SMART_AI_ENABLED = os.environ.get('SE_SMART_AI', 'on').strip().lower() in ('on', '1', 'true', 'yes')
+# A unit of the player's being hit calls the player's units up to 10 tiles away, not 4 (swf_wide_help.py).
+from swf_wide_help import wide_help_enabled  # noqa: E402
+WIDE_HELP_ENABLED = wide_help_enabled()
 # Point 28: every adventure island lets the player choose the team that sails (swf_coop.py).
 QUEST_TEAMS_ENABLED = os.environ.get('SE_QUEST_TEAMS', 'on').strip().lower() in ('on', '1', 'true', 'yes')
 # Point 28: adventures alone or with the clan, live (COOP_PLAN.md). Off until the live raid works.

@@ -790,3 +790,14 @@ Plan completo en COOP_PLAN.md (el dueño eligió el cooperativo en vivo con anfi
 - **Por qué:** el juego no usa Escape; la página sí. Con el juego llenando la pestaña, Escape volvía a la vista normal: el portal (logo, enlaces, nombre de la aldea) con el juego chico adentro. Con `SE_SHORT_MENU` el botón "Preencher aba" quedó dentro del menú retirado, así que no había forma de volver salvo recargar.
 - **Arreglo** (sin interruptor: es un arreglo pedido y solo cambia algo cuando ese botón está retirado): Escape sigue cerrando el panel del menú, pero ya no achica el juego si el botón para volver a agrandarlo no está a la vista. Las ventanas de Clan, PvP, Pase, chat y mezclador siguen cerrándose con Escape. La pantalla completa del navegador (F11) sigue saliendo con Escape, como en cualquier página.
 - **Probado** en la copia con la partida de esa cuenta: Escape deja el juego llenando la pestaña.
+
+## Tus unidades van juntas a pelear (20/11/2026)
+
+- **Pedido del dueño:** mandó una unidad a atacar a un "goblin" (los Trolls pequeños de los campamentos enemigos) y las demás no fueron, "porque su rango está limitado a su área de ataque".
+- **Por qué pasaba:** cuando algo recibe un golpe (`IsoFightingElement.recibirAtaque`), el juego llama a su bando solo en las casillas hasta 4 de distancia (`CallForHelp` → `IA.NearbyAllyAttacked`), y vienen las que están quietas. En la partida de la cuenta "IIIIIIIIIIIIIIIIIIIIII" las 3 unidades estaban juntas junto al Ayuntamiento y los campamentos de trolls a unas 30 casillas: la unidad mandada peleaba sola, lejos de todas.
+- **Lo que eligió el dueño:** que ayuden las cercanas, desde más lejos (unas 10 casillas), y solo para su bando: los enemigos siguen llamando a 4 casillas, así pelear contra trolls no se vuelve más difícil.
+- **Arreglo** (`SE_WIDE_HELP`, apagado en el código y encendido en `server.env`; `swf_wide_help.py`):
+  - un golpe llama a las unidades del jugador hasta 10 casillas; las del enemigo, como antes, hasta 4 (`CallForHelp` corta las casillas más lejanas si el golpeado no es del jugador);
+  - al mandar unidades sobre un enemigo (`Base.startMovements`), se suman a la orden las unidades del jugador quietas, con ataque y que no sean aldeanos, hasta 10 casillas de la primera unidad mandada (`Base.__seRecruit`). Caminan y pelean con ella. Las vacas, ovejas y aldeanos no van. La selección no cambia.
+- **Efecto aparte:** si la orden suma unidades, el juego la cuenta como "varias tropas movidas" para sus misiones, igual que si el jugador las hubiera seleccionado.
+- **Probado** en la copia con la partida de esa cuenta: seleccionado solo un Arquero ligero y mandado a un troll, fueron también las otras unidades; murieron 2 trolls (22 → 20 enemigos). También murieron 2 unidades del jugador: los trolls pegan 12 y los arqueros 5.
