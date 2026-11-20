@@ -12,10 +12,14 @@ goblins are not harder. This edit:
     tile more than 4 tiles from it, on either axis, calls nobody, exactly as before;
   * Base.startMovements(tile, units, side), the player's order to the selected units: when the player (side
     PLAYER_SELF) sends them onto an enemy (the tile's element of PLAYER_ENEMY), it first calls the new
-    Base.__seRecruit, which returns a copy of the list with the player's idle fighting units (IsoUnit, not dead,
-    attack above 0, not a villager, idle as IsoUnit.isIdle says) up to 10 tiles from the first unit sent. They walk and fight
-    with it: the troll camps stand far from the village, so a unit sent alone was hit where nobody could hear it.
-    The selection itself (Base.Main.hitArray) does not change. Any error returns the list as it was.
+    Base.__seRecruit, which finds the player's idle fighting units (IsoUnit, not dead, attack above 0, not a
+    villager, idle as IsoUnit.isIdle says) up to 10 tiles from the first unit sent. If there are any, it gives the
+    player's order unchanged (startMovements again, Base.__seRecruiting set so it is not recruited twice) and then
+    one order for each extra unit, and startMovements returns. A first version added them to the player's list:
+    the game places the units of one order on the free tiles around the target, sorted by its own rule, and in the
+    tutorial's narrow corner the extra units took the places and the chosen knight stood still (2026-11-20). The
+    selection itself (Base.Main.hitArray) does not change. Nothing is added in the tutorial (Base.Main.tutorialMode).
+    Any error gives the game's own order.
 """
 
 import struct
@@ -26,7 +30,7 @@ from swf_duel_bridge import DO_ABC, assemble, prepend
 from swf_hud import _used_names
 
 GAME_RADIUS, PLAYER_RADIUS = 4, 10
-RECRUIT_METHOD = '__seRecruit'
+RECRUIT_METHOD, BUSY_SLOT = '__seRecruit', '__seRecruiting'
 
 
 def wide_help_enabled():
@@ -80,14 +84,17 @@ def add_recruit(abc):
                           ('getproperty', 'building'), ('getproperty', 'subcat_functional'),
                           ('getproperty', 'SUBCATFUNC_UNIT_PEASANT'), ('getproperty', 'bMoving'),
                           ('getproperty', 'bMovingToDoAction'), ('getproperty', 'bAttacking'),
-                          ('getproperty', 'tx'), ('getproperty', 'ty'), ('callproperty', 'concat'),
-                          ('callproperty', 'indexOf'), ('callpropvoid', 'push')})
-    n = {'concat': m[('callproperty', 'concat')], 'indexOf': m[('callproperty', 'indexOf')],
-         'push': m[('callpropvoid', 'push')]}
+                          ('getproperty', 'tx'), ('getproperty', 'ty'), ('callproperty', 'indexOf'),
+                          ('callpropvoid', 'push'), ('callpropvoid', 'startMovements'), ('getproperty', 'Main'),
+                          ('getproperty', 'tutorialMode')})
+    n = {'indexOf': m[('callproperty', 'indexOf')], 'push': m[('callpropvoid', 'push')],
+         'startMovements': m[('callpropvoid', 'startMovements')]}
+    busy = abc.add_qname('', BUSY_SLOT)
+    base['traits'].append({'name': busy, 'kind': 0, 'data': [0, 0, 0], 'metadata': None})
     g = lambda name: ('getproperty', m[('getproperty', name)])  # noqa: E731
     late = g('<late>')
     constants = ('getlex', m[('getlex', 'Constants')])
-    # Locals: 1 tile, 2 units, 3 side, 4 target, 5 list, 6 index, 7 element, 8 first unit, 9 result, 10 distance.
+    # Locals: 1 tile, 2 units, 3 side, 4 target, 5 list, 6 index, 7 element, 8 first unit, 9 extras, 10 distance.
     near = []
     for axis in ('tx', 'ty'):
         near += [('getlocal', 7), g('buildingReference'), g(axis), ('getlocal', 8), g(axis), ('subtract',),
@@ -96,6 +103,9 @@ def add_recruit(abc):
                  ('getlocal', 10), ('negate',), ('pushbyte', PLAYER_RADIUS), ('ifgt', 'next')]
     program = [
         ('getlocal0',), ('pushscope',), ('label:', 'try'),
+        ('getlocal0',), ('getproperty', busy), ('iftrue', 'same'),
+        # not in the tutorial: its battle is one knight against two weak trolls, as the game made it
+        ('getlex', m[('getlex', 'Base')]), g('Main'), g('tutorialMode'), ('iftrue', 'same'),
         ('getlocal3',), constants, g('PLAYER_SELF'), ('ifne', 'same'),
         ('getlocal2',), ('iffalse', 'same'),
         ('getlocal2',), g('length'), ('pushbyte', 1), ('iflt', 'same'),
@@ -104,7 +114,7 @@ def add_recruit(abc):
         ('getlocal', 4), g('mc'), ('iffalse', 'same'),
         ('getlocal', 4), g('mc'), g('PlayerID'), constants, g('PLAYER_ENEMY'), ('ifne', 'same'),
         ('getlocal2',), ('pushbyte', 0), late, ('setlocal', 8),
-        ('getlocal2',), ('callproperty', n['concat'], 0), ('setlocal', 9),
+        ('newarray', 0), ('setlocal', 9),
         ('getlex', m[('getlex', 'Base')]), g('Iso'), g('arPlayerIsoFightingElements'), ('setlocal', 5),
         ('pushbyte', 0), ('setlocal', 6),
         ('label:', 'loop'), ('label',),
@@ -119,15 +129,30 @@ def add_recruit(abc):
         ('getlocal', 7), g('bMoving'), ('iftrue', 'next'),
         ('getlocal', 7), g('bMovingToDoAction'), ('iftrue', 'next'),
         ('getlocal', 7), g('bAttacking'), ('iftrue', 'next'),
-        ('getlocal', 9), ('getlocal', 7), g('buildingReference'), ('callproperty', n['indexOf'], 1),
+        ('getlocal2',), ('getlocal', 7), g('buildingReference'), ('callproperty', n['indexOf'], 1),
         ('pushbyte', 0), ('ifge', 'next'),
     ] + near + [
         ('getlocal', 9), ('getlocal', 7), g('buildingReference'), ('callpropvoid', n['push'], 1),
         ('label:', 'next'), ('getlocal', 6), ('increment_i',), ('setlocal', 6), ('jump', 'loop'),
-        ('label:', 'done'), ('getlocal', 9), ('returnvalue',),
+        ('label:', 'done'),
+        ('getlocal', 9), g('length'), ('pushbyte', 1), ('iflt', 'same'),
+        # The player's order first, exactly as the game gives it (its units keep their places around the target);
+        # then each extra unit with an order of its own, so none takes a place of the units the player chose.
+        ('getlocal0',), ('pushtrue',), ('setproperty', busy),
+        ('getlocal0',), ('getlocal1',), ('getlocal2',), ('getlocal3',), ('callpropvoid', n['startMovements'], 3),
+        ('pushbyte', 0), ('setlocal', 6),
+        ('label:', 'each'), ('label',),
+        ('getlocal', 6), ('getlocal', 9), g('length'), ('ifnlt', 'sent'),
+        ('getlocal0',), ('getlocal1',), ('getlocal', 9), ('getlocal', 6), late, ('newarray', 1), ('getlocal3',),
+        ('callpropvoid', n['startMovements'], 3),
+        ('getlocal', 6), ('increment_i',), ('setlocal', 6), ('jump', 'each'),
+        ('label:', 'sent'),
+        ('getlocal0',), ('pushfalse',), ('setproperty', busy),
+        ('pushtrue',), ('returnvalue',),
         ('label:', 'try_end'),
-        ('label:', 'same'), ('getlocal2',), ('returnvalue',),
-        ('label:', 'catch'), ('getlocal0',), ('pushscope',), ('pop',), ('getlocal2',), ('returnvalue',)]
+        ('label:', 'same'), ('pushfalse',), ('returnvalue',),
+        ('label:', 'catch'), ('getlocal0',), ('pushscope',), ('pop',),
+        ('getlocal0',), ('pushfalse',), ('setproperty', busy), ('pushfalse',), ('returnvalue',)]
     code, labels = assemble(program)
     reference = abc.body_of(abc.method_of('Base', 'DebugUnitTiles'))
     index = len(abc.methods)
@@ -140,9 +165,9 @@ def add_recruit(abc):
                        'traits': []})
     recruit = abc.add_qname('', RECRUIT_METHOD)
     base['traits'].append({'name': recruit, 'kind': 1, 'data': [0, index], 'metadata': None})
-    # Base.startMovements(tile, units, side): units = this.__seRecruit(tile, units, side) first.
+    # Base.startMovements(tile, units, side): if this.__seRecruit(tile, units, side) the orders were given.
     code, _ = assemble([('getlocal0',), ('getlocal1',), ('getlocal2',), ('getlocal3',),
-                        ('callproperty', recruit, 3), ('setlocal2',)])
+                        ('callproperty', recruit, 3), ('iffalse', 'own'), ('returnvoid',), ('label:', 'own')])
     body = abc.body_of(abc.method_of('Base', 'startMovements'))
     prepend(body, code)
     body['max_stack'] = max(body['max_stack'], 4)

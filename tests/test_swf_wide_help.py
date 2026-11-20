@@ -48,12 +48,22 @@ class WideHelp(unittest.TestCase):
         self.assertEqual(ops[6][0], 'ifeq')
         self.assertEqual(ops.count(('pushbyte', '4')), 4)
 
-    def test_an_attack_order_takes_the_idle_fighters_near_the_first_unit(self):
-        self.assertEqual(self.ops('Base', 'startMovements')[4], ('callproperty', f'{RECRUIT_METHOD} 3'))
-        names = [op[1] for op in self.ops('Base', RECRUIT_METHOD)]
+    def test_an_attack_order_sends_the_idle_fighters_near_the_first_unit_after_it(self):
+        ops = self.ops('Base', 'startMovements')
+        self.assertEqual(ops[4], ('callproperty', f'{RECRUIT_METHOD} 3'))
+        self.assertEqual([ops[5][0], ops[6]], ['iffalse', ('returnvoid', '')])  # the orders were given
+        recruit = self.ops('Base', RECRUIT_METHOD)
+        names = [op[1] for op in recruit]
         for name in ('PLAYER_SELF', 'PLAYER_ENEMY', 'arPlayerIsoFightingElements', 'bDead', 'uiAttack',
-                     'SUBCATFUNC_UNIT_PEASANT', 'bMoving', 'bMovingToDoAction', 'bAttacking', 'concat 0', 'push 1'):
+                     'SUBCATFUNC_UNIT_PEASANT', 'bMoving', 'bMovingToDoAction', 'bAttacking', 'push 1'):
             self.assertIn(name, names)
+        # not in the tutorial; the player's own order first, then one order for each extra unit
+        self.assertLess(names.index('tutorialMode'), names.index('arPlayerIsoFightingElements'))
+        orders = [index for index, op in enumerate(recruit) if op == ('callpropvoid', 'startMovements 3')]
+        self.assertEqual(len(orders), 2)
+        self.assertEqual(recruit[orders[0] - 3:orders[0]], [('getlocal1', ''), ('getlocal2', ''), ('getlocal3', '')])
+        self.assertEqual(recruit[orders[1] - 2], ('newarray', '1'))
+        self.assertIn(('setproperty', '__seRecruiting'), recruit)  # the inner orders are not recruited again
         self.assertEqual(self.ops('Base', RECRUIT_METHOD).count(('pushbyte', '10')), 4)  # |dx| and |dy| up to 10
 
     def test_it_is_added_once(self):
