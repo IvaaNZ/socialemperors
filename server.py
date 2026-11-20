@@ -937,6 +937,9 @@ def localized_game_movie(language=None):
     if WIDE_HELP_ENABLED:  # the player's units come to help from 10 tiles away, not 4 (swf_wide_help.py)
         from swf_wide_help import add_wide_help
         translated = add_wide_help(translated)
+    if KEEP_FIGHTING_ENABLED:  # the player's units attack the next enemy when theirs dies (swf_keep_fighting.py)
+        from swf_keep_fighting import add_keep_fighting
+        translated = add_keep_fighting(translated)
     if QUEST_TEAMS_ENABLED or COOP_ENABLED:  # every adventure island opens "Elige tu equipo" (swf_coop.py)
         from swf_coop import add_quest_teams
         translated = add_quest_teams(translated)
@@ -1194,6 +1197,9 @@ SMART_AI_ENABLED = os.environ.get('SE_SMART_AI', 'on').strip().lower() in ('on',
 # A unit of the player's being hit calls the player's units up to 10 tiles away, not 4 (swf_wide_help.py).
 from swf_wide_help import wide_help_enabled  # noqa: E402
 WIDE_HELP_ENABLED = wide_help_enabled()
+# The player's units keep fighting the nearest enemy when theirs dies (swf_keep_fighting.py).
+from swf_keep_fighting import keep_fighting_enabled  # noqa: E402
+KEEP_FIGHTING_ENABLED = keep_fighting_enabled()
 # Point 28: every adventure island lets the player choose the team that sails (swf_coop.py).
 QUEST_TEAMS_ENABLED = os.environ.get('SE_QUEST_TEAMS', 'on').strip().lower() in ('on', '1', 'true', 'yes')
 # Point 28: adventures alone or with the clan, live (COOP_PLAN.md). Off until the live raid works.
