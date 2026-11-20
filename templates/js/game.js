@@ -1333,7 +1333,9 @@
                 hideControls();
                 event.preventDefault();
                 event.stopPropagation();
-            } else if (expanded) {
+            } else if (expanded && !expand.closest(".menu-retired")) {
+                // SE_SHORT_MENU retires the "Fill tab" button: with no way back, Esc keeps the game filling the
+                // tab (it took a player in the tutorial to the portal page, the game small inside it).
                 setExpanded(false);
                 controlsToggle.focus({ preventScroll: true });
                 event.preventDefault();

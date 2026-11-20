@@ -98,6 +98,10 @@ class ShortMenuTests(unittest.TestCase):
         server = (ROOT / 'server.py').read_text(encoding='utf-8')
         self.assertIn("menu_hidden=SHORT_MENU_ENABLED and not (g.account and g.account['is_admin'])", server)
 
+    def test_escape_keeps_the_game_filling_the_tab_when_its_button_is_retired(self):
+        script = (ROOT / 'templates' / 'js' / 'game.js').read_text(encoding='utf-8')
+        self.assertIn('} else if (expanded && !expand.closest(".menu-retired")) {', script)
+
 
 class StayInGameTests(unittest.TestCase):
     """SE_STAY_IN_GAME (on by default): nothing in the Clan and PvP windows leaves the game."""
